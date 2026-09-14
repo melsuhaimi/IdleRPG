@@ -1008,6 +1008,8 @@
 <string name="gear_keep_rarity">Keep %1$s+</string>
 <string name="gear_compare_equipped">Compare: equipped %1$d bonuses · candidate %2$d bonuses</string>
     <string name="battle_combat_dock">SKILLS</string>
+    <string name="battle_skills_expand">Show skills</string>
+    <string name="battle_skills_collapse">Hide skills</string>
     <string name="battle_loadout_short">Skills</string>
     <string name="battle_doctrine_rule_insight">Rule %1$d · %2$s</string>
     <string name="world_stage_current_marker">NOW</string>
