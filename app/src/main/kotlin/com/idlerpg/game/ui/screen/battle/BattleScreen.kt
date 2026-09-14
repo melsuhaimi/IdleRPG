@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -141,7 +142,8 @@ fun BattleScreen(
     onConsumePresentationReward: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val compact = LocalConfiguration.current.screenHeightDp < 780
+    val compact = LocalConfiguration.current.screenHeightDp < 780 ||
+        LocalConfiguration.current.screenWidthDp < 360
     var consumedRewardTokens by remember(state.combatSequenceId) {
         mutableStateOf<Set<Long>>(emptySet())
     }
@@ -180,14 +182,18 @@ fun BattleScreen(
                 .fillMaxSize()
                 .padding(horizontal = if (compact) 8.dp else 12.dp, vertical = 8.dp)
         ) {
-            val lowerContentMinimumHeight = if (compact) 96.dp else 120.dp
-            val battleHeaderMinimumHeight = if (compact) 106.dp else 114.dp
+            val lowerContentMinimumHeight = if (compact) 88.dp else 104.dp
+            val battleHeaderMinimumHeight = if (compact) {
+                GameDimensions.BattleHeaderMinHeight
+            } else {
+                GameDimensions.BattleHeaderMinHeight + 8.dp
+            }
             val battleBudget = (
                 maxHeight - battleHeaderMinimumHeight - lowerContentMinimumHeight
                 ).coerceAtLeast(0.dp)
-            val minimumBattleHeight = (if (compact) 300.dp else 360.dp)
+            val minimumBattleHeight = (if (compact) 260.dp else 300.dp)
                 .coerceAtMost(battleBudget)
-            val preferredBattleHeight = maxHeight * if (compact) 0.58f else 0.64f
+            val preferredBattleHeight = maxHeight * if (compact) 0.56f else 0.62f
             val battlefieldHeight = preferredBattleHeight.coerceIn(
                 minimumBattleHeight,
                 battleBudget
@@ -288,7 +294,9 @@ private fun BattleHeader(
         else GameDimensions.LargePanelRadius
     )
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = if (compact) 76.dp else GameDimensions.BattleHeaderMinHeight),
         shape = shape,
         color = ObsidianSurface1.copy(alpha = 0.90f),
         border = BorderStroke(1.dp, StageBorder.copy(alpha = 0.76f)),
@@ -304,15 +312,13 @@ private fun BattleHeader(
                 painter = painterResource(R.drawable.hud_header_castle_generated),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.HudBannerHeight)
+                    .matchParentSize()
                     .alpha(0.38f),
                 contentScale = ContentScale.Crop
             )
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.HudBannerHeight)
+                    .matchParentSize()
                     .background(
                         Brush.horizontalGradient(
                             listOf(
@@ -334,7 +340,7 @@ private fun BattleHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = if (compact) 106.dp else GameDimensions.BattleHeaderHeight)
+                    .heightIn(min = if (compact) 76.dp else GameDimensions.BattleHeaderMinHeight + 8.dp)
                     .padding(horizontal = if (compact) 10.dp else 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 9.dp)
@@ -441,8 +447,8 @@ private fun BattleHeader(
 
                 Surface(
                     modifier = Modifier
-                        .heightIn(min = if (compact) 56.dp else 62.dp)
-                        .widthIn(min = if (compact) 104.dp else 124.dp)
+                        .heightIn(min = if (compact) 52.dp else 58.dp)
+                        .widthIn(min = if (compact) 92.dp else 112.dp)
                         .clickable(
                             role = Role.Button,
                             onClick = { onSetDoctrineEnabled(!state.doctrine.enabled) }
@@ -506,7 +512,7 @@ private fun BattleHeader(
                     Surface(
                         modifier = Modifier
                             .heightIn(min = if (compact) 56.dp else 62.dp)
-                            .widthIn(min = if (compact) 50.dp else 84.dp)
+                            .widthIn(min = if (compact) 48.dp else 72.dp)
                             .clickable(role = Role.Button, onClick = retreat)
                             .semantics { contentDescription = retreatDescription },
                         shape = RoundedCornerShape(12.dp),
@@ -753,7 +759,7 @@ private fun BattleStage(
                     HeroStageActor(
                         player = state.player,
                         compact = compact,
-                        modifier = Modifier.weight(0.92f)
+                        modifier = Modifier.weight(0.96f)
                     )
                     BattleFocusDivider(compact = compact)
                     EnemyFormationStage(
@@ -761,7 +767,7 @@ private fun BattleStage(
                         defeatedEnemies = defeatedSnapshots,
                         impacts = feedback?.impacts.orEmpty(),
                         compact = compact,
-                        modifier = Modifier.weight(1.62f)
+                        modifier = Modifier.weight(2.04f)
                     )
                 }
             }
@@ -1017,9 +1023,11 @@ private fun HeroStageActor(
     BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
         val baseImageSize = if (compact) 176.dp else 216.dp
         val reservedHeight = if (compact) 80.dp else 96.dp
-        val imageSize = baseImageSize.coerceAtMost(
-            (maxHeight - reservedHeight).coerceAtLeast(if (compact) 76.dp else 96.dp)
-        )
+        val imageSize = baseImageSize
+            .coerceAtMost(
+                (maxHeight - reservedHeight).coerceAtLeast(if (compact) 76.dp else 96.dp)
+            )
+            .coerceAtMost(maxWidth)
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1100,32 +1108,43 @@ private fun EnemyFormationStage(
         val formation = (enemies + defeatedEnemies).distinctBy { it.instanceId }
         if (formation.isEmpty()) return@BoxWithConstraints
 
+        // New content is capped at three actors. The two-column fallback keeps legacy saves
+        // readable without silently dropping an actor from an older formation.
         val columns = when {
+            formation.size == 1 -> 1
             formation.size <= 3 -> formation.size
             else -> 2
         }
         val rows = formation.chunked(columns)
-        val horizontalSpacing = if (compact) 3.dp else 6.dp
-        val verticalSpacing = if (compact) 3.dp else 6.dp
-        val maxRowHeight = (maxHeight - verticalSpacing * (rows.size - 1)) / rows.size
-        val reservedHeight = if (compact) 96.dp else 108.dp
+        val horizontalSpacing = if (compact) 3.dp else 5.dp
+        val verticalSpacing = if (compact) 4.dp else 6.dp
+        val maxRowHeight = (
+            maxHeight - verticalSpacing * (rows.size - 1)
+            ).coerceAtLeast(0.dp) / rows.size
+        val reservedHeight = when {
+            formation.size == 1 -> if (compact) 70.dp else 82.dp
+            formation.size <= 3 -> if (compact) 62.dp else 72.dp
+            else -> if (compact) 82.dp else 94.dp
+        }
         val imageHeight = (maxRowHeight - reservedHeight).coerceAtLeast(
-            if (compact) 48.dp else 64.dp
+            if (compact) 42.dp else 54.dp
         )
         val maxActorWidth = (
             (maxWidth - horizontalSpacing * (columns - 1)).coerceAtLeast(0.dp) / columns
-            ).coerceAtLeast(if (compact) 48.dp else 62.dp)
+            ).coerceAtLeast(if (compact) 44.dp else 56.dp)
         val baseSize = when (formation.size) {
-            1 -> if (compact) 176.dp else 216.dp
-            2 -> if (compact) 148.dp else 184.dp
-            3 -> if (compact) 126.dp else 158.dp
-            4 -> if (compact) 112.dp else 138.dp
-            else -> if (compact) 104.dp else 126.dp
+            1 -> if (compact) 190.dp else 228.dp
+            2 -> if (compact) 156.dp else 190.dp
+            3 -> if (compact) 132.dp else 164.dp
+            else -> if (compact) 108.dp else 132.dp
         }
-        val desiredSize = baseSize.coerceAtMost(imageHeight).coerceAtMost(maxActorWidth)
+        val desiredSize = baseSize
+            .coerceAtMost(imageHeight)
+            .coerceAtMost(maxActorWidth)
         val threatId = enemies.minByOrNull {
-                it.nextAttackRemainingMillis ?: Long.MAX_VALUE
-            }?.instanceId
+            it.nextAttackRemainingMillis ?: Long.MAX_VALUE
+        }?.instanceId
+
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing)
@@ -1526,7 +1545,7 @@ private fun BattleCombatStatsRail(
     val widthDp = LocalConfiguration.current.screenWidthDp
     val fontScale = LocalDensity.current.fontScale
     val primaryColumns = when {
-        widthDp < 340 || fontScale >= 1.45f -> 1
+        widthDp < 300 || fontScale >= 1.45f -> 1
         else -> 3
     }
     val stats = listOf(
@@ -1784,6 +1803,10 @@ private fun BattleCommandDock(
     onOpenSkillLoadout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var skillsExpanded by rememberSaveable(state.combatSequenceId) {
+        mutableStateOf(!compact)
+    }
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
@@ -1813,7 +1836,21 @@ private fun BattleCommandDock(
                     )
             )
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClick = { skillsExpanded = !skillsExpanded }
+                    )
+                    .semantics {
+                        contentDescription = stringResource(
+                            if (skillsExpanded) {
+                                R.string.battle_skills_collapse
+                            } else {
+                                R.string.battle_skills_expand
+                            }
+                        )
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1831,6 +1868,11 @@ private fun BattleCommandDock(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
+                Text(
+                    text = if (skillsExpanded) "−" else "+",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ResourceGold
+                )
                 if (state.queuedSkillId != null) {
                     GameOutlinedButton(
                         onClick = { onIntent(BattleUiIntent.ClearQueuedSkill) },
@@ -1846,35 +1888,37 @@ private fun BattleCommandDock(
                 )
             }
 
-            if (state.equippedSkills.isEmpty()) {
-                GameButton(
-                    onClick = onOpenSkillLoadout,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_skill_loadout),
-                        contentDescription = null,
-                        tint = ResourceGold,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Text(stringResource(R.string.battle_no_equipped_skills))
-                }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    state.equippedSkills.take(4).forEach { skill ->
-                        BattleSkillTile(
-                            skill = skill,
-                            compact = compact,
-                            onClick = { onIntent(BattleUiIntent.QueueSkill(skill.skillId)) },
-                            modifier = Modifier.width(if (compact) 76.dp else 84.dp)
+            if (skillsExpanded) {
+                if (state.equippedSkills.isEmpty()) {
+                    GameButton(
+                        onClick = onOpenSkillLoadout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_skill_loadout),
+                            contentDescription = null,
+                            tint = ResourceGold,
+                            modifier = Modifier.size(22.dp)
                         )
+                        Text(stringResource(R.string.battle_no_equipped_skills))
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        state.equippedSkills.take(4).forEach { skill ->
+                            BattleSkillTile(
+                                skill = skill,
+                                compact = compact,
+                                onClick = { onIntent(BattleUiIntent.QueueSkill(skill.skillId)) },
+                                modifier = Modifier.width(if (compact) 76.dp else 84.dp)
+                            )
+                        }
                     }
                 }
             }
