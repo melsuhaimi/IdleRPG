@@ -43,8 +43,8 @@ import com.idlerpg.game.ui.theme.MotionTokens
 fun PremiumPanel(
     backgroundResId: Int,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 18.dp),
-    verticalSpacing: Dp = 10.dp,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
+    verticalSpacing: Dp = 7.dp,
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -66,7 +66,7 @@ fun PremiumPanel(
                     // Decoration must follow content size, never expand a Scaffold top bar.
                     .matchParentSize()
                     .align(Alignment.Center)
-                    .alpha(0.19f),
+                    .alpha(0.12f),
                 contentScale = ContentScale.Crop
             )
             Image(
@@ -74,7 +74,7 @@ fun PremiumPanel(
                 contentDescription = null,
                 modifier = Modifier
                     .matchParentSize()
-                    .alpha(0.34f),
+                    .alpha(0.24f),
                 contentScale = ContentScale.FillBounds
             )
             Box(
@@ -97,7 +97,7 @@ fun PremiumPanel(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(32.dp)
+                    .height(20.dp)
                     .align(Alignment.BottomCenter)
                     .background(
                         Brush.verticalGradient(
@@ -123,7 +123,7 @@ fun PremiumImageProgressBar(
     fillResId: Int,
     contentDescriptionText: String,
     modifier: Modifier = Modifier,
-    height: Dp = 34.dp
+    height: Dp = 28.dp
 ) {
     val targetFraction = progressUnits.coerceIn(0, 10_000) / 10_000f
     val fraction by animateFloatAsState(
