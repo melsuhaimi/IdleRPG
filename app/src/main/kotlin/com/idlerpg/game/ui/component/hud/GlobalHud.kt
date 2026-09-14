@@ -69,7 +69,9 @@ fun GlobalHud(
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = GameDimensions.HudMinHeight),
         shape = RoundedCornerShape(GameDimensions.LargePanelRadius),
         color = ObsidianSurface1.copy(alpha = 0.93f),
         border = BorderStroke(1.dp, ObsidianOutline.copy(alpha = 0.82f)),
@@ -85,8 +87,7 @@ fun GlobalHud(
                 painter = painterResource(R.drawable.hud_header_castle_generated),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.HudBannerHeight)
+                    .matchParentSize()
                     .alpha(0.52f),
                 contentScale = ContentScale.Crop
             )
@@ -133,7 +134,7 @@ fun GlobalHud(
                         .fillMaxWidth()
                         .padding(horizontal = 14.dp, vertical = 11.dp)
                 ) {
-                    val compact = maxWidth < 360.dp
+                    val compact = maxWidth < 380.dp
                     Column(
                         modifier = Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(if (compact) 7.dp else 9.dp)
@@ -335,7 +336,7 @@ private fun HudResourceValue(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .heightIn(min = 44.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = contentDescriptionText
             },
