@@ -49,6 +49,12 @@ object TrainingHollowWorldContent {
             29 -> listOf(TrainingHollowStrategyContent.SHADE_MIMIC_ID, DefaultGameContent.HOLLOW_BULWARK_ID, TrainingHollowStrategyContent.FROSTBOUND_MITE_ID)
             30 -> listOf(HollowWardenContent.ENEMY_ID, DefaultGameContent.HOLLOW_BULWARK_ID)
             else -> generatedComposition(stage, type)
+        }.let { composition ->
+            when (type) {
+                EncounterType.ELITE,
+                EncounterType.BOSS -> composition.take(1)
+                else -> composition.take(EncounterDefinition.MAX_ACTIVE_ENEMIES)
+            }
         }
         val modifiers = when (type) {
             EncounterType.ELITE -> setOf(EliteModifier.FRENZIED, EliteModifier.REGENERATING)
@@ -124,10 +130,7 @@ object TrainingHollowWorldContent {
     /** Content-driven compositions keep future stage additions deterministic and varied. */
     private fun generatedComposition(stage: Int, type: EncounterType): List<ContentId> {
         if (type == EncounterType.BOSS) {
-            return listOf(
-                HollowWardenContent.ENEMY_ID,
-                DefaultGameContent.HOLLOW_BULWARK_ID
-            )
+            return listOf(HollowWardenContent.ENEMY_ID)
         }
         val patterns = listOf(
             listOf(DefaultGameContent.SLIME_ID, DefaultGameContent.RIFTFANG_ID, DefaultGameContent.SLIME_ID),
@@ -144,9 +147,9 @@ object TrainingHollowWorldContent {
 
     private fun bossWavesOrEmpty(type: EncounterType): List<List<ContentId>> =
         if (type != EncounterType.BOSS) emptyList() else listOf(
-            listOf(HollowWardenContent.ENEMY_ID, DefaultGameContent.HOLLOW_BULWARK_ID),
-            listOf(HollowWardenContent.ENEMY_ID, TrainingHollowStrategyContent.SHADE_MIMIC_ID),
-            listOf(HollowWardenContent.ENEMY_ID, TrainingHollowStrategyContent.ECHO_LEECH_ID, DefaultGameContent.ARCANE_SEER_ID)
+            listOf(HollowWardenContent.ENEMY_ID),
+            listOf(HollowWardenContent.ENEMY_ID),
+            listOf(HollowWardenContent.ENEMY_ID)
         )
 
     private fun stageRewardMultiplier(stage: Int): Ratio = Ratio.ofUnits(
