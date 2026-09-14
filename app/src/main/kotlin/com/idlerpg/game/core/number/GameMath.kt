@@ -1,0 +1,96 @@
+package com.idlerpg.game.core.number
+
+import java.math.BigInteger
+
+/** Central deterministic helpers for authoritative gameplay arithmetic. */
+object GameMath {
+
+    /**
+     * Applies [ratio] to [value] using the project default authoritative rounding policy:
+     * floor after the final multiplier application.
+     */
+    fun applyRatio(value: GameNumber, ratio: Ratio): GameNumber {
+        val numerator = value.toBigInteger().multiply(BigInteger.valueOf(ratio.units))
+        val result = numerator.divide(BigInteger.valueOf(Ratio.UNITS_PER_ONE))
+        return GameNumber.fromBigInteger(result)
+    }
+
+    /**
+     * Applies a deterministic per-step growth rate once for each logical step.
+     *
+     * This is intentionally not a loop. A tier-100 value is calculated as
+     * `base * (1 + rate * 100)`, which avoids compounding runaway inflation while
+     * remaining exact for [GameNumber] and safe for very large idle values.
+     */
+    fun scaleByStep(
+        value: GameNumber,
+        growthPerStep: Ratio,
+        steps: Long
+    ): GameNumber {
+        require(steps >= 0L) { "steps cannot be negative: $steps" }
+        val multiplierUnits = BigInteger.valueOf(Ratio.UNITS_PER_ONE)
+            .add(BigInteger.valueOf(growthPerStep.units).multiply(BigInteger.valueOf(steps)))
+        return GameNumber.fromBigInteger(
+            value.toBigInteger()
+                .multiply(multiplierUnits)
+                .divide(BigInteger.valueOf(Ratio.UNITS_PER_ONE))
+        )
+    }
+
+    /** Fixed-point ratio after additive per-step growth, clamped only at Long.MAX_VALUE. */
+    fun ratioAfterSteps(
+        base: Ratio,
+        growthPerStep: Ratio,
+        steps: Long
+    ): Ratio {
+        require(steps >= 0L) { "steps cannot be negative: $steps" }
+        val units = BigInteger.valueOf(base.units)
+            .add(BigInteger.valueOf(growthPerStep.units).multiply(BigInteger.valueOf(steps)))
+            .min(BigInteger.valueOf(Long.MAX_VALUE))
+            .longValueExact()
+        return Ratio.ofUnits(units)
+    }
+
+    /** Multiplies fixed-point ratios without overflowing the Long intermediate. */
+    fun multiplyRatios(left: Ratio, right: Ratio): Ratio {
+        val units = BigInteger.valueOf(left.units)
+            .multiply(BigInteger.valueOf(right.units))
+            .divide(BigInteger.valueOf(Ratio.UNITS_PER_ONE))
+            .min(BigInteger.valueOf(Long.MAX_VALUE))
+            .longValueExact()
+        return Ratio.ofUnits(units)
+    }
+
+    /** n * (n - 1) / 2, used by the progressive XP curve. */
+    fun triangular(n: Long): BigInteger {
+        require(n >= 0L) { "n cannot be negative: $n" }
+        val value = BigInteger.valueOf(n)
+        return value.multiply(value.subtract(BigInteger.ONE)).divide(BigInteger.TWO)
+    }
+
+    fun clamp(
+        value: GameNumber,
+        minimum: GameNumber,
+        maximum: GameNumber
+    ): GameNumber {
+        require(minimum <= maximum) {
+            "minimum cannot exceed maximum: $minimum > $maximum"
+        }
+
+        return when {
+            value < minimum -> minimum
+            value > maximum -> maximum
+            else -> value
+        }
+    }
+
+    /** Generic deterministic linear growth helper. Feature-specific meaning stays outside core. */
+    fun linearGrowth(
+        base: GameNumber,
+        increment: GameNumber,
+        level: Long
+    ): GameNumber {
+        require(level >= 0L) { "level cannot be negative: $level" }
+        return base + (increment * level)
+    }
+}
