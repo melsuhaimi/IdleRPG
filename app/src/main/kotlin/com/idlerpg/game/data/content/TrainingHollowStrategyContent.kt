@@ -183,7 +183,7 @@ object TrainingHollowStrategyContent {
             ECHO_LEECH_ENCOUNTER_ID,
             DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
             EncounterType.ELITE,
-            listOf(ECHO_LEECH_ID, DefaultGameContent.HOLLOW_BULWARK_ID),
+            listOf(ECHO_LEECH_ID),
             nextEncounterId = SHADE_MIMIC_ENCOUNTER_ID,
             eliteModifiers = setOf(EliteModifier.RESONANT, EliteModifier.REGENERATING),
             rewardLootTableId = TrainingHollowLootContent.ELITE_LOOT_TABLE_ID
