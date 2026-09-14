@@ -1806,6 +1806,13 @@ private fun BattleCommandDock(
     var skillsExpanded by rememberSaveable(state.combatSequenceId) {
         mutableStateOf(!compact)
     }
+    val skillsToggleDescription = stringResource(
+        if (skillsExpanded) {
+            R.string.battle_skills_collapse
+        } else {
+            R.string.battle_skills_expand
+        }
+    )
 
     Surface(
         modifier = modifier,
@@ -1843,13 +1850,7 @@ private fun BattleCommandDock(
                         onClick = { skillsExpanded = !skillsExpanded }
                     )
                     .semantics {
-                        contentDescription = stringResource(
-                            if (skillsExpanded) {
-                                R.string.battle_skills_collapse
-                            } else {
-                                R.string.battle_skills_expand
-                            }
-                        )
+                        contentDescription = skillsToggleDescription
                     },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
