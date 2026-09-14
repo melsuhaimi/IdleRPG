@@ -32,7 +32,6 @@ android {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget("17"))
         }
     }
-}
 
     testOptions {
         unitTests.all {
