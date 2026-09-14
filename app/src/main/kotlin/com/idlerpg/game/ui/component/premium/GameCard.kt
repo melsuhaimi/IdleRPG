@@ -41,9 +41,9 @@ import com.idlerpg.game.ui.theme.ObsidianSurface1
 @Composable
 fun GameCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(18.dp),
+    shape: Shape = RoundedCornerShape(14.dp),
     colors: CardColors = CardDefaults.cardColors(
-        containerColor = ObsidianSurface1.copy(alpha = 0.98f)
+        containerColor = ObsidianSurface1.copy(alpha = 0.96f)
     ),
     elevation: CardElevation = CardDefaults.cardElevation(
         defaultElevation = 0.dp,
@@ -51,7 +51,7 @@ fun GameCard(
     ),
     border: BorderStroke? = BorderStroke(
         width = 1.dp,
-        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.52f)
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.44f)
     ),
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -72,9 +72,9 @@ fun GameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = RoundedCornerShape(18.dp),
+    shape: Shape = RoundedCornerShape(14.dp),
     colors: CardColors = CardDefaults.cardColors(
-        containerColor = ObsidianSurface1.copy(alpha = 0.98f)
+        containerColor = ObsidianSurface1.copy(alpha = 0.96f)
     ),
     elevation: CardElevation = CardDefaults.cardElevation(
         defaultElevation = 0.dp,
@@ -82,7 +82,7 @@ fun GameCard(
     ),
     border: BorderStroke? = BorderStroke(
         width = 1.dp,
-        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.52f)
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.44f)
     ),
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -125,7 +125,7 @@ private fun GameCardContent(
             contentDescription = null,
             modifier = Modifier
                 .matchParentSize()
-                .alpha(0.16f),
+                .alpha(0.10f),
             contentScale = ContentScale.FillBounds
         )
         Column(
@@ -137,7 +137,7 @@ private fun GameCardContent(
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .fillMaxHeight()
-                    .width(2.dp)
+                    .width(1.5.dp)
                     .background(
                         Brush.verticalGradient(
                             listOf(
