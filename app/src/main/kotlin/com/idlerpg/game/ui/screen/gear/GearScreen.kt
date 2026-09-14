@@ -552,9 +552,9 @@ private fun EquipmentSlotNode(
                     contentScale = ContentScale.Fit
                 )
             }
-            Text(slotLabel(slot), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(slotLabel(slot), style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Clip)
             if (item != null) {
-                Text(stringResource(item.rarityTitleStringKey.stringResId()), style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp), color = rarityAccent(item.rarityId))
+                Text(stringResource(item.rarityTitleStringKey.stringResId()), style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp), color = rarityAccent(item.rarityId))
             }
         }
     }
@@ -722,13 +722,13 @@ private fun ItemIdentity(item: GearItemUiState, accent: Color, modifier: Modifie
                 contentScale = ContentScale.Fit
             )
         }
-        Text(stringResource(item.titleStringKey.stringResId()), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+        Text(stringResource(item.titleStringKey.stringResId()), style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Clip, textAlign = TextAlign.Center)
         Text(
             listOfNotNull(item.equipmentSlot?.let { slotLabel(it) }, stringResource(item.rarityTitleStringKey.stringResId())).joinToString(" · "),
             style = MaterialTheme.typography.labelSmall,
             color = accent,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Clip
         )
     }
 }
@@ -743,7 +743,7 @@ private fun FactualEffectColumn(title: String, item: GearItemUiState?, accent: C
         } else {
             Text(slotLabel(item.equipmentSlot ?: EquipmentSlot.WEAPON), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             item.effects.forEach { effect ->
-                Text(effectSummary(effect), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(effectSummary(effect), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Clip)
             }
             if (item.effects.isEmpty()) Text(stringResource(R.string.gear_no_effects), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -820,7 +820,7 @@ private fun CapacityPanel(state: GearUiState, onExpand: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
             }
             GameStatusPill(if (capacity.atMaximumCapacity) stringResource(R.string.gear_capacity_maximum) else "${capacity.normalAvailable} OPEN", if (capacity.progressionBlocked) WarningAmber else ResonanceTeal)
@@ -950,9 +950,9 @@ private fun ArmoryInventoryRow(item: GearItemUiState, selected: Boolean, bulkSel
                     )
                 }
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(stringResource(item.titleStringKey.stringResId()), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(listOfNotNull(item.equipmentSlot?.let { slotLabel(it) }, stringResource(item.rarityTitleStringKey.stringResId())).joinToString(" · "), style = MaterialTheme.typography.labelMedium, color = accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    item.effects.firstOrNull()?.let { effect -> Text(effectSummary(effect), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+                    Text(stringResource(item.titleStringKey.stringResId()), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Clip)
+                    Text(listOfNotNull(item.equipmentSlot?.let { slotLabel(it) }, stringResource(item.rarityTitleStringKey.stringResId())).joinToString(" · "), style = MaterialTheme.typography.labelMedium, color = accent, maxLines = 1, overflow = TextOverflow.Clip)
+                    item.effects.firstOrNull()?.let { effect -> Text(effectSummary(effect), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Clip) }
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     when {
@@ -960,7 +960,7 @@ private fun ArmoryInventoryRow(item: GearItemUiState, selected: Boolean, bulkSel
                         item.equippedSlot != null -> GameStatusPill(stringResource(R.string.gear_status_equipped), ResonanceTeal)
                     selected -> GameStatusPill(stringResource(R.string.gear_inspecting), ResourceGold)
                     }
-                    Text(stringResource(R.string.gear_salvage_value_format, item.salvageGoldDisplay), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.gear_salvage_value_format, item.salvageGoldDisplay), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Clip)
                 }
             }
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1015,7 +1015,7 @@ private fun StashInventoryRow(
                     contentScale = ContentScale.Fit
                 )
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text(stringResource(item.titleStringKey.stringResId()), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(item.titleStringKey.stringResId()), style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Clip)
                     Text(stringResource(item.rarityTitleStringKey.stringResId()), style = MaterialTheme.typography.labelSmall, color = accent)
                     Text(stringResource(R.string.gear_salvage_value_format, item.salvageGoldDisplay), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
