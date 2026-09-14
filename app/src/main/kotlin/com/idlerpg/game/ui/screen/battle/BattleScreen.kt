@@ -203,7 +203,7 @@ fun BattleScreen(
             }
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 4.dp)
+                verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
             ) {
                 BattleHeader(
                     state = state,
@@ -754,7 +754,7 @@ private fun BattleStage(
                         .weight(1f)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)
                 ) {
                     HeroStageActor(
                         player = state.player,
