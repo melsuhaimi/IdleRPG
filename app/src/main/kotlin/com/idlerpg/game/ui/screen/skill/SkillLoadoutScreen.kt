@@ -304,7 +304,7 @@ private fun LoadoutSlotTile(
                     text = stringResource(skill.titleStringKey.stringResId()),
                     style = MaterialTheme.typography.labelSmall,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
             }
             Text(
@@ -399,7 +399,7 @@ private fun FocusArtwork(skill: SkillLoadoutSkillUiState, modifier: Modifier = M
                 style = MaterialTheme.typography.labelMedium,
                 color = ResonanceTeal,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Clip
             )
         }
     }
@@ -415,7 +415,7 @@ private fun SkillSummary(skill: SkillLoadoutSkillUiState, modifier: Modifier = M
             text = stringResource(skill.titleStringKey.stringResId()),
             style = MaterialTheme.typography.headlineSmall,
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Clip
         )
         Text(
             text = stringResource(skill.descriptionStringKey.stringResId()),
@@ -515,7 +515,7 @@ private fun SkillLoadoutActions(
             enabled = skill.canMoveEarlier,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(R.string.loadout_move_earlier), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.loadout_move_earlier), maxLines = 1, overflow = TextOverflow.Clip)
         }
         GameOutlinedButton(
             onClick = {
@@ -529,7 +529,7 @@ private fun SkillLoadoutActions(
             enabled = skill.canMoveLater,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(R.string.loadout_move_later), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.loadout_move_later), maxLines = 1, overflow = TextOverflow.Clip)
         }
     }
     GameButton(
@@ -614,14 +614,14 @@ private fun AvailableSkillRow(
                     text = stringResource(skill.titleStringKey.stringResId()),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
                 Text(
                     text = stringResource(skill.descriptionStringKey.stringResId()),
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
                 Text(
                     text = stringResource(
