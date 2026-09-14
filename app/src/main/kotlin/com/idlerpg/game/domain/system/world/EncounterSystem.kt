@@ -10,6 +10,7 @@ import com.idlerpg.game.domain.engine.ScheduledAction
 import com.idlerpg.game.domain.engine.ScheduledActionExecution
 import com.idlerpg.game.domain.engine.ScheduledActionHandler
 import com.idlerpg.game.domain.engine.ScheduledActionType
+import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.event.CombatEndReason
 import com.idlerpg.game.domain.event.CombatEnded
 import com.idlerpg.game.domain.event.EncounterCleared
