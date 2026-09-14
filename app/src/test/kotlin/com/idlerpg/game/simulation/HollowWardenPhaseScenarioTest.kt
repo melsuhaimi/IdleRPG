@@ -46,17 +46,13 @@ object HollowWardenPhaseScenarioTest {
         )
         check(encounter.waves == 3)
         check(encounter.enemyDefinitionIdsForWave(1) == listOf(
-            HollowWardenContent.ENEMY_ID,
-            DefaultGameContent.HOLLOW_BULWARK_ID
+            HollowWardenContent.ENEMY_ID
         ))
         check(encounter.enemyDefinitionIdsForWave(2) == listOf(
-            HollowWardenContent.ENEMY_ID,
-            TrainingHollowStrategyContent.SHADE_MIMIC_ID
+            HollowWardenContent.ENEMY_ID
         ))
         check(encounter.enemyDefinitionIdsForWave(3) == listOf(
-            HollowWardenContent.ENEMY_ID,
-            TrainingHollowStrategyContent.ECHO_LEECH_ID,
-            DefaultGameContent.ARCANE_SEER_ID
+            HollowWardenContent.ENEMY_ID
         ))
         val sharedFormation = EncounterDefinition(
             id = TrainingHollowWorldContent.stageId(97),
@@ -215,9 +211,9 @@ object HollowWardenPhaseScenarioTest {
             BattleBossPhaseUi.FRACTURE
         ))
         check(formations == listOf(
-            listOf("enemy.hollow_warden", "enemy.hollow_bulwark"),
-            listOf("enemy.hollow_warden", "enemy.shade_mimic"),
-            listOf("enemy.hollow_warden", "enemy.echo_leech", "enemy.arcane_seer")
+            listOf("enemy.hollow_warden"),
+            listOf("enemy.hollow_warden"),
+            listOf("enemy.hollow_warden")
         ))
         return PhaseRun(
             formations = formations.map { it.toList() },
