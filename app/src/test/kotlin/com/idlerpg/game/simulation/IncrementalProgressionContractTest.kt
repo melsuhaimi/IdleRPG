@@ -21,7 +21,7 @@ object IncrementalProgressionContractTest {
         check(TrainingHollowWorldContent.additionalBosses.size == 3)
 
         val checkpoints = listOf(1L, 10L, 25L, 50L, 100L)
-        val levelBase = factory.newGame(18_001L)
+        val levelBase = factory.newGame(18_001L).state()
         val xpCosts = checkpoints.map { level ->
             val state = levelBase.copy(
                 run = levelBase.run.copy(
