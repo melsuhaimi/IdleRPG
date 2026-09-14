@@ -64,7 +64,9 @@ fun IdleRpgBottomNavigation(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = GameDimensions.BottomDockMinHeight),
         color = ObsidianSurface1.copy(alpha = 0.98f),
         shadowElevation = 6.dp,
         tonalElevation = 0.dp,
@@ -83,15 +85,13 @@ fun IdleRpgBottomNavigation(
                 painter = painterResource(R.drawable.panel_secondary_premium),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.BottomDockArtworkHeight)
+                    .matchParentSize()
                     .alpha(0.34f),
                 contentScale = ContentScale.FillBounds
             )
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.BottomDockArtworkHeight)
+                    .matchParentSize()
                     .background(
                         Brush.verticalGradient(
                             listOf(
@@ -105,8 +105,7 @@ fun IdleRpgBottomNavigation(
                 painter = painterResource(R.drawable.ui_panel_frame_generated),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.BottomDockArtworkHeight)
+                    .matchParentSize()
                     .alpha(0.62f),
                 contentScale = ContentScale.FillBounds
             )
@@ -132,6 +131,7 @@ fun IdleRpgBottomNavigation(
                     .padding(horizontal = 8.dp, vertical = 6.dp)
             ) {
                 val scrollItems = maxWidth < 352.dp && destinations.size > 4
+                val compactLabels = maxWidth < 380.dp
                 val rowModifier = if (scrollItems) {
                     Modifier.horizontalScroll(rememberScrollState())
                 } else {
@@ -155,7 +155,7 @@ fun IdleRpgBottomNavigation(
                         GameNavigationItem(
                             destination = destination,
                             selected = selectedItem,
-                            compactLabel = scrollItems,
+                            compactLabel = scrollItems || compactLabels,
                             onClick = { onSelect(destination) },
                             modifier = if (scrollItems) {
                                 Modifier.width(70.dp)
@@ -183,7 +183,7 @@ private fun GameNavigationItem(
 
     Box(
         modifier = modifier
-            .heightIn(min = 76.dp)
+            .heightIn(min = 56.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(
                 if (selected) {
@@ -218,7 +218,7 @@ private fun GameNavigationItem(
         ) {
             Box(
                 modifier = Modifier
-                    .size(if (selected) 42.dp else 36.dp)
+                    .size(if (selected) 34.dp else 30.dp)
                     .clip(RoundedCornerShape(99.dp))
                     .background(
                         if (selected) ResourceGold.copy(alpha = 0.18f) else Color.Transparent
@@ -228,7 +228,7 @@ private fun GameNavigationItem(
                 Image(
                     painter = painterResource(destination.iconAssetKey.drawableResId()),
                     contentDescription = null,
-                    modifier = Modifier.size(if (selected) 30.dp else 26.dp),
+                    modifier = Modifier.size(if (selected) 24.dp else 22.dp),
                     contentScale = ContentScale.Fit
                 )
             }
@@ -239,12 +239,12 @@ private fun GameNavigationItem(
                     fontSize = if (compactLabel) 10.sp else 11.sp,
                     letterSpacing = 0.35.sp
                 ),
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Box(
                 modifier = Modifier
-                    .size(width = if (selected) 42.dp else 30.dp, height = 3.dp)
+                    .size(width = if (selected) 34.dp else 24.dp, height = 2.dp)
                     .clip(RoundedCornerShape(99.dp))
                     .background(if (selected) ResourceGold else Color.Transparent)
             )
