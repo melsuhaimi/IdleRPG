@@ -108,4 +108,5 @@ data class EquipmentDefinition(
 
 fun EquipmentEffectDefinition.isBuildDefiningTrait(): Boolean =
     this !is EquipmentEffectDefinition.FlatAttackPower &&
-        this !is EquipmentEffectDefinition.FlatArmor
+        this !is EquipmentEffectDefinition.FlatArmor &&
+        this !is EquipmentEffectDefinition.ResonanceChargeBonus
