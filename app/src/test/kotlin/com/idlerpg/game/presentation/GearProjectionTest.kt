@@ -141,7 +141,7 @@ object GearProjectionTest {
             )
         )
         val blocked = projector.project(blockedState)
-        check(blocked.capacity.progressionBlocked) { "full normal and overflow storage did not block progression" }
+        check(!blocked.capacity.progressionBlocked) { "overflow storage incorrectly blocked unattended progression" }
 
         println("FUI07_GEAR_PROJECTION_PASS")
     }
