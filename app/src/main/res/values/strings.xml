@@ -108,7 +108,7 @@
     <string name="world_tier_unknown">Tier —</string>
     <string name="battle_expedition_stopped">The expedition stopped.</string>
     <string name="battle_incoming_strike">Incoming strike</string>
-    <string name="battle_threat_format">Threat · %1$s</string>
+    <string name="battle_threat_format">THREAT // %1$s</string>
     <string name="battle_no_attack_eta">—</string>
     <string name="progress_combat_readout">Combat readout</string>
     <string name="progress_chronicle_progress_format">%1$s / %2$s</string>
@@ -284,8 +284,8 @@
     <string name="battle_no_encounter">No active encounter</string>
     <string name="battle_enemy_tier_format">Enemy Tier %1$d</string>
     <string name="battle_enemy_attack_title">Enemy attack</string>
-    <string name="battle_attack_profile_format">Projected attack: %1$s</string>
-    <string name="battle_enemy_role_format">Role: %1$s</string>
+    <string name="battle_attack_profile_format">DMG %1$s</string>
+    <string name="battle_enemy_role_format">%1$s</string>
     <string name="battle_enemy_role_swarm">Swarm</string>
     <string name="battle_enemy_role_assassin">Assassin</string>
     <string name="battle_enemy_role_caster">Caster</string>
@@ -298,7 +298,7 @@
     <string name="battle_more_enemies_format">+%1$d more enemies in this wave</string>
     <string name="battle_enemy_attack_profile_format">%1$s · %2$s · %3$s damage · every %4$.1fs</string>
     <string name="battle_enemy_armor_pen_format">ARMOR PEN %1$s</string>
-    <string name="battle_enemy_next_attack_format">Next attack in %1$.1fs</string>
+    <string name="battle_enemy_next_attack_format">NEXT %1$.1fs</string>
     <string name="battle_retry_failed_encounter">Retry failed encounter</string>
     <string name="battle_defeat_title">Hero defeated</string>
     <string name="battle_defeat_detail">The fight failed without rewards. Retry restores your hero before the same encounter.</string>
@@ -309,8 +309,8 @@
     <string name="battle_stage_format">STAGE %1$s</string>
     <string name="battle_wave_format">WAVE %1$d/%2$d</string>
     <string name="battle_training_hall">Training Hall</string>
-    <string name="battle_stage_tagline">A STRONGER YOU AWAITS.</string>
-    <string name="battle_readout_tagline">EVERY BATTLE BUILDS A STRONGER YOU.</string>
+    <string name="battle_stage_tagline">AUTO-COMBAT // LIVE</string>
+    <string name="battle_readout_tagline">LIVE // CORE METRICS</string>
     <string name="battle_enemy_effects_format">%1$d status · %2$d modifier</string>
     <string name="battle_open_farm">Farm</string>
     <string name="world_mode_farm">Farm</string>
@@ -375,8 +375,8 @@
     <string name="battle_mode_farm">Farm</string>
     <string name="battle_skills_active">Auto skills on</string>
     <string name="battle_skills_paused">Auto skills off</string>
-    <string name="battle_queued_skill_format">Queued: %1$s</string>
-    <string name="battle_queue_hint">Tap a skill to queue it</string>
+    <string name="battle_queued_skill_format">QUEUE: %1$s</string>
+    <string name="battle_queue_hint">SELECT SKILL TO QUEUE</string>
     <string name="battle_upgrade_level_format">Level %1$d</string>
     <string name="battle_upgrade_cost_format">Next cost %1$s Gold</string>
     <string name="battle_upgrade_purchase">Purchase +1 level</string>
