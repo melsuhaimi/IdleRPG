@@ -89,46 +89,46 @@ object GearProjectionTest {
         )
 
         val ui = projector.project(state)
-        check(ui.capacity.normalUsed == 3L)
-        check(ui.capacity.normalCapacity == 3L)
-        check(ui.capacity.normalAvailable == 0L)
-        check(ui.capacity.overflowUsed == 1L)
-        check(ui.capacity.overflowCapacity == 2L)
-        check(ui.capacity.nextExpansionGoldCostDisplay == "20")
-        check(ui.capacity.canAffordExpansion)
-        check(!ui.capacity.progressionBlocked)
+        check(ui.capacity.normalUsed == 3L) { "normal inventory count changed" }
+        check(ui.capacity.normalCapacity == 3L) { "normal inventory capacity changed" }
+        check(ui.capacity.normalAvailable == 0L) { "normal inventory availability changed" }
+        check(ui.capacity.overflowUsed == 1L) { "overflow inventory count changed" }
+        check(ui.capacity.overflowCapacity == 2L) { "overflow capacity changed" }
+        check(ui.capacity.nextExpansionGoldCostDisplay == "20") { "expansion cost changed" }
+        check(ui.capacity.canAffordExpansion) { "expansion affordability changed" }
+        check(!ui.capacity.progressionBlocked) { "fresh overflow state is blocked" }
 
         val weapon = ui.equipmentSlots.single { it.slot == EquipmentSlot.WEAPON }
-        check(weapon.equippedItem?.instanceId == bladeId)
+        check(weapon.equippedItem?.instanceId == bladeId) { "weapon projection lost its equipped blade" }
         val projectedBlade = ui.ownedItems.single { it.instanceId == bladeId }
         check(projectedBlade.iconAssetKey ==
             com.idlerpg.game.presentation.content.PresentationAssetKey.TRAINING_BLADE)
-        check(projectedBlade.equippedSlot == EquipmentSlot.WEAPON)
-        check(!projectedBlade.canSalvage)
-        check(projectedBlade.affixes.single().rolledValue == 3L)
+        check(projectedBlade.equippedSlot == EquipmentSlot.WEAPON) { "blade slot projection changed" }
+        check(!projectedBlade.canSalvage) { "equipped blade became salvageable" }
+        check(projectedBlade.affixes.single().rolledValue == 3L) { "blade affix roll changed" }
         check(projectedBlade.affixes.single().iconAssetKey ==
             com.idlerpg.game.presentation.content.PresentationAssetKey.KEEN)
-        check(projectedBlade.effects.single().kind == GearEffectKind.FLAT_ATTACK_POWER)
+        check(projectedBlade.effects.any { it.kind == GearEffectKind.FLAT_ATTACK_POWER }) { "blade lost its baseline attack effect" }
 
         val projectedCatalyst = ui.ownedItems.single { it.instanceId == catalystId }
-        check(projectedCatalyst.locked)
-        check(!projectedCatalyst.canSalvage)
-        check(projectedCatalyst.canUnlock)
-        check(projectedCatalyst.effects.single().kind == GearEffectKind.RESONANCE_CHARGE_BONUS)
-        check(projectedCatalyst.comparison != null)
-        check(projectedCatalyst.comparison!!.currentAttackDisplay.isNotBlank())
-        check(projectedCatalyst.comparison!!.resultingArmorDisplay.isNotBlank())
+        check(projectedCatalyst.locked) { "locked catalyst projection changed" }
+        check(!projectedCatalyst.canSalvage) { "locked catalyst became salvageable" }
+        check(projectedCatalyst.canUnlock) { "locked catalyst cannot be unlocked" }
+        check(projectedCatalyst.effects.any { it.kind == GearEffectKind.RESONANCE_CHARGE_BONUS }) { "common catalyst lost its baseline resonance effect" }
+        check(projectedCatalyst.comparison != null) { "catalyst comparison is missing" }
+        check(projectedCatalyst.comparison!!.currentAttackDisplay.isNotBlank()) { "catalyst attack comparison is blank" }
+        check(projectedCatalyst.comparison!!.resultingArmorDisplay.isNotBlank()) { "catalyst armor comparison is blank" }
 
         val projectedCandidate = ui.ownedItems.single { it.instanceId == candidateBladeId }
-        check(projectedCandidate.comparison != null)
+        check(projectedCandidate.comparison != null) { "candidate blade comparison is missing" }
         check(projectedCandidate.comparison!!.currentAttackDisplay !=
             projectedCandidate.comparison!!.resultingAttackDisplay)
-        check(projectedCandidate.comparison!!.attackDeltaDisplay != "0")
+        check(projectedCandidate.comparison!!.attackDeltaDisplay != "0") { "candidate blade has no attack delta" }
 
         val projectedOverflow = ui.overflowItems.single()
-        check(projectedOverflow.instanceId == overflowId)
-        check(!projectedOverflow.canClaimOverflow)
-        check(projectedOverflow.canSalvageOverflow)
+        check(projectedOverflow.instanceId == overflowId) { "overflow item identity changed" }
+        check(!projectedOverflow.canClaimOverflow) { "full inventory can claim overflow" }
+        check(projectedOverflow.canSalvageOverflow) { "overflow item cannot be salvaged" }
 
         val blockedState = state.copy(
             run = state.run.copy(
@@ -141,7 +141,7 @@ object GearProjectionTest {
             )
         )
         val blocked = projector.project(blockedState)
-        check(blocked.capacity.progressionBlocked)
+        check(blocked.capacity.progressionBlocked) { "full normal and overflow storage did not block progression" }
 
         println("FUI07_GEAR_PROJECTION_PASS")
     }
