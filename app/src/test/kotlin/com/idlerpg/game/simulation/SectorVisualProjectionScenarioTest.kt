@@ -32,7 +32,7 @@ object SectorVisualProjectionScenarioTest {
             worldReadQueries = DefaultWorldReadQueries(content)
         )
         val regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID
-        val base = factory.newGame(9_501L)
+        val base = factory.newGame(9_501L).state()
         val selected = base.copy(run = base.run.copy(world = WorldState(
             activeRegionId = regionId,
             unlockedRegionIds = setOf(regionId)
