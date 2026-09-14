@@ -59,6 +59,6 @@ object NewGameDeploymentScenarioTest {
         check(state.run.combat.status == CombatStatus.ACTIVE)
         check(state.run.combat.enemies.count {
             it.combatant.currentHealth > GameNumber.ZERO
-        } in 1..5)
+        } in 1..3)
     }
 }
