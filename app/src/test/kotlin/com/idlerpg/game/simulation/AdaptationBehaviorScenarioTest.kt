@@ -129,7 +129,7 @@ object AdaptationBehaviorScenarioTest {
         val periodic = ActionResolutionSystem.resolvePrimitiveEffects(
             hurt, player.instanceId, player.instanceId,
             factory.contentRegistry.status(DefaultGameContent.VITAL_REGENERATION_STATUS_ID).periodicEffects,
-            listOf(Affinity.VITALITY), context
+            context, listOf(Affinity.VITALITY)
         )
         check(periodic.events.filterIsInstance<HealingApplied>().single().amount == GameNumber.of(5L))
         val enemyId = hurt.run.combat.enemies.single().instanceId
@@ -137,7 +137,7 @@ object AdaptationBehaviorScenarioTest {
             hurt, player.instanceId, enemyId,
             factory.contentRegistry.convergence(TrainingHollowStrategyContent.BASTION_PULSE_ID)
                 .effects.filterIsInstance<EffectSpec.Heal>(),
-            listOf(Affinity.GUARD, Affinity.VITALITY), factory.createEngineContext()
+            factory.createEngineContext(), listOf(Affinity.GUARD, Affinity.VITALITY)
         )
         check(convergence.events.filterIsInstance<HealingApplied>().single().amount == GameNumber.of(24L))
     }
