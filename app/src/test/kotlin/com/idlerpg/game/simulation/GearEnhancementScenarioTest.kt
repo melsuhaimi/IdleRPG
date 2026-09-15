@@ -4,6 +4,7 @@ import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.id.InstanceId
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.data.content.DefaultGameContent
+import com.idlerpg.game.data.local.SaveData
 import com.idlerpg.game.domain.command.EnhanceItem
 import com.idlerpg.game.domain.command.RefineItem
 import com.idlerpg.game.domain.definition.CurrencyId
@@ -53,6 +54,12 @@ object GearEnhancementScenarioTest {
         val preview = GearEnhancementSystem.preview(item)
         check(preview.targetLevel == 1)
         check(preview.successChance == GearEnhancementSystem.enhancementSuccessChance(0))
+        check(
+            GearEnhancementSystem.preview(item.copy(enhancementFailstack = 1)).successChance >
+                preview.successChance
+        )
+        check(preview.currentFailstack == 0)
+        check(preview.failureFailstack == 1)
         check(preview.materialCost == GameNumber.of(5L))
         check(preview.failureLevelWithoutProtection == EnhancementLevel.INITIAL)
 
@@ -98,5 +105,16 @@ object GearEnhancementScenarioTest {
             EnhancementLevel.PEN
         )
         check(enhanced > base)
+
+        val persisted = afterRefine.copy(enhancementFailstack = 7)
+        val persistedState = runtime.state().copy(
+            run = runtime.state().run.copy(
+                inventory = runtime.state().run.inventory.copy(
+                    itemsById = mapOf(itemId to persisted)
+                )
+            )
+        )
+        check(SaveData.fromGameState(persistedState).toGameState().run.inventory.item(itemId)
+            ?.enhancementFailstack == 7)
     }
 }
