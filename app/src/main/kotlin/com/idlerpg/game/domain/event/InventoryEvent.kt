@@ -106,7 +106,8 @@ data class ItemUnlocked(
 data class AffixRolled(
     val itemInstanceId: InstanceId,
     val affixId: ContentId,
-    val value: Long
+    val value: Long,
+    val isMainStat: Boolean = false
 ) : InventoryEvent {
     init {
         require(value >= 0L) { "AffixRolled.value cannot be negative" }
