@@ -15,6 +15,7 @@ import com.idlerpg.game.domain.command.MoveEquippedSkill
 import com.idlerpg.game.domain.command.PurchaseEchoOffer
 import com.idlerpg.game.domain.command.PlayerCommand
 import com.idlerpg.game.domain.command.QueueSkillCast
+import com.idlerpg.game.domain.command.RebirthCommand
 import com.idlerpg.game.domain.command.SelectSkillEvolution
 import com.idlerpg.game.domain.command.QuestCommand
 import com.idlerpg.game.domain.command.SkillCommand
@@ -37,6 +38,7 @@ import com.idlerpg.game.domain.system.skill.ManualSkillInputSystem
 import com.idlerpg.game.domain.system.skill.SkillLoadoutSystem
 import com.idlerpg.game.domain.system.skill.SkillEvolutionSystem
 import com.idlerpg.game.domain.system.player.PlayerSystem
+import com.idlerpg.game.domain.system.rebirth.RebirthSystem
 import com.idlerpg.game.domain.system.world.WorldSystem
 
 /** Application-layer command router; gameplay mutation stays in owning domain systems. */
@@ -59,6 +61,7 @@ object ApplicationCommandRouter : GameCommandHandler {
         is AchievementCommand -> when (command) { is ClaimAchievementReward -> AchievementClaimSystem.handle(state, command, context) }
         is EchoCommand -> when (command) { is PurchaseEchoOffer -> EchoOfferSystem.handle(state, command, context) }
         is PlayerCommand -> PlayerSystem.handle(state, command, context)
+        is RebirthCommand -> RebirthSystem.handle(state, command, context)
     }
 }
 
