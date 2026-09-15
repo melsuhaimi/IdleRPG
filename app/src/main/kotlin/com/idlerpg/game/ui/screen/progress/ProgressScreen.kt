@@ -59,6 +59,7 @@ import com.idlerpg.game.presentation.model.ProgressNextGoalKind
 import com.idlerpg.game.presentation.model.ProgressNextGoalUiState
 import com.idlerpg.game.presentation.model.ProgressRewardUiState
 import com.idlerpg.game.presentation.model.ProgressUiState
+import com.idlerpg.game.presentation.model.PowerScoreUiState
 import com.idlerpg.game.presentation.model.QuestProgressUiState
 import com.idlerpg.game.presentation.model.StatOverviewUiState
 import com.idlerpg.game.ui.content.drawableResId
@@ -420,6 +421,7 @@ private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
                 )
             )
             NextGoalPanel(goal = overview.nextGoal)
+            PowerScorePanel(score = overview.powerScore)
             GameDivider()
             Text(
                 text = stringResource(R.string.progress_combat_readout),
@@ -467,6 +469,47 @@ private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
                     modifier = Modifier.weight(1f)
                 )
             }
+    }
+}
+
+@Composable
+private fun PowerScorePanel(score: PowerScoreUiState) {
+    GameCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = com.idlerpg.game.ui.theme.ObsidianSurface2.copy(alpha = 0.78f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                text = "POWER SCORE  " + score.totalDisplay,
+                style = MaterialTheme.typography.titleMedium,
+                color = com.idlerpg.game.ui.theme.ResourceGold
+            )
+            score.components.forEach { component ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(component.label, style = MaterialTheme.typography.labelSmall)
+                    Text(component.valueDisplay, style = MaterialTheme.typography.labelMedium)
+                }
+                Text(
+                    component.formula,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = "Expected hit " + score.expectedBasicAttackDamageDisplay +
+                    " · Effective health " + score.effectiveHealthDisplay,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.secondary
+            )
+        }
     }
 }
 
