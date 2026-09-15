@@ -220,7 +220,7 @@ class BattleProjector(
                 healthProgressUnits = ratioUnits(playerCurrentHealth, playerMaximumHealth),
                 attackDisplay = GameNumberFormatter.compact(readQueries.attackPower(state)),
                 armorDisplay = GameNumberFormatter.compact(readQueries.armor(state)),
-                basicAttackDpsDisplay = readQueries.basicAttackDps(state).toPlainString(),
+                basicAttackDpsDisplay = GameNumberFormatter.compact(readQueries.basicAttackDps(state)),
                 basicAttackIntervalMillis = readQueries.basicAttackInterval(state).millis,
                 nextDecisionRemainingMillis = combat.nextPlayerDecisionAt?.let { decision ->
                     (decision.millis - nowMillis).coerceAtLeast(0L)
