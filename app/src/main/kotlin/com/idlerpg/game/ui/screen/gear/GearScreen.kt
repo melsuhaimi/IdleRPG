@@ -110,7 +110,8 @@ fun GearScreen(
     }
     var rarityFilterId by rememberSaveable { mutableStateOf<String?>(null) }
     var slotFilterId by rememberSaveable { mutableStateOf<String?>(null) }
-    var rarityDescending by rememberSaveable { mutableStateOf(true) }
+    var sortModeId by rememberSaveable { mutableStateOf("rarity") }
+    var storageTabId by rememberSaveable { mutableStateOf("inventory") }
     var lockedOnly by rememberSaveable { mutableStateOf(false) }
 
     val allItems = state.ownedItems + state.overflowItems
@@ -120,21 +121,35 @@ fun GearScreen(
     val slotFilter = slotFilterId?.let { id ->
         EquipmentSlot.values().firstOrNull { it.id.value == id }
     }
-    val visibleOwnedItems = state.ownedItems
-        .filter { rarityFilter == null || it.rarityId == rarityFilter.id }
-        .filter { slotFilter == null || it.equipmentSlot == slotFilter }
-        .filter { !lockedOnly || it.locked }
-        .let { items ->
-            if (rarityDescending) {
-                items.sortedWith(
-                    compareByDescending<GearItemUiState> {
-                        Rarity.values().firstOrNull { rarity -> rarity.id == it.rarityId }?.rank ?: 0
-                    }.thenByDescending { it.instanceId.value }
-                )
-            } else {
-                items.sortedByDescending { it.instanceId.value }
-            }
+    val storageIsStash = storageTabId == "stash"
+    val rarityFilter = rarityFilterId?.let { id ->
+        Rarity.values().firstOrNull { it.id.value == id }
+    }
+    val slotFilter = slotFilterId?.let { id ->
+        EquipmentSlot.values().firstOrNull { it.id.value == id }
+    }
+    val sortItems: (List<GearItemUiState>) -> List<GearItemUiState> = { items ->
+        when (sortModeId) {
+            "newest" -> items.sortedByDescending { it.instanceId.value }
+            else -> items.sortedWith(
+                compareByDescending<GearItemUiState> { item ->
+                    Rarity.values().firstOrNull { rarity -> rarity.id == item.rarityId }?.rank ?: 0
+                }.thenByDescending { it.instanceId.value }
+            )
         }
+    }
+    val visibleOwnedItems = sortItems(
+        state.ownedItems
+            .filter { rarityFilter == null || it.rarityId == rarityFilter.id }
+            .filter { slotFilter == null || it.equipmentSlot == slotFilter }
+            .filter { !lockedOnly || it.locked }
+    )
+    val visibleOverflowItems = sortItems(
+        state.overflowItems
+            .filter { rarityFilter == null || it.rarityId == rarityFilter.id }
+            .filter { slotFilter == null || it.equipmentSlot == slotFilter }
+    )
+    val visibleItems = if (storageIsStash) visibleOverflowItems else visibleOwnedItems
     val selectedItem = allItems.firstOrNull { it.instanceId.value == selectedItemValue }
     val equippedComparison = selectedItem?.equipmentSlot?.let { slot ->
         state.equipmentSlots.firstOrNull { it.slot == slot }?.equippedItem
@@ -246,9 +261,9 @@ fun GearScreen(
     }
 
     val listState = rememberLazyListState()
-    LaunchedEffect(focusItemId, visibleOwnedItems.size, state.feedback != null) {
-        val focusedIndex = focusItemId?.let { id -> visibleOwnedItems.indexOfFirst { it.instanceId == id } } ?: -1
-        val fixedItemPrefix = 5 + if (state.feedback != null) 1 else 0
+    LaunchedEffect(focusItemId, visibleItems.size, storageIsStash, state.feedback != null) {
+        val focusedIndex = focusItemId?.let { id -> visibleItems.indexOfFirst { it.instanceId == id } } ?: -1
+        val fixedItemPrefix = 6 + if (state.feedback != null) 1 else 0
         if (focusedIndex >= 0) listState.animateScrollToItem(fixedItemPrefix + focusedIndex)
     }
 
@@ -294,111 +309,118 @@ fun GearScreen(
         item(key = "gear-capacity") {
             CapacityPanel(state = state, onExpand = { onIntent(GearUiIntent.ExpandCapacity) })
         }
+        item(key = "gear-storage-tabs") {
+            StorageTabs(
+                stashSelected = storageIsStash,
+                inventoryCount = state.capacity.normalUsed,
+                inventoryCapacity = state.capacity.normalCapacity,
+                stashCount = state.capacity.overflowUsed,
+                onSelectInventory = {
+                    storageTabId = "inventory"
+                    selectedOverflowIds = emptySet()
+                    selectedItemValue = visibleOwnedItems.firstOrNull()?.instanceId?.value
+                },
+                onSelectStash = {
+                    storageTabId = "stash"
+                    selectedItemIds = emptySet()
+                    selectedItemValue = visibleOverflowItems.firstOrNull()?.instanceId?.value
+                }
+            )
+        }
         item(key = "gear-inventory-tools") {
             InventoryToolbar(
                 state = state,
-                visibleItemIds = visibleOwnedItems.map { it.instanceId }.toSet(),
-                selectedItemIds = selectedItemIds,
+                showingStash = storageIsStash,
+                visibleItemIds = visibleItems.map { it.instanceId }.toSet(),
+                selectedItemIds = if (storageIsStash) selectedOverflowIds else selectedItemIds,
                 rarityFilter = rarityFilter,
                 slotFilter = slotFilter,
-                rarityDescending = rarityDescending,
+                sortModeId = sortModeId,
                 lockedOnly = lockedOnly,
                 onSelectAll = {
-                    selectedItemIds = visibleOwnedItems.filter { it.canSalvage }.map { it.instanceId }.toSet()
-                },
-                onSelectUnlocked = {
-                    selectedItemIds = visibleOwnedItems.filter { it.canSalvage }.map { it.instanceId }.toSet()
-                },
-                onToggleRarity = {
-                    val ordered = Rarity.ordered()
-                    rarityFilterId = when (val current = rarityFilter) {
-                        null -> ordered.first().id.value
-                        else -> ordered.getOrNull(ordered.indexOf(current) + 1)?.id?.value
+                    if (storageIsStash) {
+                        selectedOverflowIds = visibleOverflowItems.map { it.instanceId }.toSet()
+                    } else {
+                        selectedItemIds = visibleOwnedItems
+                            .filter { it.canSalvage }
+                            .map { it.instanceId }
+                            .toSet()
                     }
                 },
-                onToggleSlot = {
-                    val ordered = EquipmentSlot.values().toList()
-                    slotFilterId = when (val current = slotFilter) {
-                        null -> ordered.firstOrNull()?.id?.value
-                        else -> ordered.getOrNull(ordered.indexOf(current) + 1)?.id?.value
-                    }
+                onSelectRarity = { rarityFilterId = it?.id?.value },
+                onSelectSlot = { slotFilterId = it?.id?.value },
+                onToggleSort = {
+                    sortModeId = if (sortModeId == "rarity") "newest" else "rarity"
                 },
-                onToggleSort = { rarityDescending = !rarityDescending },
                 onToggleLocked = { lockedOnly = !lockedOnly },
-                onToggleAutoSalvage = {
-                    onIntent(GearUiIntent.SetLootFilter(!state.autoSalvageEnabled, state.minimumKeepRarity))
+                onSelectKeepRarity = { rarity ->
+                    onIntent(GearUiIntent.SetLootFilter(true, rarity))
                 },
-                onAdvanceKeepRarity = {
-                    val ordered = Rarity.ordered()
-                    val next = ordered[(ordered.indexOf(state.minimumKeepRarity) + 1) % ordered.size]
-                    onIntent(GearUiIntent.SetLootFilter(state.autoSalvageEnabled, next))
+                onDisableAutoSalvage = {
+                    onIntent(GearUiIntent.SetLootFilter(false, state.minimumKeepRarity))
                 },
                 onSalvageBelow = { salvageBelowRarity = state.minimumKeepRarity },
-                onBulkSalvage = { confirmBulkSalvage = true },
-                onClearSelection = { selectedItemIds = emptySet() }
+                onBulkSalvage = {
+                    if (storageIsStash) confirmOverflowSalvage = true else confirmBulkSalvage = true
+                },
+                onClearSelection = {
+                    if (storageIsStash) selectedOverflowIds = emptySet() else selectedItemIds = emptySet()
+                }
             )
         }
-        if (visibleOwnedItems.isEmpty()) {
-            item(key = "gear-inventory-empty") {
-                EmptyStoragePanel(stringResource(R.string.gear_inventory_empty))
+        if (visibleItems.isEmpty()) {
+            item(key = if (storageIsStash) "gear-stash-empty" else "gear-inventory-empty") {
+                EmptyStoragePanel(
+                    if (storageIsStash) {
+                        stringResource(R.string.gear_overflow_empty)
+                    } else {
+                        stringResource(R.string.gear_inventory_empty)
+                    }
+                )
             }
         } else {
-            items(visibleOwnedItems, key = { "owned-${it.instanceId.value}" }) { item ->
-                ArmoryInventoryRow(
-                    item = item,
-                    selected = item.instanceId.value == selectedItemValue,
-                    bulkSelected = item.instanceId in selectedItemIds,
-                    onSelect = { selectedItemValue = item.instanceId.value },
-                    onToggleSelected = {
-                        if (item.canSalvage) {
-                            selectedItemIds = if (item.instanceId in selectedItemIds) {
-                                selectedItemIds - item.instanceId
+            items(
+                visibleItems,
+                key = { item ->
+                    if (storageIsStash) "stash-${item.instanceId.value}"
+                    else "owned-${item.instanceId.value}"
+                }
+            ) { item ->
+                if (storageIsStash) {
+                    StashInventoryRow(
+                        item = item,
+                        selected = item.instanceId.value == selectedItemValue,
+                        bulkSelected = item.instanceId in selectedOverflowIds,
+                        onSelect = { selectedItemValue = item.instanceId.value },
+                        onToggleSelected = {
+                            selectedOverflowIds = if (item.instanceId in selectedOverflowIds) {
+                                selectedOverflowIds - item.instanceId
                             } else {
-                                selectedItemIds + item.instanceId
+                                selectedOverflowIds + item.instanceId
+                            }
+                        },
+                        onIntent = onIntent,
+                        onRequestSalvage = {
+                            pendingDestructiveAction = PendingGearDestructiveAction.SalvageOverflow(item.instanceId)
+                        }
+                    )
+                } else {
+                    ArmoryInventoryRow(
+                        item = item,
+                        selected = item.instanceId.value == selectedItemValue,
+                        bulkSelected = item.instanceId in selectedItemIds,
+                        onSelect = { selectedItemValue = item.instanceId.value },
+                        onToggleSelected = {
+                            if (item.canSalvage) {
+                                selectedItemIds = if (item.instanceId in selectedItemIds) {
+                                    selectedItemIds - item.instanceId
+                                } else {
+                                    selectedItemIds + item.instanceId
+                                }
                             }
                         }
-                    }
-                )
-            }
-        }
-        item(key = "gear-stash-heading") {
-            GameSectionHeader(
-                eyebrow = stringResource(R.string.gear_overflow_title),
-                title = stringResource(R.string.gear_overflow_count_format, state.capacity.overflowUsed, state.capacity.overflowCapacity),
-                subtitle = stringResource(R.string.gear_overflow_item_note)
-            )
-        }
-        if (state.overflowItems.isEmpty()) {
-            item(key = "gear-stash-empty") {
-                EmptyStoragePanel(stringResource(R.string.gear_overflow_empty))
-            }
-        } else {
-            item(key = "gear-stash-tools") {
-                StashToolbar(
-                    selectedCount = selectedOverflowIds.size,
-                    onSelectAll = { selectedOverflowIds = state.overflowItems.map { it.instanceId }.toSet() },
-                    onSalvage = { confirmOverflowSalvage = true },
-                    onClear = { selectedOverflowIds = emptySet() }
-                )
-            }
-            items(state.overflowItems, key = { "stash-${it.instanceId.value}" }) { item ->
-                StashInventoryRow(
-                    item = item,
-                    selected = item.instanceId.value == selectedItemValue,
-                    bulkSelected = item.instanceId in selectedOverflowIds,
-                    onSelect = { selectedItemValue = item.instanceId.value },
-                    onToggleSelected = {
-                        selectedOverflowIds = if (item.instanceId in selectedOverflowIds) {
-                            selectedOverflowIds - item.instanceId
-                        } else {
-                            selectedOverflowIds + item.instanceId
-                        }
-                    },
-                    onIntent = onIntent,
-                    onRequestSalvage = {
-                        pendingDestructiveAction = PendingGearDestructiveAction.SalvageOverflow(item.instanceId)
-                    }
-                )
+                    )
+                }
             }
         }
     }
@@ -862,49 +884,404 @@ private fun CapacityMeter(label: String, used: Long, total: Long, progressUnits:
 }
 
 @Composable
+private fun StorageTabs(
+    stashSelected: Boolean,
+    inventoryCount: Long,
+    inventoryCapacity: Long,
+    stashCount: Long,
+    onSelectInventory: () -> Unit,
+    onSelectStash: () -> Unit
+) {
+    GameCard(
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, ObsidianOutline.copy(alpha = 0.58f)),
+        colors = CardDefaults.cardColors(containerColor = ObsidianSurface1.copy(alpha = 0.92f))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            GameChoiceButton(
+                selected = !stashSelected,
+                onClick = onSelectInventory,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 7.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    stringResource(R.string.gear_inventory_tab_format, inventoryCount, inventoryCapacity),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip,
+                    textAlign = TextAlign.Center
+                )
+            }
+            GameChoiceButton(
+                selected = stashSelected,
+                onClick = onSelectStash,
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(horizontal = 7.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    stringResource(R.string.gear_stash_tab_format, stashCount),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun InventoryToolbar(
     state: GearUiState,
+    showingStash: Boolean,
     visibleItemIds: Set<InstanceId>,
     selectedItemIds: Set<InstanceId>,
     rarityFilter: Rarity?,
     slotFilter: EquipmentSlot?,
-    rarityDescending: Boolean,
+    sortModeId: String,
     lockedOnly: Boolean,
     onSelectAll: () -> Unit,
-    onSelectUnlocked: () -> Unit,
-    onToggleRarity: () -> Unit,
-    onToggleSlot: () -> Unit,
+    onSelectRarity: (Rarity?) -> Unit,
+    onSelectSlot: (EquipmentSlot?) -> Unit,
     onToggleSort: () -> Unit,
     onToggleLocked: () -> Unit,
-    onToggleAutoSalvage: () -> Unit,
-    onAdvanceKeepRarity: () -> Unit,
+    onSelectKeepRarity: (Rarity) -> Unit,
+    onDisableAutoSalvage: () -> Unit,
     onSalvageBelow: () -> Unit,
     onBulkSalvage: () -> Unit,
     onClearSelection: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-        GameSectionHeader(
-            eyebrow = stringResource(R.string.gear_inventory_title),
-            title = stringResource(R.string.gear_inventory_count_format, state.capacity.normalUsed, state.capacity.normalCapacity),
-            subtitle = stringResource(R.string.gear_canonical_note)
-        )
-        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GameChoiceButton(selected = rarityFilter != null, onClick = onToggleRarity, modifier = Modifier.width(132.dp)) { Text(rarityFilter?.name ?: stringResource(R.string.gear_filter_all_rarities)) }
-            GameChoiceButton(selected = slotFilter != null, onClick = onToggleSlot, modifier = Modifier.width(126.dp)) { Text(slotFilter?.let { slotLabel(it) } ?: stringResource(R.string.gear_filter_all_slots)) }
-            GameChoiceButton(selected = lockedOnly, onClick = onToggleLocked, modifier = Modifier.width(112.dp)) { Text(stringResource(if (lockedOnly) R.string.gear_locked_only else R.string.gear_show_all)) }
-            GameOutlinedButton(onClick = onToggleSort, modifier = Modifier.width(132.dp)) { Text(stringResource(if (rarityDescending) R.string.gear_sort_rarity else R.string.gear_sort_newest)) }
-        }
-        Row(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GameOutlinedButton(onClick = onSelectAll, modifier = Modifier.width(126.dp)) { Text(stringResource(R.string.gear_select_all)) }
-            GameOutlinedButton(onClick = onSelectUnlocked, modifier = Modifier.width(170.dp)) { Text(stringResource(R.string.gear_select_all_unlocked)) }
-            GameOutlinedButton(onClick = onToggleAutoSalvage, modifier = Modifier.width(190.dp)) {
-                Text(stringResource(if (state.autoSalvageEnabled) R.string.gear_auto_salvage_on else R.string.gear_auto_salvage_off))
+    val storageAccent = if (showingStash) WarningAmber else ResonanceTeal
+    GameCard(
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, storageAccent.copy(alpha = 0.44f)),
+        colors = CardDefaults.cardColors(containerColor = ObsidianSurface1.copy(alpha = 0.96f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            GameSectionHeader(
+                eyebrow = stringResource(
+                    if (showingStash) R.string.gear_overflow_title else R.string.gear_inventory_title
+                ),
+                title = if (showingStash) {
+                    stringResource(
+                        R.string.gear_overflow_count_format,
+                        state.capacity.overflowUsed,
+                        state.capacity.overflowCapacity
+                    )
+                } else {
+                    stringResource(
+                        R.string.gear_inventory_count_short_format,
+                        state.capacity.normalUsed,
+                        state.capacity.normalCapacity
+                    )
+                },
+                subtitle = stringResource(
+                    if (showingStash) R.string.gear_overflow_item_note else R.string.gear_canonical_note
+                )
+            )
+
+            Text(
+                stringResource(R.string.gear_filter_rarity_label),
+                style = MaterialTheme.typography.labelSmall,
+                color = storageAccent
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                GameChoiceButton(
+                    selected = rarityFilter == null,
+                    onClick = { onSelectRarity(null) },
+                    modifier = Modifier.widthIn(min = 62.dp),
+                    contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.gear_filter_all_short),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+                Rarity.ordered().forEach { rarity ->
+                    GameChoiceButton(
+                        selected = rarityFilter == rarity,
+                        onClick = { onSelectRarity(rarity) },
+                        modifier = Modifier.widthIn(min = 78.dp),
+                        contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            rarityLabel(rarity),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
+                }
             }
-            GameOutlinedButton(onClick = onAdvanceKeepRarity, modifier = Modifier.width(132.dp)) { Text(stringResource(R.string.gear_keep_rarity, state.minimumKeepRarity.name)) }
-            GameOutlinedButton(onClick = onSalvageBelow, modifier = Modifier.width(170.dp)) { Text(stringResource(R.string.gear_salvage_below, state.minimumKeepRarity.name)) }
+
+            Text(
+                stringResource(R.string.gear_filter_slot_label),
+                style = MaterialTheme.typography.labelSmall,
+                color = storageAccent
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                GameChoiceButton(
+                    selected = slotFilter == null,
+                    onClick = { onSelectSlot(null) },
+                    modifier = Modifier.widthIn(min = 82.dp),
+                    contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.gear_filter_all_slots_short),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+                EquipmentSlot.values().forEach { slot ->
+                    GameChoiceButton(
+                        selected = slotFilter == slot,
+                        onClick = { onSelectSlot(slot) },
+                        modifier = Modifier.widthIn(min = 78.dp),
+                        contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            slotLabel(slot),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                if (!showingStash) {
+                    GameChoiceButton(
+                        selected = lockedOnly,
+                        onClick = onToggleLocked,
+                        modifier = Modifier.widthIn(min = 106.dp),
+                        contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            stringResource(
+                                if (lockedOnly) R.string.gear_locked_only else R.string.gear_show_all
+                            ),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
+                }
+                GameOutlinedButton(
+                    onClick = onToggleSort,
+                    modifier = Modifier.widthIn(min = 112.dp),
+                    contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            if (sortModeId == "rarity") {
+                                R.string.gear_sort_rarity
+                            } else {
+                                R.string.gear_sort_newest
+                            }
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+                GameOutlinedButton(
+                    onClick = onSelectAll,
+                    modifier = Modifier.widthIn(min = 104.dp),
+                    contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.gear_select_all),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+                if (selectedItemIds.isNotEmpty()) {
+                    GameOutlinedButton(
+                        onClick = onClearSelection,
+                        modifier = Modifier.widthIn(min = 84.dp),
+                        contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.gear_cancel),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
+                }
+            }
+
+            if (!showingStash) {
+                AutoSalvagePolicy(
+                    state = state,
+                    onDisable = onDisableAutoSalvage,
+                    onSelectKeepRarity = onSelectKeepRarity,
+                    onSalvageBelow = onSalvageBelow
+                )
+            }
+
+            if (selectedItemIds.isNotEmpty()) {
+                SelectionActionBar(
+                    count = selectedItemIds.size,
+                    visibleCount = visibleItemIds.size,
+                    onSalvage = onBulkSalvage,
+                    onClear = onClearSelection
+                )
+            }
         }
-        if (selectedItemIds.isNotEmpty()) {
-            SelectionActionBar(selectedItemIds.size, visibleItemIds.size, onBulkSalvage, onClearSelection)
+    }
+}
+
+@Composable
+private fun AutoSalvagePolicy(
+    state: GearUiState,
+    onDisable: () -> Unit,
+    onSelectKeepRarity: (Rarity) -> Unit,
+    onSalvageBelow: () -> Unit
+) {
+    GameCard(
+        modifier = Modifier.fillMaxWidth(),
+        border = BorderStroke(1.dp, ResourceGold.copy(alpha = 0.38f)),
+        colors = CardDefaults.cardColors(containerColor = ResourceGold.copy(alpha = 0.07f))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(9.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(1.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.gear_auto_salvage_title),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = ResourceGold
+                    )
+                    Text(
+                        if (state.autoSalvageEnabled) {
+                            stringResource(
+                                R.string.gear_auto_salvage_summary_format,
+                                rarityLabel(state.minimumKeepRarity)
+                            )
+                        } else {
+                            stringResource(R.string.gear_auto_salvage_off_detail)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+                GameStatusPill(
+                    text = stringResource(
+                        if (state.autoSalvageEnabled) {
+                            R.string.gear_auto_salvage_on_short
+                        } else {
+                            R.string.gear_auto_salvage_off_short
+                        }
+                    ),
+                    accent = if (state.autoSalvageEnabled) PositiveGreen else ObsidianOutline
+                )
+            }
+            Text(
+                stringResource(R.string.gear_auto_salvage_detail),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Clip
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                GameChoiceButton(
+                    selected = !state.autoSalvageEnabled,
+                    onClick = onDisable,
+                    modifier = Modifier.widthIn(min = 58.dp),
+                    contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.gear_auto_salvage_off_short),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1
+                    )
+                }
+                Rarity.ordered().forEach { rarity ->
+                    GameChoiceButton(
+                        selected = state.autoSalvageEnabled && state.minimumKeepRarity == rarity,
+                        onClick = { onSelectKeepRarity(rarity) },
+                        modifier = Modifier.widthIn(min = 92.dp),
+                        contentPadding = PaddingValues(horizontal = 9.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.gear_keep_rarity, rarityLabel(rarity)),
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
+                }
+            }
+            if (state.autoSalvageEnabled) {
+                GameOutlinedButton(
+                    onClick = onSalvageBelow,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            R.string.gear_salvage_below_action,
+                            rarityLabel(state.minimumKeepRarity)
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+            }
         }
     }
 }
@@ -1119,6 +1496,15 @@ private fun effectSummary(effect: GearEffectUiState): String = when (effect.kind
     GearEffectKind.FLAT_ARMOR -> stringResource(R.string.gear_effect_armor_format, effect.amountDisplay)
     GearEffectKind.RESONANCE_CHARGE_BONUS -> stringResource(R.string.gear_effect_resonance_format, effect.affinityTitleStringKey?.let { stringResource(it.stringResId()) } ?: stringResource(R.string.gear_unknown_affinity), effect.amountDisplay)
     GearEffectKind.SKILL_TRAIT -> stringResource(R.string.gear_effect_skill_trait, listOfNotNull(effect.amountDisplay, effect.skillTitleStringKey?.let { stringResource(it.stringResId()) }).joinToString(" · "))
+}
+
+@Composable
+private fun rarityLabel(rarity: Rarity): String = when (rarity) {
+    Rarity.COMMON -> stringResource(R.string.content_rarity_common)
+    Rarity.UNCOMMON -> stringResource(R.string.content_rarity_uncommon)
+    Rarity.RARE -> stringResource(R.string.content_rarity_rare)
+    Rarity.EPIC -> stringResource(R.string.content_rarity_epic)
+    Rarity.LEGENDARY -> stringResource(R.string.content_rarity_legendary)
 }
 
 @Composable
