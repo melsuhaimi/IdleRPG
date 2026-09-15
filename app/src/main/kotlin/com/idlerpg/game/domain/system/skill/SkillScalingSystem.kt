@@ -32,20 +32,6 @@ object SkillScalingSystem {
     fun refinement(state: GameState, definition: SkillDefinition): Long =
         state.run.progression.skillProgression.refinementBySkillId[definition.id] ?: 0L
 
-    fun investmentMultiplier(state: GameState, definition: SkillDefinition): Ratio {
-        val masteryMultiplier = GameMath.ratioAfterSteps(
-            base = Ratio.ONE,
-            growthPerStep = Ratio.ofUnits(150L),
-            steps = mastery(state, definition)
-        )
-        val refinementMultiplier = GameMath.ratioAfterSteps(
-            base = Ratio.ONE,
-            growthPerStep = Ratio.ofUnits(500L),
-            steps = refinement(state, definition)
-        )
-        return GameMath.multiplyRatios(masteryMultiplier, refinementMultiplier)
-    }
-
     fun scaledEffects(
         state: GameState,
         definition: SkillDefinition
@@ -56,14 +42,38 @@ object SkillScalingSystem {
             growthPerStep = definition.powerGrowthPerPlayerLevel,
             steps = steps
         )
-        val multiplier = GameMath.multiplyRatios(
+        val masteryDamageMultiplier = GameMath.ratioAfterSteps(
+            base = Ratio.ONE,
+            growthPerStep = Ratio.ofUnits(150L),
+            steps = mastery(state, definition)
+        )
+        val refinementDamageMultiplier = GameMath.ratioAfterSteps(
+            base = Ratio.ONE,
+            growthPerStep = Ratio.ofUnits(500L),
+            steps = refinement(state, definition)
+        )
+        val damageMultiplier = GameMath.multiplyRatios(
             rankMultiplier,
-            investmentMultiplier(state, definition)
+            GameMath.multiplyRatios(masteryDamageMultiplier, refinementDamageMultiplier)
+        )
+        val masteryHealingMultiplier = GameMath.ratioAfterSteps(
+            base = Ratio.ONE,
+            growthPerStep = Ratio.ofUnits(100L),
+            steps = mastery(state, definition)
+        )
+        val refinementHealingMultiplier = GameMath.ratioAfterSteps(
+            base = Ratio.ONE,
+            growthPerStep = Ratio.ofUnits(300L),
+            steps = refinement(state, definition)
+        )
+        val healingMultiplier = GameMath.multiplyRatios(
+            rankMultiplier,
+            GameMath.multiplyRatios(masteryHealingMultiplier, refinementHealingMultiplier)
         )
         return definition.effects.map { effect ->
             when (effect) {
                 is EffectSpec.DealDamage -> effect.copy(
-                    powerRatio = GameMath.multiplyRatios(effect.powerRatio, multiplier)
+                    powerRatio = GameMath.multiplyRatios(effect.powerRatio, damageMultiplier)
                 )
                 is EffectSpec.Heal -> {
                     val rankedAmount = GameMath.scaleByStep(
@@ -71,7 +81,7 @@ object SkillScalingSystem {
                         definition.healingGrowthPerPlayerLevel,
                         steps
                     )
-                    effect.copy(flatAmount = GameMath.applyRatio(rankedAmount, multiplier))
+                    effect.copy(flatAmount = GameMath.applyRatio(rankedAmount, healingMultiplier))
                 }
                 else -> effect
             }
