@@ -7,6 +7,8 @@ import com.idlerpg.game.domain.command.ClaimOverflowItem
 import com.idlerpg.game.domain.command.CommandRejectionCode
 import com.idlerpg.game.domain.command.CommandRejectionReason
 import com.idlerpg.game.domain.command.EquipItem
+import com.idlerpg.game.domain.command.EnhanceItem
+import com.idlerpg.game.domain.command.RefineItem
 import com.idlerpg.game.domain.command.ExpandInventoryCapacity
 import com.idlerpg.game.domain.command.GameCommand
 import com.idlerpg.game.domain.command.InventoryCommand
@@ -39,6 +41,7 @@ import com.idlerpg.game.domain.model.inventory.ItemLockState
 import com.idlerpg.game.domain.model.inventory.LootFilterState
 import com.idlerpg.game.domain.system.economy.TransactionSystem
 
+
 enum class GeneratedItemPlacement { NORMAL, OVERFLOW }
 
 data class GeneratedItemAddResult(
@@ -63,6 +66,8 @@ object InventorySystem : GameCommandHandler {
                 context.contentRegistry
             )
         )
+        is EnhanceItem,
+        is RefineItem -> GearEnhancementSystem.handle(state, command, context)
         is UnequipItem -> fromEquipmentResult(
             state,
             EquipmentSystem.unequip(state.run.inventory, command.slot)
