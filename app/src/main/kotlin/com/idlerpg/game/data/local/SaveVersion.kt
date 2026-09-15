@@ -45,6 +45,9 @@ data class SaveVersion(
         /** Explicit per-skill rank, mastery, and refinement tracks. */
         val V9: SaveVersion = SaveVersion(9)
 
-        val CURRENT: SaveVersion = V9
+        /** Bounded per-item enhancement failstack state. */
+        val V10: SaveVersion = SaveVersion(10)
+
+        val CURRENT: SaveVersion = V10
     }
 }
