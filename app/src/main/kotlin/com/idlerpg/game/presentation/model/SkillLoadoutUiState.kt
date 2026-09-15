@@ -65,7 +65,8 @@ data class SkillLoadoutSkillUiState(
     val refinementCostDisplay: String = "—",
     val canUpgradeRank: Boolean = false,
     val canUpgradeMastery: Boolean = false,
-    val canRefine: Boolean = false
+    val canRefine: Boolean = false,
+    val technicalDetails: List<String> = emptyList()
 )
 
 data class SkillEvolutionBranchUiState(
