@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,7 +52,6 @@ import com.idlerpg.game.ui.theme.ObsidianSurface3
 import com.idlerpg.game.ui.theme.PanelHighlight
 import com.idlerpg.game.ui.theme.ResourceGold
 import com.idlerpg.game.ui.theme.ResonanceTeal
-import com.idlerpg.game.ui.theme.WarningAmber
 import com.idlerpg.game.ui.theme.GameDimensions
 
 @Composable
@@ -296,27 +296,7 @@ fun GlobalHud(
                     }
                 }
 
-                if (state.overflowUsed > 0 || state.inventoryProgressionBlocked) {
-                    Text(
-                        text = if (state.inventoryProgressionBlocked) {
-                            stringResource(
-                                R.string.hud_inventory_blocked_format,
-                                state.overflowUsed,
-                                state.overflowCapacity
-                            )
-                        } else {
-                            stringResource(
-                                R.string.hud_overflow_format,
-                                state.overflowUsed,
-                                state.overflowCapacity
-                            )
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarningAmber,
-                        maxLines = 1,
-                        overflow = TextOverflow.Clip
-                    )
-                }
+
                     }
                 }
             }
@@ -369,7 +349,9 @@ private fun HudResourceValue(
                 contentScale = ContentScale.Fit
             )
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 Text(
@@ -384,7 +366,7 @@ private fun HudResourceValue(
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleSmall.copy(fontSize = 11.sp),
                     maxLines = 1,
                     overflow = TextOverflow.Clip
                 )
