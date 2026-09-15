@@ -14,6 +14,7 @@ import com.idlerpg.game.domain.definition.item.AffixEffectDefinition
 import com.idlerpg.game.domain.definition.item.EquipmentEffectDefinition
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.system.inventory.EquipmentScalingSystem
+import com.idlerpg.game.domain.system.rebirth.RebirthStatSystem
 
 /**
  * Deterministic modifier aggregation.
@@ -246,9 +247,12 @@ object ModifierSystem {
         val result = linkedMapOf<Affinity, GameNumber>()
         val maximumHealth = maximumHealth(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
+            RebirthStatSystem.apply(
+                PlayerScalingSystem.baseStatsForLevel(
+                    state.run.player.baseStats,
+                    state.run.progression.playerLevel.level
+                ),
+                state.meta.rebirth
             ).maxHealth,
             contentRegistry
         )
