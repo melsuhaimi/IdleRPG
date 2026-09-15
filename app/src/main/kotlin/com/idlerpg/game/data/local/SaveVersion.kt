@@ -39,6 +39,9 @@ data class SaveVersion(
         /** Chronicle-persistent player-facing hero identity. */
         val V7: SaveVersion = SaveVersion(7)
 
-        val CURRENT: SaveVersion = V7
+        /** Permanent Rebirth/Legacy point pools and stat allocations. */
+        val V8: SaveVersion = SaveVersion(8)
+
+        val CURRENT: SaveVersion = V8
     }
 }
