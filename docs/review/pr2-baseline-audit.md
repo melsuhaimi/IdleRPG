@@ -33,12 +33,12 @@ This review separates implementation standards from the requested gameplay contr
 
 ## Requested gameplay findings
 
-### P1 — the route is capped and the final stage self-loops
+### P1 — the route was capped and the final stage self-looped
 
 - **Evidence:** `app/src/main/kotlin/com/idlerpg/game/data/content/TrainingHollowWorldContent.kt:10-12` caps the route at stage 72.
 - **Evidence:** `TrainingHollowWorldContent.kt:74` points the last encounter to itself.
 - **Risk:** the long-run idle loop has no authored post-72 push/farm runway; the user request explicitly calls for substantial stages and grinding.
-- **Fix target:** extend the route with deterministic stage bands, recurring elite/anomaly milestones, and additional boss gates while keeping at most three normal enemies and one elite/boss.
+- **Resolution:** extend the route to 120 deterministic stages, add milestone bosses at 84, 96, 108, and 120, and stop push automation at the final stage. Farm mode can still target the highest cleared stage. The three-enemy/one-elite-or-boss constraint remains enforced.
 
 ### P2 — gear/skill progression needs a longer runway
 

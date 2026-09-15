@@ -7,20 +7,24 @@ import com.idlerpg.game.domain.definition.world.BossDefinition
 import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.definition.world.EncounterType
 
-/** Stages 9–72 complete the expandable Training Hollow route. */
+/** Stages 9–120 provide a long-form push/farm route with recurring milestone bosses. */
 object TrainingHollowWorldContent {
-    const val MAX_STAGE: Int = 72
+    const val MAX_STAGE: Int = 120
 
     val STAGE_45_BOSS_ID = ContentId("boss.training_hollow.stage_45")
     val STAGE_60_BOSS_ID = ContentId("boss.training_hollow.stage_60")
     val STAGE_72_BOSS_ID = ContentId("boss.training_hollow.stage_72")
+    val STAGE_84_BOSS_ID = ContentId("boss.training_hollow.stage_84")
+    val STAGE_96_BOSS_ID = ContentId("boss.training_hollow.stage_96")
+    val STAGE_108_BOSS_ID = ContentId("boss.training_hollow.stage_108")
+    val STAGE_120_BOSS_ID = ContentId("boss.training_hollow.stage_120")
 
     fun stageId(number: Int): ContentId =
         ContentId("encounter.training_hollow.stage_${number.toString().padStart(2, '0')}")
 
     val encounters: List<EncounterDefinition> = (9..MAX_STAGE).map { stage ->
         val type = when (stage) {
-            30, 45, 60, MAX_STAGE -> EncounterType.BOSS
+            30, 45, 60, 72, 84, 96, 108, MAX_STAGE -> EncounterType.BOSS
             10, 15, 20, 25, 29 -> EncounterType.ELITE
             12, 18, 24, 27 -> EncounterType.ANOMALY
             else -> generatedType(stage)
@@ -72,7 +76,7 @@ object TrainingHollowWorldContent {
                 stage > 30 && stage % 10 == 0 -> 2
                 else -> 1
             },
-            nextEncounterId = if (stage < MAX_STAGE) stageId(stage + 1) else stageId(MAX_STAGE),
+            nextEncounterId = if (stage < MAX_STAGE) stageId(stage + 1) else null,
             bossId = bossIdForStage(stage, type),
             eliteModifiers = modifiers,
             rewardLootTableId = when (type) {
@@ -98,7 +102,11 @@ object TrainingHollowWorldContent {
             30 -> HollowWardenContent.BOSS_ID
             45 -> STAGE_45_BOSS_ID
             60 -> STAGE_60_BOSS_ID
-            MAX_STAGE -> STAGE_72_BOSS_ID
+            72 -> STAGE_72_BOSS_ID
+            84 -> STAGE_84_BOSS_ID
+            96 -> STAGE_96_BOSS_ID
+            108 -> STAGE_108_BOSS_ID
+            MAX_STAGE -> STAGE_120_BOSS_ID
             else -> error("No boss id authored for stage $stage")
         }
 
@@ -121,8 +129,36 @@ object TrainingHollowWorldContent {
         BossDefinition(
             id = STAGE_72_BOSS_ID,
             regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(MAX_STAGE),
+            encounterDefinitionId = stageId(72),
             requiredNormalClears = 60L,
+            chronicleMilestoneRelevant = true
+        ),
+        BossDefinition(
+            id = STAGE_84_BOSS_ID,
+            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+            encounterDefinitionId = stageId(84),
+            requiredNormalClears = 72L,
+            chronicleMilestoneRelevant = true
+        ),
+        BossDefinition(
+            id = STAGE_96_BOSS_ID,
+            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+            encounterDefinitionId = stageId(96),
+            requiredNormalClears = 84L,
+            chronicleMilestoneRelevant = true
+        ),
+        BossDefinition(
+            id = STAGE_108_BOSS_ID,
+            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+            encounterDefinitionId = stageId(108),
+            requiredNormalClears = 96L,
+            chronicleMilestoneRelevant = true
+        ),
+        BossDefinition(
+            id = STAGE_120_BOSS_ID,
+            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+            encounterDefinitionId = stageId(120),
+            requiredNormalClears = 108L,
             chronicleMilestoneRelevant = true
         )
     )
@@ -153,6 +189,6 @@ object TrainingHollowWorldContent {
         )
 
     private fun stageRewardMultiplier(stage: Int): Ratio = Ratio.ofUnits(
-        10_000L + ((stage - 30L) * 75L).coerceAtMost(15_000L)
+        10_000L + ((stage - 30L) * 125L).coerceAtMost(25_000L)
     )
 }

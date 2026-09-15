@@ -84,9 +84,11 @@ after role health scaling. Tanks therefore gain more health and armor, assassins
 and cadence, casters gain stronger damage/reward growth, and bosses use their own stronger profile.
 
 Enemy XP and gold use their role reward profile, then the encounter reward multiplier is applied.
-The expanded Training Hollow contains 72 ordered stages, with authored role compositions, elite
-and special encounters, multi-wave encounters, and boss milestones at stages 30, 45, 60, and 72.
-Each boss milestone has its own boss definition so first-clear persistence remains unambiguous.
+The expanded Training Hollow contains 120 ordered stages, with authored role compositions, elite
+and special encounters, multi-wave encounters, and boss milestones at stages 30, 45, 60, 72, 84,
+96, 108, and 120. The final stage stops push automation cleanly; players can choose it as a
+farm target. Each boss milestone has its own boss definition so first-clear persistence remains
+unambiguous.
 
 ## Combat pipeline
 

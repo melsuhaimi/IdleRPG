@@ -16,9 +16,13 @@ object IncrementalProgressionContractTest {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
 
-        check(TrainingHollowWorldContent.MAX_STAGE >= 72)
+        check(TrainingHollowWorldContent.MAX_STAGE >= 120)
         check(registry.allEncounters().size == TrainingHollowWorldContent.MAX_STAGE)
-        check(TrainingHollowWorldContent.additionalBosses.size == 3)
+        check(TrainingHollowWorldContent.additionalBosses.size == 7)
+        check(TrainingHollowWorldContent.encounters.count {
+            it.type == com.idlerpg.game.domain.definition.world.EncounterType.BOSS
+        } == 8)
+        check(TrainingHollowWorldContent.encounters.last().nextEncounterId == null)
 
         val checkpoints = listOf(1L, 10L, 25L, 50L, 100L)
         val levelBase = factory.newGame(18_001L).state()
