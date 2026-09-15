@@ -353,6 +353,7 @@ private fun SkillFocusPane(
             }
 
             SkillFacts(skill)
+            SkillTechnicalDetails(skill)
             SkillInvestmentActions(skill, onIntent)
             SkillEvolutionChoices(skill, onIntent)
             GameDivider()
@@ -458,6 +459,38 @@ private fun SkillFacts(skill: SkillLoadoutSkillUiState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = ResourceGold
             )
+        }
+    }
+}
+
+@Composable
+private fun SkillTechnicalDetails(skill: SkillLoadoutSkillUiState) {
+    var expanded by rememberSaveable(skill.skillId.value) { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        GameOutlinedButton(
+            onClick = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (expanded) "Hide technical details" else "Show technical details")
+        }
+        if (expanded) {
+            GameCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ObsidianSurface2)
+            ) {
+                Column(
+                    modifier = Modifier.padding(11.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    skill.technicalDetails.forEach { detail ->
+                        Text(
+                            text = detail,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
         }
     }
 }
