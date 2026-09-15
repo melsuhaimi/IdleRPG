@@ -52,6 +52,8 @@ import com.idlerpg.game.domain.model.progression.AffinityMasteryState
 import com.idlerpg.game.domain.model.progression.FeatureUnlockState
 import com.idlerpg.game.domain.model.progression.PlayerLevelState
 import com.idlerpg.game.domain.model.progression.ProgressionState
+import com.idlerpg.game.domain.model.rebirth.RebirthState
+import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.domain.model.quest.QuestProgressState
 import com.idlerpg.game.domain.model.quest.QuestState
 import com.idlerpg.game.domain.model.resonance.ConvergenceState
@@ -238,6 +240,7 @@ private object SaveDataMapper {
             "$path.lifetimeStatistics",
             state.lifetimeStatistics
         )
+        writeRebirthState(writer, "$path.rebirth", state.rebirth)
     }
 
     private fun readMetaState(
@@ -260,8 +263,80 @@ private object SaveDataMapper {
             lifetimeStatistics = readStatisticsState(
                 reader,
                 "$path.lifetimeStatistics"
+            ),
+            rebirth = readRebirthState(reader, "$path.rebirth")
+        )
+
+    private fun writeRebirthState(
+        writer: FieldWriter,
+        path: String,
+        state: RebirthState
+    ) {
+        writer.long("$path.completedRebirths", state.completedRebirths)
+        writer.long("$path.normalPointsEarned", state.normalPointsEarned)
+        writer.long("$path.legacyPointsEarned", state.legacyPointsEarned)
+        writeRebirthAllocations(writer, "$path.normalAllocations", state.normalAllocations)
+        writeRebirthAllocations(writer, "$path.legacyAllocations", state.legacyAllocations)
+    }
+
+    private fun readRebirthState(
+        reader: FieldReader,
+        path: String
+    ): RebirthState =
+        RebirthState(
+            completedRebirths = reader.long("$path.completedRebirths"),
+            normalPointsEarned = reader.long("$path.normalPointsEarned"),
+            legacyPointsEarned = reader.long("$path.legacyPointsEarned"),
+            normalAllocations = readRebirthAllocations(
+                reader,
+                "$path.normalAllocations"
+            ),
+            legacyAllocations = readRebirthAllocations(
+                reader,
+                "$path.legacyAllocations"
             )
         )
+
+    private fun writeRebirthAllocations(
+        writer: FieldWriter,
+        path: String,
+        allocations: Map<RebirthStat, Long>
+    ) {
+        val entries = allocations.entries.sortedBy { it.key.name }
+        writer.count(path, entries.size)
+        entries.forEachIndexed { index, entry ->
+            val entryPath = "$path.$index"
+            writer.string("$entryPath.stat", entry.key.name)
+            writer.long("$entryPath.points", entry.value)
+        }
+    }
+
+    private fun readRebirthAllocations(
+        reader: FieldReader,
+        path: String
+    ): Map<RebirthStat, Long> {
+        val result = linkedMapOf<RebirthStat, Long>()
+        repeat(reader.count(path)) { index ->
+            val entryPath = "$path.$index"
+            val stat = try {
+                RebirthStat.valueOf(reader.string("$entryPath.stat"))
+            } catch (error: SaveDataException) {
+                throw error
+            } catch (error: Throwable) {
+                throw SaveDataException(
+                    "Unknown RebirthStat at $entryPath",
+                    error
+                )
+            }
+            val previous = result.put(stat, reader.long("$entryPath.points"))
+            if (previous != null) {
+                throw SaveDataException(
+                    "Duplicate RebirthStat allocation at $entryPath: $stat"
+                )
+            }
+        }
+        return result
+    }
 
     // -------------------------------------------------------------------------
     // Player
