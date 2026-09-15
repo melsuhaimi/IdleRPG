@@ -3,6 +3,7 @@ package com.idlerpg.game.domain.system.progression
 import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.number.GameMath
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.definition.progression.LevelCurveDefinition
 import com.idlerpg.game.domain.event.ExperienceGranted
@@ -106,20 +107,45 @@ object PlayerProgressionSystem {
     ): GameNumber = when (curve) {
         is LevelCurveDefinition.Linear -> {
             require(level > 0L) { "level must be positive: $level" }
-                curve.baseExperienceToNextLevel +
+            curve.baseExperienceToNextLevel +
                 (curve.experienceIncrementPerLevel * (level - 1L))
         }
         is LevelCurveDefinition.Progressive -> {
             require(level > 0L) { "level must be positive: $level" }
-            val offset = (level - curve.accelerationStartLevel).coerceAtLeast(0L)
-            val accelerated = curve.accelerationPerLevel.toBigInteger()
-                .multiply(GameMath.triangular(offset))
-            GameNumber.fromBigInteger(
-                curve.baseExperienceToNextLevel.toBigInteger()
-                    .add(curve.experienceIncrementPerLevel.toBigInteger()
-                        .multiply(BigInteger.valueOf(level - 1L)))
-                    .add(accelerated)
-            )
+            val earlyMultiplier = curve.compoundingMultiplierPerLevel
+            if (earlyMultiplier != null) {
+                val softCapLevel = curve.softCapLevel
+                    ?: error("Compounding curve is missing softCapLevel: ${curve.id}")
+                val postMultiplier = curve.postSoftCapCompoundingMultiplierPerLevel
+                    ?: error("Compounding curve is missing post-soft-cap multiplier: ${curve.id}")
+                val earlySteps = if (level <= softCapLevel) {
+                    level - 1L
+                } else {
+                    softCapLevel - 1L
+                }
+                val postSteps = if (level <= softCapLevel) {
+                    0L
+                } else {
+                    level - softCapLevel
+                }
+                GameMath.compoundCeil(
+                    value = curve.baseExperienceToNextLevel,
+                    firstMultiplier = earlyMultiplier,
+                    firstSteps = earlySteps,
+                    secondMultiplier = postMultiplier,
+                    secondSteps = postSteps
+                )
+            } else {
+                val offset = (level - curve.accelerationStartLevel).coerceAtLeast(0L)
+                val accelerated = curve.accelerationPerLevel.toBigInteger()
+                    .multiply(GameMath.triangular(offset))
+                GameNumber.fromBigInteger(
+                    curve.baseExperienceToNextLevel.toBigInteger()
+                        .add(curve.experienceIncrementPerLevel.toBigInteger()
+                            .multiply(BigInteger.valueOf(level - 1L)))
+                        .add(accelerated)
+                )
+            }
         }
     }
 
@@ -146,28 +172,94 @@ object PlayerProgressionSystem {
                 GameNumber.fromBigInteger(basePart.add(incrementPart))
             }
             is LevelCurveDefinition.Progressive -> {
-                val n = BigInteger.valueOf(levelGains)
-                val firstLinearOffset = BigInteger.valueOf(currentLevel - 1L)
-                val linearSpan = n.multiply(
-                    firstLinearOffset.shiftLeft(1).add(n.subtract(BigInteger.ONE))
-                ).divide(BigInteger.TWO)
-                val basePart = curve.baseExperienceToNextLevel.toBigInteger().multiply(n)
-                val incrementPart = curve.experienceIncrementPerLevel.toBigInteger()
-                    .multiply(linearSpan)
+                if (curve.compoundingMultiplierPerLevel != null) {
+                    cumulativeExponentialCost(currentLevel, levelGains, curve)
+                } else {
+                    val n = BigInteger.valueOf(levelGains)
+                    val firstLinearOffset = BigInteger.valueOf(currentLevel - 1L)
+                    val linearSpan = n.multiply(
+                        firstLinearOffset.shiftLeft(1).add(n.subtract(BigInteger.ONE))
+                    ).divide(BigInteger.TWO)
+                    val basePart = curve.baseExperienceToNextLevel.toBigInteger().multiply(n)
+                    val incrementPart = curve.experienceIncrementPerLevel.toBigInteger()
+                        .multiply(linearSpan)
 
-                val endExclusive = currentLevel + levelGains
-                val firstAcceleratedLevel = maxOf(currentLevel, curve.accelerationStartLevel)
-                val acceleratedCount = (endExclusive - firstAcceleratedLevel).coerceAtLeast(0L)
-                val firstOffset = firstAcceleratedLevel - curve.accelerationStartLevel
-                val acceleratedSpan = sumTriangularRange(firstOffset, acceleratedCount)
-                val acceleratedPart = curve.accelerationPerLevel.toBigInteger()
-                    .multiply(acceleratedSpan)
+                    val endExclusive = Math.addExact(currentLevel, levelGains)
+                    val firstAcceleratedLevel = maxOf(currentLevel, curve.accelerationStartLevel)
+                    val acceleratedCount = (endExclusive - firstAcceleratedLevel).coerceAtLeast(0L)
+                    val firstOffset = firstAcceleratedLevel - curve.accelerationStartLevel
+                    val acceleratedSpan = sumTriangularRange(firstOffset, acceleratedCount)
+                    val acceleratedPart = curve.accelerationPerLevel.toBigInteger()
+                        .multiply(acceleratedSpan)
 
-                GameNumber.fromBigInteger(
-                    basePart.add(incrementPart).add(acceleratedPart)
-                )
+                    GameNumber.fromBigInteger(
+                        basePart.add(incrementPart).add(acceleratedPart)
+                    )
+                }
             }
         }
+    }
+
+    /** Sum exact rounded exponential costs across a bounded level interval. */
+    private fun cumulativeExponentialCost(
+        currentLevel: Long,
+        levelGains: Long,
+        curve: LevelCurveDefinition.Progressive
+    ): GameNumber {
+        val softCapLevel = curve.softCapLevel
+            ?: error("Compounding curve is missing softCapLevel: ${curve.id}")
+        val earlyMultiplier = curve.compoundingMultiplierPerLevel
+            ?: error("Compounding curve is missing early multiplier: ${curve.id}")
+        val postMultiplier = curve.postSoftCapCompoundingMultiplierPerLevel
+            ?: error("Compounding curve is missing post-soft-cap multiplier: ${curve.id}")
+        val endExclusive = Math.addExact(currentLevel, levelGains)
+        val earlySteps = earlyStepsFor(currentLevel, softCapLevel)
+        val postSteps = postStepsFor(currentLevel, softCapLevel)
+        var level = currentLevel
+        var numerator = curve.baseExperienceToNextLevel.toBigInteger()
+            .multiply(exactPower(BigInteger.valueOf(earlyMultiplier.units), earlySteps))
+            .multiply(exactPower(BigInteger.valueOf(postMultiplier.units), postSteps))
+        var denominator = exactPower(
+            BigInteger.valueOf(Ratio.UNITS_PER_ONE),
+            Math.addExact(earlySteps, postSteps)
+        )
+        var total = BigInteger.ZERO
+        val denominatorBase = BigInteger.valueOf(Ratio.UNITS_PER_ONE)
+        while (level < endExclusive) {
+            val (quotient, remainder) = numerator.divideAndRemainder(denominator)
+            total = total.add(
+                if (remainder.signum() == 0) quotient else quotient.add(BigInteger.ONE)
+            )
+            val multiplier = if (level < softCapLevel) {
+                earlyMultiplier.units
+            } else {
+                postMultiplier.units
+            }
+            numerator = numerator.multiply(BigInteger.valueOf(multiplier))
+            denominator = denominator.multiply(denominatorBase)
+            level = Math.addExact(level, 1L)
+        }
+        return GameNumber.fromBigInteger(total)
+    }
+
+    private fun earlyStepsFor(level: Long, softCapLevel: Long): Long =
+        if (level <= softCapLevel) level - 1L else softCapLevel - 1L
+
+    private fun postStepsFor(level: Long, softCapLevel: Long): Long =
+        if (level <= softCapLevel) 0L else level - softCapLevel
+
+    private fun exactPower(base: BigInteger, exponent: Long): BigInteger {
+        var remaining = exponent
+        var factor = base
+        var result = BigInteger.ONE
+        while (remaining > 0L) {
+            if (remaining % 2L == 1L) {
+                result = result.multiply(factor)
+            }
+            factor = factor.multiply(factor)
+            remaining /= 2L
+        }
+        return result
     }
 
     /** Sum triangular(n) for n in [first, first + count), without a level-by-level loop. */
