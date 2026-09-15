@@ -115,12 +115,6 @@ fun GearScreen(
     var lockedOnly by rememberSaveable { mutableStateOf(false) }
 
     val allItems = state.ownedItems + state.overflowItems
-    val rarityFilter = rarityFilterId?.let { id ->
-        Rarity.values().firstOrNull { it.id.value == id }
-    }
-    val slotFilter = slotFilterId?.let { id ->
-        EquipmentSlot.values().firstOrNull { it.id.value == id }
-    }
     val storageIsStash = storageTabId == "stash"
     val rarityFilter = rarityFilterId?.let { id ->
         Rarity.values().firstOrNull { it.id.value == id }
