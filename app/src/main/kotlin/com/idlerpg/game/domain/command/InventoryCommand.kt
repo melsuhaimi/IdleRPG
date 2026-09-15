@@ -1,11 +1,26 @@
 package com.idlerpg.game.domain.command
 
 import com.idlerpg.game.core.id.InstanceId
+import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.domain.definition.EquipmentSlot
 import com.idlerpg.game.domain.definition.Rarity
 
 /** Inventory/equipment/capacity player intent. */
 sealed interface InventoryCommand : GameCommand
+
+/** Attempt one deterministic BDO-style base-stat enhancement. */
+data class EnhanceItem(
+    val itemInstanceId: InstanceId,
+    val useProtection: Boolean = false,
+    override val correlationId: CommandCorrelationId? = null
+) : InventoryCommand
+
+/** Reroll one selected main-stat or substat line without changing enhancement. */
+data class RefineItem(
+    val itemInstanceId: InstanceId,
+    val affixId: ContentId,
+    override val correlationId: CommandCorrelationId? = null
+) : InventoryCommand
 
 /** Attempt to equip an owned normal-inventory item into one typed equipment slot. */
 data class EquipItem(
