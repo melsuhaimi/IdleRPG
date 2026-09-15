@@ -113,3 +113,33 @@ data class AffixRolled(
         require(value >= 0L) { "AffixRolled.value cannot be negative" }
     }
 }
+
+data class GearEnhancementAttempted(
+    val itemInstanceId: InstanceId,
+    val previousEnhancementLevel: Int,
+    val resultingEnhancementLevel: Int,
+    val success: Boolean,
+    val protectionUsed: Boolean,
+    val materialCost: GameNumber,
+    val gemCost: GameNumber
+) : InventoryEvent {
+    init {
+        require(previousEnhancementLevel in 0..20)
+        require(resultingEnhancementLevel in 0..20)
+        require(materialCost > GameNumber.ZERO)
+        require(gemCost >= GameNumber.ZERO)
+    }
+}
+
+data class GearRefined(
+    val itemInstanceId: InstanceId,
+    val affixId: ContentId,
+    val previousValue: Long,
+    val resultingValue: Long,
+    val isMainStat: Boolean
+) : InventoryEvent {
+    init {
+        require(previousValue >= 0L)
+        require(resultingValue >= 0L)
+    }
+}
