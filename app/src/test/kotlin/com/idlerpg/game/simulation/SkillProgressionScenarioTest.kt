@@ -82,7 +82,7 @@ object SkillProgressionScenarioTest {
         )
 
         val beforeRejected = runtime.state()
-        val unaffordable = runtime.replaceLoadedState(
+        runtime.replaceLoadedState(
             beforeRejected.copy(
                 run = beforeRejected.run.copy(
                     economy = beforeRejected.run.economy.copy(
@@ -93,7 +93,6 @@ object SkillProgressionScenarioTest {
                 )
             )
         )
-        check(unaffordable == Unit)
         val rejected = runtime.dispatch(UpgradeSkillMastery(skillId))
         check((rejected.commandResult as CommandResult.Rejected).reason.code ==
             com.idlerpg.game.domain.command.CommandRejectionCode.INSUFFICIENT_RESOURCE)
