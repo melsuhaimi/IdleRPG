@@ -1977,6 +1977,12 @@ private object SaveDataMapper {
             writer.long("$affixPath.value", affix.value)
         }
 
+        writer.boolean("$path.mainStat.present", item.mainStat != null)
+        item.mainStat?.let { mainStat ->
+            writer.contentId("$path.mainStat.affixId", mainStat.affixId)
+            writer.long("$path.mainStat.value", mainStat.value)
+        }
+        writer.long("$path.enhancementLevel", item.enhancementLevel)
         writer.optionalContentId(
             "$path.sourceDefinitionId",
             item.sourceDefinitionId
@@ -2004,6 +2010,15 @@ private object SaveDataMapper {
                     )
                 }
             },
+            mainStat = if (reader.boolean("$path.mainStat.present")) {
+                RolledAffix(
+                    affixId = reader.contentId("$path.mainStat.affixId"),
+                    value = reader.long("$path.mainStat.value")
+                )
+            } else {
+                null
+            },
+            enhancementLevel = reader.long("$path.enhancementLevel"),
             sourceDefinitionId = reader.optionalContentId(
                 "$path.sourceDefinitionId"
             )
