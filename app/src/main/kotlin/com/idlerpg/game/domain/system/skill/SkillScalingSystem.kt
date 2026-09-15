@@ -15,6 +15,11 @@ import com.idlerpg.game.domain.system.stats.PlayerScalingSystem
  * decisions as the primary source of power.
  */
 object SkillScalingSystem {
+    const val MASTERY_DAMAGE_UNITS_PER_LEVEL: Long = 150L
+    const val REFINEMENT_DAMAGE_UNITS_PER_LEVEL: Long = 500L
+    const val MASTERY_HEALING_UNITS_PER_LEVEL: Long = 100L
+    const val REFINEMENT_HEALING_UNITS_PER_LEVEL: Long = 300L
+
     fun rank(state: GameState, definition: SkillDefinition): Long {
         val levelRank = PlayerScalingSystem.skillRank(
             playerLevel = state.run.progression.playerLevel.level,
@@ -44,12 +49,12 @@ object SkillScalingSystem {
         )
         val masteryDamageMultiplier = GameMath.ratioAfterSteps(
             base = Ratio.ONE,
-            growthPerStep = Ratio.ofUnits(150L),
+            growthPerStep = Ratio.ofUnits(MASTERY_DAMAGE_UNITS_PER_LEVEL),
             steps = mastery(state, definition)
         )
         val refinementDamageMultiplier = GameMath.ratioAfterSteps(
             base = Ratio.ONE,
-            growthPerStep = Ratio.ofUnits(500L),
+            growthPerStep = Ratio.ofUnits(REFINEMENT_DAMAGE_UNITS_PER_LEVEL),
             steps = refinement(state, definition)
         )
         val damageMultiplier = GameMath.multiplyRatios(
@@ -58,12 +63,12 @@ object SkillScalingSystem {
         )
         val masteryHealingMultiplier = GameMath.ratioAfterSteps(
             base = Ratio.ONE,
-            growthPerStep = Ratio.ofUnits(100L),
+            growthPerStep = Ratio.ofUnits(MASTERY_HEALING_UNITS_PER_LEVEL),
             steps = mastery(state, definition)
         )
         val refinementHealingMultiplier = GameMath.ratioAfterSteps(
             base = Ratio.ONE,
-            growthPerStep = Ratio.ofUnits(300L),
+            growthPerStep = Ratio.ofUnits(REFINEMENT_HEALING_UNITS_PER_LEVEL),
             steps = refinement(state, definition)
         )
         val healingMultiplier = GameMath.multiplyRatios(
