@@ -712,11 +712,14 @@ object DefaultGameContent {
         levelCurves = listOf(
             LevelCurveDefinition.Progressive(
                 id = PLAYER_LEVEL_CURVE_ID,
-                baseExperienceToNextLevel = GameNumber.of(20L),
-                experienceIncrementPerLevel = GameNumber.of(10L),
+                baseExperienceToNextLevel = GameNumber.of(100L),
+                experienceIncrementPerLevel = GameNumber.ZERO,
                 accelerationStartLevel = 10L,
-                accelerationPerLevel = GameNumber.ONE,
-                maxLevel = 10_000L
+                accelerationPerLevel = GameNumber.ZERO,
+                compoundingMultiplierPerLevel = Ratio.ofUnits(10_080L),
+                softCapLevel = 800L,
+                postSoftCapCompoundingMultiplierPerLevel = Ratio.ofUnits(10_120L),
+                maxLevel = 15_000L
             )
         ),
         featureUnlocks = listOf(
