@@ -9,6 +9,8 @@ import com.idlerpg.game.domain.definition.chronicle.EchoUnlockEffect
 import com.idlerpg.game.domain.definition.economy.UpgradeEffectDefinition
 import com.idlerpg.game.domain.definition.quest.QuestDefinition
 import com.idlerpg.game.domain.model.GameState
+import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
+import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.presentation.content.PresentationContentRegistry
 import com.idlerpg.game.presentation.format.GameNumberFormatter
 import com.idlerpg.game.presentation.model.AchievementProgressUiState
@@ -26,6 +28,7 @@ import com.idlerpg.game.presentation.model.EchoShopUiState
 import com.idlerpg.game.presentation.model.MasteryProgressUiState
 import com.idlerpg.game.presentation.model.MasteryUnlockUiState
 import com.idlerpg.game.domain.system.quest.QuestClaimSystem
+import com.idlerpg.game.domain.system.rebirth.RebirthSystem
 import com.idlerpg.game.domain.system.stats.PowerScoreSystem
 import com.idlerpg.game.presentation.model.ObjectiveProgressUiState
 import com.idlerpg.game.presentation.model.PersistentDiscoveryKind
@@ -40,6 +43,8 @@ import com.idlerpg.game.presentation.model.ProgressOverviewUiState
 import com.idlerpg.game.presentation.model.ProgressNextGoalKind
 import com.idlerpg.game.presentation.model.ProgressNextGoalUiState
 import com.idlerpg.game.presentation.model.ProgressRewardUiState
+import com.idlerpg.game.presentation.model.RebirthStatAllocationUiState
+import com.idlerpg.game.presentation.model.RebirthUiState
 import com.idlerpg.game.presentation.model.ProgressUiState
 import com.idlerpg.game.presentation.model.QuestProgressUiState
 import com.idlerpg.game.presentation.model.StatOverviewUiState
@@ -115,11 +120,49 @@ class ProgressProjector(
         discoveries = projectDiscoveries(state),
         echoShop = projectEchoShop(state),
         chronicle = projectChronicle(state),
+        rebirth = projectRebirth(state),
         chroniclePreview = chroniclePreview,
         chroniclePreviewRequestPending = chroniclePreviewRequestPending,
         chronicleCommitPending = chronicleCommitPending,
         feedback = feedback
     )
+
+    private fun projectRebirth(state: GameState): RebirthUiState {
+        val preview = RebirthSystem.preview(state)
+        val rebirth = state.meta.rebirth
+        val gemBalance = state.run.economy.wallet.amountsByCurrencyId[
+            CurrencyId.GEMS
+        ] ?: GameNumber.ZERO
+        return RebirthUiState(
+            currentLevel = preview.currentLevel,
+            minimumLevel = preview.minimumLevel,
+            eligible = preview.eligible,
+            nextRebirthNumber = preview.nextRebirthNumber,
+            goldCostDisplay = GameNumberFormatter.full(preview.goldCost),
+            goldAvailableDisplay = GameNumberFormatter.full(preview.goldAvailable),
+            normalPointsGranted = preview.normalPointsGranted,
+            legacyPointsGranted = preview.legacyPointsGranted,
+            normalPointsEarned = rebirth.normalPointsEarned,
+            normalUnspent = rebirth.unspentPoints(RebirthPointPool.NORMAL),
+            legacyPointsEarned = rebirth.legacyPointsEarned,
+            legacyUnspent = rebirth.unspentPoints(RebirthPointPool.LEGACY),
+            respecGemCostDisplay = GameNumberFormatter.full(
+                GameNumber.of(RebirthSystem.GEM_RESPEC_COST)
+            ),
+            canRespecNormal = rebirth.allocatedPoints(RebirthPointPool.NORMAL) > 0L &&
+                gemBalance >= GameNumber.of(RebirthSystem.GEM_RESPEC_COST),
+            canRespecLegacy = rebirth.allocatedPoints(RebirthPointPool.LEGACY) > 0L &&
+                gemBalance >= GameNumber.of(RebirthSystem.GEM_RESPEC_COST),
+            stats = RebirthStat.values().map { stat ->
+                RebirthStatAllocationUiState(
+                    stat = stat,
+                    label = stat.name.replace('_', ' '),
+                    normalAllocated = rebirth.allocation(RebirthPointPool.NORMAL, stat),
+                    legacyAllocated = rebirth.allocation(RebirthPointPool.LEGACY, stat)
+                )
+            }
+        )
+    }
 
     private fun projectCoreGrowth(state: GameState): List<CoreGrowthTrackUiState> =
         contentRegistry.allUpgrades().sortedBy { it.id }.map { definition ->
