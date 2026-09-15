@@ -2,8 +2,11 @@ package com.idlerpg.game.presentation.projection
 
 import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.data.content.ContentRegistry
+import com.idlerpg.game.domain.definition.CurrencyId
 import com.idlerpg.game.domain.definition.combat.SkillDefinition
 import com.idlerpg.game.domain.model.GameState
+import com.idlerpg.game.domain.system.skill.SkillProgressionSystem
+import com.idlerpg.game.domain.system.skill.SkillScalingSystem
 import com.idlerpg.game.domain.model.combat.QueuedPlayerAction
 import com.idlerpg.game.presentation.content.PresentationContentRegistry
 import com.idlerpg.game.presentation.model.SkillLoadoutFeedbackUiState
@@ -81,6 +84,16 @@ class SkillLoadoutProjector(
         val metadata = presentationContentRegistry.entry(definition.id)
         val unlock = projectUnlock(state, definition)
         val lastEquippedIndex = state.run.player.equippedSkillIds.lastIndex
+        val rank = SkillScalingSystem.rank(state, definition)
+        val mastery = SkillScalingSystem.mastery(state, definition)
+        val refinement = SkillScalingSystem.refinement(state, definition)
+        val gold = state.run.economy.wallet.amountsByCurrencyId[CurrencyId.GOLD]
+            ?: com.idlerpg.game.core.number.GameNumber.ZERO
+        val rankCost = SkillProgressionSystem.rankUpgradeCost(rank)
+        val masteryCost = SkillProgressionSystem.masteryUpgradeCost(mastery)
+        val refinementCost = SkillProgressionSystem.refinementCost(refinement)
+        val maximumRank = definition.maxRank
+        val unlocked = unlock.unlocked
 
         return SkillLoadoutSkillUiState(
             skillId = definition.id,
@@ -115,7 +128,22 @@ class SkillLoadoutProjector(
                     selected = selected,
                     canSelect = unlock.unlocked && currentLevel >= evolution.requiredMasteryLevel && !selected
                 )
-            }
+            },
+            rank = rank,
+            maxRank = maximumRank,
+            mastery = mastery,
+            masteryCap = SkillProgressionSystem.MAX_MASTERY,
+            refinement = refinement,
+            refinementCap = SkillProgressionSystem.MAX_REFINEMENT,
+            rankUpgradeCostDisplay = com.idlerpg.game.presentation.format.GameNumberFormatter.compact(rankCost),
+            masteryUpgradeCostDisplay = com.idlerpg.game.presentation.format.GameNumberFormatter.compact(masteryCost),
+            refinementCostDisplay = com.idlerpg.game.presentation.format.GameNumberFormatter.compact(refinementCost),
+            canUpgradeRank = unlocked &&
+                (maximumRank == null || rank < maximumRank) && gold >= rankCost,
+            canUpgradeMastery = unlocked &&
+                mastery < SkillProgressionSystem.MAX_MASTERY && gold >= masteryCost,
+            canRefine = unlocked &&
+                refinement < SkillProgressionSystem.MAX_REFINEMENT && gold >= refinementCost
         )
     }
 
