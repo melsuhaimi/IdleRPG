@@ -23,6 +23,7 @@ import com.idlerpg.game.domain.system.world.RegionSystem
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.data.content.TrainingHollowLootContent
+import com.idlerpg.game.data.content.TrainingHollowStrategyContent
 import com.idlerpg.game.data.content.TrainingHollowWorldContent
 import com.idlerpg.game.domain.model.world.WorldAutomationMode
 import com.idlerpg.game.domain.model.world.EncounterState
@@ -158,9 +159,41 @@ object LootWorldAutomationScenarioTest {
         check(ModifierSystem.preservedSequenceEntries(traitState, DefaultGameContent.ARCANE_PULSE_ID, registry) == 1)
         check(ModifierSystem.skillHealingMultiplier(traitState, DefaultGameContent.GUARD_MEND_ID, registry).units > 10_000L)
         check(ModifierSystem.skillResonanceBonuses(traitState, DefaultGameContent.QUICK_SLASH_ID, registry)[Affinity.TEMPO] == GameNumber.ONE)
-        check(ModifierSystem.skillCleaveRatio(traitState, TrainingHollowStrategyContent.VOID_LANCE_ID, registry) != null)
-        check(ModifierSystem.skillHealingMultiplier(traitState, TrainingHollowStrategyContent.IRON_VOW_ID, registry).units > 10_000L)
-        check(ModifierSystem.skillSequencePreservation(traitState, TrainingHollowStrategyContent.STARFALL_ID, registry) == 1)
+        val buildDefiningEquipped = equipped + mapOf(
+            EquipmentSlot.WEAPON to traitItemIds[6],
+            EquipmentSlot.ARMOR to traitItemIds[7],
+            EquipmentSlot.HELM to traitItemIds[8],
+            EquipmentSlot.CATALYST to traitItemIds[9],
+            EquipmentSlot.ACCESSORY to traitItemIds[10]
+        )
+        val buildDefiningState = traitState.copy(
+            run = traitState.run.copy(
+                inventory = traitState.run.inventory.copy(
+                    equipment = EquipmentLoadoutState(buildDefiningEquipped)
+                )
+            )
+        )
+        check(
+            ModifierSystem.skillCleaveRatio(
+                buildDefiningState,
+                TrainingHollowStrategyContent.VOID_LANCE_ID,
+                registry
+            ) != null
+        )
+        check(
+            ModifierSystem.skillHealingMultiplier(
+                buildDefiningState,
+                TrainingHollowStrategyContent.IRON_VOW_ID,
+                registry
+            ).units > 10_000L
+        )
+        check(
+            ModifierSystem.preservedSequenceEntries(
+                buildDefiningState,
+                TrainingHollowStrategyContent.STARFALL_ID,
+                registry
+            ) == 1
+        )
 
         val worldRuntime = SimulationTestSupport.runtime(seed = 5_602L)
         SimulationTestSupport.checkAccepted(
