@@ -21,6 +21,19 @@ class V7ToV8SaveMigration : SaveMigration {
         fields["$prefix.legacyPointsEarned"] = "0"
         fields["$prefix.normalAllocations.count"] = "0"
         fields["$prefix.legacyAllocations.count"] = "0"
+
+        val itemPrefixes = data.fields.keys
+            .filter { key ->
+                key.endsWith(".definitionId") &&
+                    (key.startsWith("run.inventory.itemsById.") ||
+                        key.startsWith("run.inventory.overflowItemsById."))
+            }
+            .map { key -> key.removeSuffix(".definitionId") }
+            .toSet()
+        itemPrefixes.forEach { itemPrefix ->
+            fields["$itemPrefix.mainStat.present"] = "0"
+            fields["$itemPrefix.enhancementLevel"] = "0"
+        }
         return SaveData(fields)
     }
 }
