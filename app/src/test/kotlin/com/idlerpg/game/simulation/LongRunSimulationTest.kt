@@ -179,6 +179,8 @@ fun main() {
     IncrementalProgressionContractTest.run()
     RebirthScenarioTest.run()
     GearEnhancementScenarioTest.run()
+    SkillProgressionScenarioTest.run()
+    PowerScoreScenarioTest.run()
     LootWorldAutomationScenarioTest.run()
     SaveV3WaveMigrationTest.run()
     ResonanceScenarioTest.run()
