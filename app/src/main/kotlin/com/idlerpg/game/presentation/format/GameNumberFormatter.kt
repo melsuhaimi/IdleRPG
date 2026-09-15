@@ -2,6 +2,7 @@ package com.idlerpg.game.presentation.format
 
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.number.GameRate
+import java.math.BigDecimal
 import java.math.RoundingMode
 
 /** Exact-string idle-RPG number formatting. No Double conversion feeds presentation. */

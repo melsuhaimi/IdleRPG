@@ -74,7 +74,7 @@ class WorldProjector(
                 val enemyMetadata = presentationContentRegistry.entry(enemyDefinition.id)
                 val attackId = enemyDefinition.attackDefinitionId
                     ?: error(
-                        "Encounter ${encounter.id} wave 1 enemy ${enemyDefinition.id} " +
+                        "Encounter ${definition.id} wave 1 enemy ${enemyDefinition.id} " +
                             "has no authored attack"
                     )
                 val attack = contentRegistry.enemyAttack(attackId)
