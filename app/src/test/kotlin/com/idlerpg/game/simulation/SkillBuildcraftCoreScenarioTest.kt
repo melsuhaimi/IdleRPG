@@ -26,7 +26,7 @@ object SkillBuildcraftCoreScenarioTest {
     fun run() {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
-        check(registry.allSkills().size == 12)
+        check(registry.allSkills().size == 15)
 
         val quick = registry.skill(DefaultGameContent.QUICK_SLASH_ID)
         check(quick.effects.filterIsInstance<EffectSpec.DealDamage>().single().hitCount == 3)

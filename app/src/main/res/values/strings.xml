@@ -161,6 +161,9 @@
     <string name="content_arcane_pulse">Arcane Blast</string>
     <string name="content_vital_surge">Regeneration</string>
     <string name="content_umbral_cut">Shadow Strike</string>
+    <string name="content_void_lance">Void Lance</string>
+    <string name="content_iron_vow">Iron Vow</string>
+    <string name="content_starfall">Starfall</string>
     <string name="content_burning">Burning</string>
     <string name="content_scorched">Scorched</string>
     <string name="content_guard_focus">Defense Up</string>
@@ -190,6 +193,11 @@
     <string name="content_seers_helm">Seer\'s Helm</string>
     <string name="content_riftstep_boots">Riftstep Boots</string>
     <string name="content_echo_sigil">Legacy Sigil</string>
+    <string name="content_voidglass_edge">Voidglass Edge</string>
+    <string name="content_warden_plate">Warden Plate</string>
+    <string name="content_starfall_visor">Starfall Visor</string>
+    <string name="content_resonant_core">Resonant Core</string>
+    <string name="content_dusk_sigil">Dusk Sigil</string>
     <string name="content_keen">Keen</string>
     <string name="content_affix_brutal">Brutal</string>
     <string name="content_affix_relentless">Relentless</string>

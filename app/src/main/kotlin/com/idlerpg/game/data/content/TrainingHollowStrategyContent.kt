@@ -29,6 +29,9 @@ object TrainingHollowStrategyContent {
     val GLACIAL_WARD_ID = ContentId("skill.glacial_ward")
     val RESONANCE_SHIFT_ID = ContentId("skill.resonance_shift")
     val BLOOD_ECLIPSE_SKILL_ID = ContentId("skill.blood_eclipse")
+    val VOID_LANCE_ID = ContentId("skill.void_lance")
+    val IRON_VOW_ID = ContentId("skill.iron_vow")
+    val STARFALL_ID = ContentId("skill.starfall")
     val GLACIAL_WARD_STATUS_ID = ContentId("status.glacial_ward")
     val SCORCHED_STATUS_ID = ContentId("status.scorched")
 
@@ -53,6 +56,9 @@ object TrainingHollowStrategyContent {
     val GLACIAL_WARD_FEATURE_ID = ContentId("feature.skill.glacial_ward")
     val RESONANCE_SHIFT_FEATURE_ID = ContentId("feature.skill.resonance_shift")
     val BLOOD_ECLIPSE_FEATURE_ID = ContentId("feature.skill.blood_eclipse")
+    val VOID_LANCE_FEATURE_ID = ContentId("feature.skill.void_lance")
+    val IRON_VOW_FEATURE_ID = ContentId("feature.skill.iron_vow")
+    val STARFALL_FEATURE_ID = ContentId("feature.skill.starfall")
 
     val skills = listOf(
         SkillDefinition(
@@ -87,6 +93,67 @@ object TrainingHollowStrategyContent {
                 ResonanceEmissionDefinition(Affinity.VITALITY, GameNumber.ONE)
             ),
             requiredFeatureId = BLOOD_ECLIPSE_FEATURE_ID
+        ),
+        SkillDefinition(
+            id = VOID_LANCE_ID,
+            cooldown = GameDuration.ofSeconds(5L),
+            effects = listOf(
+                EffectSpec.DealDamage(
+                    powerRatio = Ratio.ofUnits(14_000L),
+                    damageKind = DamageKind.ARCANE,
+                    conditions = listOf(
+                        EffectSpec.DamageCondition.TargetHasStatus(
+                            DefaultGameContent.CHILL_STATUS_ID,
+                            Ratio.ofUnits(8_000L)
+                        )
+                    )
+                ),
+                EffectSpec.ApplyStatus(DefaultGameContent.CHILL_STATUS_ID)
+            ),
+            affinityTags = setOf(Affinity.ARCANE, Affinity.FROST),
+            resonanceEmissions = listOf(
+                ResonanceEmissionDefinition(Affinity.ARCANE, GameNumber.ONE)
+            ),
+            requiredFeatureId = VOID_LANCE_FEATURE_ID
+        ),
+        SkillDefinition(
+            id = IRON_VOW_ID,
+            cooldown = GameDuration.ofSeconds(8L),
+            targetingRule = SkillTargetingRule.SELF,
+            effects = listOf(
+                EffectSpec.Heal(GameNumber.of(50L), EffectSpec.TargetPattern.SELF),
+                EffectSpec.ApplyStatus(
+                    DefaultGameContent.GUARD_FOCUS_STATUS_ID,
+                    EffectSpec.TargetPattern.SELF
+                )
+            ),
+            affinityTags = setOf(Affinity.GUARD, Affinity.VITALITY),
+            resonanceEmissions = listOf(
+                ResonanceEmissionDefinition(Affinity.GUARD, GameNumber.ONE),
+                ResonanceEmissionDefinition(Affinity.VITALITY, GameNumber.ONE)
+            ),
+            requiredFeatureId = IRON_VOW_FEATURE_ID
+        ),
+        SkillDefinition(
+            id = STARFALL_ID,
+            cooldown = GameDuration.ofSeconds(7L),
+            effects = listOf(
+                EffectSpec.DealDamage(
+                    powerRatio = Ratio.ofUnits(7_500L),
+                    damageKind = DamageKind.ELEMENTAL,
+                    targetPattern = EffectSpec.TargetPattern.ALL_ENEMIES
+                ),
+                EffectSpec.ApplyStatus(
+                    DefaultGameContent.BURNING_STATUS_ID,
+                    EffectSpec.TargetPattern.ALL_ENEMIES
+                )
+            ),
+            affinityTags = setOf(Affinity.EMBER, Affinity.ARCANE),
+            resonanceEmissions = listOf(
+                ResonanceEmissionDefinition(Affinity.EMBER, GameNumber.ONE),
+                ResonanceEmissionDefinition(Affinity.ARCANE, GameNumber.ONE)
+            ),
+            requiredFeatureId = STARFALL_FEATURE_ID
         )
     )
 
@@ -285,7 +352,25 @@ object TrainingHollowStrategyContent {
         FeatureUnlockDefinition(RESONANCE_SHIFT_FEATURE_ID, FeatureUnlockScope.RUN, 28L,
             requiredMasteryLevels = mapOf(Affinity.ARCANE.id to 4L)),
         FeatureUnlockDefinition(BLOOD_ECLIPSE_FEATURE_ID, FeatureUnlockScope.RUN, 32L,
-            requiredMasteryLevels = mapOf(Affinity.SHADOW.id to 3L, Affinity.VITALITY.id to 3L))
+            requiredMasteryLevels = mapOf(Affinity.SHADOW.id to 3L, Affinity.VITALITY.id to 3L)),
+        FeatureUnlockDefinition(
+            VOID_LANCE_FEATURE_ID,
+            FeatureUnlockScope.RUN,
+            38L,
+            requiredMasteryLevels = mapOf(Affinity.ARCANE.id to 6L, Affinity.FROST.id to 4L)
+        ),
+        FeatureUnlockDefinition(
+            IRON_VOW_FEATURE_ID,
+            FeatureUnlockScope.RUN,
+            50L,
+            requiredMasteryLevels = mapOf(Affinity.GUARD.id to 7L, Affinity.VITALITY.id to 6L)
+        ),
+        FeatureUnlockDefinition(
+            STARFALL_FEATURE_ID,
+            FeatureUnlockScope.RUN,
+            65L,
+            requiredMasteryLevels = mapOf(Affinity.EMBER.id to 8L, Affinity.ARCANE.id to 8L)
+        )
     )
 
     private fun convergence(

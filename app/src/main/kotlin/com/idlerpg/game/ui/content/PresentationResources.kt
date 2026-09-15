@@ -39,6 +39,9 @@ fun PresentationStringKey.stringResId(): Int = when (this) {
     PresentationStringKey.GLACIAL_WARD -> R.string.content_glacial_ward
     PresentationStringKey.RESONANCE_SHIFT -> R.string.content_resonance_shift
     PresentationStringKey.BLOOD_ECLIPSE_SKILL -> R.string.content_blood_eclipse_skill
+    PresentationStringKey.VOID_LANCE -> R.string.content_void_lance
+    PresentationStringKey.IRON_VOW -> R.string.content_iron_vow
+    PresentationStringKey.STARFALL -> R.string.content_starfall
     PresentationStringKey.BURNING -> R.string.content_burning
     PresentationStringKey.SCORCHED -> R.string.content_scorched
     PresentationStringKey.GUARD_FOCUS -> R.string.content_guard_focus
@@ -88,6 +91,11 @@ fun PresentationStringKey.stringResId(): Int = when (this) {
     PresentationStringKey.SEERS_HELM -> R.string.content_seers_helm
     PresentationStringKey.RIFTSTEP_BOOTS -> R.string.content_riftstep_boots
     PresentationStringKey.ECHO_SIGIL -> R.string.content_echo_sigil
+    PresentationStringKey.VOIDGLASS_EDGE -> R.string.content_voidglass_edge
+    PresentationStringKey.WARDEN_PLATE -> R.string.content_warden_plate
+    PresentationStringKey.STARFALL_VISOR -> R.string.content_starfall_visor
+    PresentationStringKey.RESONANT_CORE -> R.string.content_resonant_core
+    PresentationStringKey.DUSK_SIGIL -> R.string.content_dusk_sigil
     PresentationStringKey.KEEN -> R.string.content_keen
     PresentationStringKey.BRUTAL -> R.string.content_affix_brutal
     PresentationStringKey.RELENTLESS -> R.string.content_affix_relentless
@@ -238,6 +246,9 @@ fun PresentationAssetKey.drawableResId(): Int = when (this) {
     PresentationAssetKey.GLACIAL_WARD -> R.drawable.ic_skill_glacial_ward
     PresentationAssetKey.RESONANCE_SHIFT -> R.drawable.ic_skill_resonance_shift
     PresentationAssetKey.BLOOD_ECLIPSE_SKILL -> R.drawable.ic_skill_blood_eclipse
+    PresentationAssetKey.VOID_LANCE -> R.drawable.ic_skill_void_lance
+    PresentationAssetKey.IRON_VOW -> R.drawable.ic_skill_iron_vow
+    PresentationAssetKey.STARFALL -> R.drawable.ic_skill_starfall
     PresentationAssetKey.BURNING -> R.drawable.ic_status_burning
     PresentationAssetKey.GUARD_FOCUS -> R.drawable.ic_status_guard_focus
     PresentationAssetKey.STAGGER -> R.drawable.ic_skill_heavy_strike
@@ -274,6 +285,11 @@ fun PresentationAssetKey.drawableResId(): Int = when (this) {
     PresentationAssetKey.SEERS_HELM -> R.drawable.ic_item_seer_helm
     PresentationAssetKey.RIFTSTEP_BOOTS -> R.drawable.ic_item_riftstep_boots
     PresentationAssetKey.ECHO_SIGIL -> R.drawable.ic_item_echo_sigil
+    PresentationAssetKey.VOIDGLASS_EDGE -> R.drawable.ic_item_voidglass_edge
+    PresentationAssetKey.WARDEN_PLATE -> R.drawable.ic_item_warden_plate
+    PresentationAssetKey.STARFALL_VISOR -> R.drawable.ic_item_starfall_visor
+    PresentationAssetKey.RESONANT_CORE -> R.drawable.ic_item_resonant_core
+    PresentationAssetKey.DUSK_SIGIL -> R.drawable.ic_item_dusk_sigil
     PresentationAssetKey.KEEN -> R.drawable.ic_affix_keen
     PresentationAssetKey.FIRST_HUNT -> R.drawable.ic_quest_first_hunt
     PresentationAssetKey.FIRST_HUNT_OBJECTIVE -> R.drawable.ic_objective_target

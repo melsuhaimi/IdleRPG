@@ -37,7 +37,7 @@ object LootWorldAutomationScenarioTest {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
         check(EquipmentSlot.values().size == 6)
-        check(registry.allItems().size == 6)
+        check(registry.allItems().size == 11)
         check(registry.allAffixes().size == 16)
         val region = registry.region(DefaultGameContent.TRAINING_HOLLOW_REGION_ID)
         check(region.encounterIds.size == TrainingHollowWorldContent.MAX_STAGE)
@@ -126,7 +126,12 @@ object LootWorldAutomationScenarioTest {
             TrainingHollowLootContent.ARMOR_ITEM_ID,
             TrainingHollowLootContent.HELM_ITEM_ID,
             TrainingHollowLootContent.BOOTS_ITEM_ID,
-            TrainingHollowLootContent.ACCESSORY_ITEM_ID
+            TrainingHollowLootContent.ACCESSORY_ITEM_ID,
+            TrainingHollowLootContent.VOIDGLASS_EDGE_ITEM_ID,
+            TrainingHollowLootContent.WARDEN_PLATE_ITEM_ID,
+            TrainingHollowLootContent.STARFALL_VISOR_ITEM_ID,
+            TrainingHollowLootContent.RESONANT_CORE_ITEM_ID,
+            TrainingHollowLootContent.DUSK_SIGIL_ITEM_ID
         )
         val traitItemIds = traitDefinitions.indices.map { index -> InstanceId(52_000L + index) }
         val traitItems = traitDefinitions.mapIndexed { index, definitionId ->
@@ -153,6 +158,9 @@ object LootWorldAutomationScenarioTest {
         check(ModifierSystem.preservedSequenceEntries(traitState, DefaultGameContent.ARCANE_PULSE_ID, registry) == 1)
         check(ModifierSystem.skillHealingMultiplier(traitState, DefaultGameContent.GUARD_MEND_ID, registry).units > 10_000L)
         check(ModifierSystem.skillResonanceBonuses(traitState, DefaultGameContent.QUICK_SLASH_ID, registry)[Affinity.TEMPO] == GameNumber.ONE)
+        check(ModifierSystem.skillCleaveRatio(traitState, TrainingHollowStrategyContent.VOID_LANCE_ID, registry) != null)
+        check(ModifierSystem.skillHealingMultiplier(traitState, TrainingHollowStrategyContent.IRON_VOW_ID, registry).units > 10_000L)
+        check(ModifierSystem.skillSequencePreservation(traitState, TrainingHollowStrategyContent.STARFALL_ID, registry) == 1)
 
         val worldRuntime = SimulationTestSupport.runtime(seed = 5_602L)
         SimulationTestSupport.checkAccepted(

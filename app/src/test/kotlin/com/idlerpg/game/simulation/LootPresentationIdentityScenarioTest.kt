@@ -33,7 +33,17 @@ object LootPresentationIdentityScenarioTest {
             TrainingHollowLootContent.BOOTS_ITEM_ID to
                 (PresentationStringKey.RIFTSTEP_BOOTS to PresentationAssetKey.RIFTSTEP_BOOTS),
             TrainingHollowLootContent.ACCESSORY_ITEM_ID to
-                (PresentationStringKey.ECHO_SIGIL to PresentationAssetKey.ECHO_SIGIL)
+                (PresentationStringKey.ECHO_SIGIL to PresentationAssetKey.ECHO_SIGIL),
+            TrainingHollowLootContent.VOIDGLASS_EDGE_ITEM_ID to
+                (PresentationStringKey.VOIDGLASS_EDGE to PresentationAssetKey.VOIDGLASS_EDGE),
+            TrainingHollowLootContent.WARDEN_PLATE_ITEM_ID to
+                (PresentationStringKey.WARDEN_PLATE to PresentationAssetKey.WARDEN_PLATE),
+            TrainingHollowLootContent.STARFALL_VISOR_ITEM_ID to
+                (PresentationStringKey.STARFALL_VISOR to PresentationAssetKey.STARFALL_VISOR),
+            TrainingHollowLootContent.RESONANT_CORE_ITEM_ID to
+                (PresentationStringKey.RESONANT_CORE to PresentationAssetKey.RESONANT_CORE),
+            TrainingHollowLootContent.DUSK_SIGIL_ITEM_ID to
+                (PresentationStringKey.DUSK_SIGIL to PresentationAssetKey.DUSK_SIGIL)
         )
         expectedItems.forEach { (id, expected) ->
             val entry = presentation.entry(id)
