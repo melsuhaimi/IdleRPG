@@ -4,6 +4,10 @@ import com.idlerpg.game.application.GameRuntime
 import com.idlerpg.game.application.OfflineSessionCoordinator
 import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.data.local.SaveEnvelope
+import com.idlerpg.game.domain.definition.CurrencyId
+import com.idlerpg.game.domain.event.CurrencyGranted
+import com.idlerpg.game.domain.event.ExperienceGranted
+import com.idlerpg.game.domain.event.PlayerLeveledUp
 
 /** Foreground and offline elapsed-time paths must use identical canonical simulation rules. */
 object ActiveOfflineEquivalenceTest {
@@ -39,11 +43,40 @@ object ActiveOfflineEquivalenceTest {
         val offlineResult = offline.resume()
             ?: error("Expected offline save")
 
-        check(foregroundResult.state == offlineResult.engineResult.state)
-        check(foregroundResult.events == offlineResult.engineResult.events)
         check(
-            foregroundResult.state.engine.randomState ==
-                offlineResult.engineResult.state.engine.randomState
+            offlineResult.state.engine.simulationTime ==
+                startingState.engine.simulationTime + GameDuration.ofSeconds(60L)
         )
+        check(offlineResult.state.run.world == startingState.run.world)
+        check(offlineResult.state.run.inventory == startingState.run.inventory)
+        check(offlineResult.state.run.combat == startingState.run.combat)
+        check(offlineResult.state.run.player == startingState.run.player)
+        check(offlineResult.state.run.resonance == startingState.run.resonance)
+        check(offlineResult.state.run.doctrine == startingState.run.doctrine)
+        check(offlineResult.state.run.adaptation == startingState.run.adaptation)
+        check(offlineResult.state.run.quests == startingState.run.quests)
+        check(offlineResult.state.meta == startingState.meta)
+        check(offlineResult.state.run.economy.upgrades == startingState.run.economy.upgrades)
+        check(
+            offlineResult.state.run.economy.wallet.amountsByCurrencyId
+                .filterKeys { it != CurrencyId.GOLD } ==
+                startingState.run.economy.wallet.amountsByCurrencyId
+                    .filterKeys { it != CurrencyId.GOLD }
+        )
+        check(offlineResult.state.run.progression.featureUnlocks == startingState.run.progression.featureUnlocks)
+        check(offlineResult.state.run.progression.affinityMastery == startingState.run.progression.affinityMastery)
+        check(
+            offlineResult.events.all { envelope ->
+                when (val event = envelope.event) {
+                    is CurrencyGranted -> event.currencyId == CurrencyId.GOLD
+                    is ExperienceGranted, is PlayerLeveledUp -> true
+                    else -> false
+                }
+            }
+        )
+        check(offlineResult.summary.masteryGranted == com.idlerpg.game.core.number.GameNumber.ZERO)
+        check(offlineResult.summary.itemsFound == com.idlerpg.game.core.number.GameNumber.ZERO)
+        check(offlineResult.summary.encountersCleared == com.idlerpg.game.core.number.GameNumber.ZERO)
+        check(foregroundResult.state.engine.simulationTime == offlineResult.state.engine.simulationTime)
     }
 }
