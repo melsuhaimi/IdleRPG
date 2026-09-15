@@ -302,8 +302,8 @@
     <string name="battle_retry_failed_encounter">Retry failed encounter</string>
     <string name="battle_defeat_title">Hero defeated</string>
     <string name="battle_defeat_detail">The fight failed without rewards. Retry restores your hero before the same encounter.</string>
-    <string name="battle_health_format">HP %1$s / %2$s</string>
-    <string name="battle_health_compact_format">%1$s / %2$s HP</string>
+    <string name="battle_health_format">HP %1$s/%2$s</string>
+    <string name="battle_health_compact_format">%1$s/%2$s</string>
     <string name="battle_theater_auto_format">AUTO · %1$d RULES</string>
     <string name="battle_theater_header_format">%1$s · Stage %2$s · Wave %3$d/%4$d · %5$s</string>
     <string name="battle_stage_format">STAGE %1$s</string>
@@ -714,6 +714,21 @@
     <string name="gear_bulk_salvage_confirm_body">This will salvage %1$d unlocked, unequipped items.</string>
     <string name="gear_filter_all_rarities">All rarities</string>
     <string name="gear_filter_all_slots">All slots</string>
+    <string name="gear_inventory_tab_format">INVENTORY %1$d/%2$d</string>
+    <string name="gear_stash_tab_format">STASH %1$d</string>
+    <string name="gear_inventory_count_short_format">%1$d/%2$d slots used</string>
+    <string name="gear_filter_rarity_label">RARITY</string>
+    <string name="gear_filter_slot_label">SLOT</string>
+    <string name="gear_filter_all_short">ALL</string>
+    <string name="gear_filter_all_slots_short">ALL SLOTS</string>
+    <string name="gear_auto_salvage_title">AUTO-SALVAGE POLICY</string>
+    <string name="gear_auto_salvage_on_short">ON</string>
+    <string name="gear_auto_salvage_off_short">OFF</string>
+    <string name="gear_auto_salvage_summary_format">Auto-salvage below %1$s</string>
+    <string name="gear_auto_salvage_detail">New drops below the selected tier are salvaged for Gold. Build-defining items remain protected.</string>
+    <string name="gear_auto_salvage_off_detail">New drops are kept until you choose what to salvage.</string>
+    <string name="gear_salvage_below_action">Salvage unlocked items below %1$s</string>
+
     <string name="gear_sort_rarity">Sort: rarity</string>
     <string name="gear_sort_newest">Sort: newest</string>
     <string name="gear_auto_salvage_on">Auto-salvage: on (keep Rare+)</string>
@@ -723,7 +738,7 @@
     <string name="gear_inventory_count_format">%1$d / %2$d inventory slots used</string>
     <string name="gear_inventory_empty">No owned items yet.</string>
     <string name="gear_overflow_title">Stash</string>
-    <string name="gear_overflow_count_format">%1$d / %2$d stash slots used</string>
+    <string name="gear_overflow_count_format">%1$d stored · soft limit %2$d</string>
     <string name="gear_overflow_empty">Stash is empty.</string>
     <string name="gear_overflow_item_note">Stash items cannot be equipped or locked until moved to inventory.</string>
     <string name="gear_instance_format">#%1$d</string>
