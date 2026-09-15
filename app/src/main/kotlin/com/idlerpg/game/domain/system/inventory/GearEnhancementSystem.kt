@@ -31,7 +31,9 @@ data class GearEnhancementPreview(
     val successChance: Ratio,
     val materialCost: GameNumber,
     val protectionGemCost: GameNumber,
-    val failureLevelWithoutProtection: Int
+    val failureLevelWithoutProtection: Int,
+    val currentFailstack: Int = 0,
+    val failureFailstack: Int = 0
 )
 
 /**
@@ -56,11 +58,15 @@ object GearEnhancementSystem : GameCommandHandler {
         else -> rejected(CommandRejectionCode.UNSUPPORTED)
     }
 
-    fun enhancementSuccessChance(level: Int): Ratio {
+    fun enhancementSuccessChance(
+        level: Int,
+        failstack: Int = 0
+    ): Ratio {
         require(level in EnhancementLevel.INITIAL until EnhancementLevel.MAX) {
             "Enhancement level is not attemptable: $level"
         }
-        val units = when {
+        val failstackBonus = EnhancementLevel.failstackBonusUnits(failstack)
+        val baseUnits = when {
             level <= 4 -> 9_000L - level * 1_000L
             level <= 9 -> 4_500L - (level - 5L) * 500L
             level <= 13 -> 2_000L - (level - 10L) * 500L
@@ -71,7 +77,9 @@ object GearEnhancementSystem : GameCommandHandler {
             level == 18 -> 25L
             else -> 10L
         }
-        return Ratio.ofUnits(units)
+        return Ratio.ofUnits(
+            (baseUnits + failstackBonus).coerceAtMost(Ratio.UNITS_PER_ONE)
+        )
     }
 
     fun materialCostFor(level: Int): GameNumber {
@@ -96,7 +104,10 @@ object GearEnhancementSystem : GameCommandHandler {
             successChance = if (nextLevel == null) {
                 Ratio.ZERO
             } else {
-                enhancementSuccessChance(item.enhancementLevel)
+                enhancementSuccessChance(
+                    item.enhancementLevel,
+                    item.enhancementFailstack
+                )
             },
             materialCost = if (nextLevel == null) {
                 GameNumber.ZERO
@@ -108,6 +119,12 @@ object GearEnhancementSystem : GameCommandHandler {
                 item.enhancementLevel
             } else {
                 EnhancementLevel.downgradeAfterFailure(item.enhancementLevel)
+            },
+            currentFailstack = item.enhancementFailstack,
+            failureFailstack = if (nextLevel == null) {
+                item.enhancementFailstack
+            } else {
+                EnhancementLevel.nextFailstack(item.enhancementFailstack)
             }
         )
     }
@@ -141,7 +158,10 @@ object GearEnhancementSystem : GameCommandHandler {
             materialSpent
         }
 
-        val chance = enhancementSuccessChance(currentLevel)
+        val chance = enhancementSuccessChance(
+            currentLevel,
+            item.enhancementFailstack
+        )
         val success = context.random.nextLong(Ratio.UNITS_PER_ONE) < chance.units
         val nextLevel = EnhancementLevel.next(currentLevel)
             ?: error("Validated enhancement level has no next level")
@@ -150,7 +170,15 @@ object GearEnhancementSystem : GameCommandHandler {
         } else {
             EnhancementLevel.downgradeAfterFailure(currentLevel)
         }
-        val nextItem = item.copy(enhancementLevel = resultingLevel)
+        val resultingFailstack = if (success) {
+            EnhancementLevel.INITIAL
+        } else {
+            EnhancementLevel.nextFailstack(item.enhancementFailstack)
+        }
+        val nextItem = item.copy(
+            enhancementLevel = resultingLevel,
+            enhancementFailstack = resultingFailstack
+        )
         val nextInventory = state.run.inventory.copy(
             itemsById = (state.run.inventory.itemsById + (item.instanceId to nextItem)).toSortedMap()
         )
@@ -174,7 +202,10 @@ object GearEnhancementSystem : GameCommandHandler {
                 success = success,
                 protectionUsed = command.useProtection,
                 materialCost = materialCost,
-                gemCost = gemCost
+                gemCost = gemCost,
+                successChance = chance,
+                previousFailstack = item.enhancementFailstack,
+                resultingFailstack = resultingFailstack
             ))
         }
         return CommandHandlingResult.Accepted(
