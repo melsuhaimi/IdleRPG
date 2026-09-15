@@ -332,7 +332,8 @@ object ModifierSystem {
             val itemId = state.run.inventory.equipment.itemIn(slot) ?: continue
             val item = state.run.inventory.itemsById[itemId]
                 ?: error("Equipped item $itemId is not owned")
-            for (rolled in item.affixes.sortedBy { it.affixId }) {
+            val rolledStats = listOfNotNull(item.mainStat) + item.affixes
+            for (rolled in rolledStats.sortedBy { it.affixId }) {
                 val effect = contentRegistry.affix(rolled.affixId).effect ?: continue
                 block(rolled.value, effect)
             }
