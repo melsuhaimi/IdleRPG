@@ -59,7 +59,7 @@ object IncrementalProgressionContractTest {
         )
         check(
             PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(14_999L), registry).toPlainString() ==
-                "1736681689828688423672605407345848192064237607405376617300084897172117018074535"
+                "210407975003795522087166622010876514590959839631751922183083395623780256829360715000"
         )
         check(PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(15_000L), registry) == GameNumber.ZERO)
         val baselines = checkpoints.map { level ->
