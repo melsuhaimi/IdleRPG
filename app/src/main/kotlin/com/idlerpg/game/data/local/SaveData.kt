@@ -1983,7 +1983,7 @@ private object SaveDataMapper {
             writer.contentId("$path.mainStat.affixId", mainStat.affixId)
             writer.long("$path.mainStat.value", mainStat.value)
         }
-        writer.long("$path.enhancementLevel", item.enhancementLevel)
+        writer.long("$path.enhancementLevel", item.enhancementLevel.toLong())
         writer.optionalContentId(
             "$path.sourceDefinitionId",
             item.sourceDefinitionId
@@ -2019,7 +2019,7 @@ private object SaveDataMapper {
             } else {
                 null
             },
-            enhancementLevel = reader.long("$path.enhancementLevel"),
+            enhancementLevel = Math.toIntExact(reader.long("$path.enhancementLevel")),
             sourceDefinitionId = reader.optionalContentId(
                 "$path.sourceDefinitionId"
             )
