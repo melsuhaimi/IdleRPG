@@ -16,6 +16,63 @@ object GameMath {
     }
 
     /**
+     * Applies a fixed-point multiplier repeatedly using exact rational arithmetic.
+     *
+     * The result is floored after the final multiplication. Exponentiation by squaring keeps
+     * the operation logarithmic in [steps] and avoids floating-point drift.
+     */
+    fun compound(
+        value: GameNumber,
+        multiplier: Ratio,
+        steps: Long
+    ): GameNumber {
+        require(steps >= 0L) { "steps cannot be negative: $steps" }
+        val numerator = value.toBigInteger().multiply(
+            exactPower(BigInteger.valueOf(multiplier.units), steps)
+        )
+        val denominator = exactPower(
+            BigInteger.valueOf(Ratio.UNITS_PER_ONE),
+            steps
+        )
+        return GameNumber.fromBigInteger(numerator.divide(denominator))
+    }
+
+    /** Applies a fixed-point multiplier repeatedly and rounds the final result upward. */
+    fun compoundCeil(
+        value: GameNumber,
+        multiplier: Ratio,
+        steps: Long
+    ): GameNumber {
+        require(steps >= 0L) { "steps cannot be negative: $steps" }
+        val numerator = value.toBigInteger().multiply(
+            exactPower(BigInteger.valueOf(multiplier.units), steps)
+        )
+        val denominator = exactPower(
+            BigInteger.valueOf(Ratio.UNITS_PER_ONE),
+            steps
+        )
+        val (quotient, remainder) = numerator.divideAndRemainder(denominator)
+        return GameNumber.fromBigInteger(
+            if (remainder.signum() == 0) quotient else quotient.add(BigInteger.ONE)
+        )
+    }
+
+    /** Exact exponentiation for non-negative [exponent] values. */
+    private fun exactPower(base: BigInteger, exponent: Long): BigInteger {
+        var remaining = exponent
+        var factor = base
+        var result = BigInteger.ONE
+        while (remaining > 0L) {
+            if (remaining % 2L == 1L) {
+                result = result.multiply(factor)
+            }
+            factor = factor.multiply(factor)
+            remaining /= 2L
+        }
+        return result
+    }
+
+    /**
      * Applies a deterministic per-step growth rate once for each logical step.
      *
      * This is intentionally not a loop. A tier-100 value is calculated as
