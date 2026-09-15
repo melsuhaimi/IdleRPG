@@ -8,6 +8,7 @@ import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.definition.combat.BasicAttackDefinition
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.system.combat.CombatMath
+import com.idlerpg.game.domain.system.rebirth.RebirthStatSystem
 import java.math.BigDecimal
 
 /** Builds authoritative derived combat readouts from canonical state and definitions. */
@@ -16,20 +17,14 @@ object DerivedStatSystem {
     fun attackPower(state: GameState, contentRegistry: ContentRegistry): GameNumber =
         ModifierSystem.attackPower(
             state = state,
-            base = PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).attackPower,
+            base = baseStats(state).attackPower,
             contentRegistry = contentRegistry
         )
 
     fun armor(state: GameState, contentRegistry: ContentRegistry): GameNumber =
         ModifierSystem.armor(
             state = state,
-            base = PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).armor,
+            base = baseStats(state).armor,
             contentRegistry = contentRegistry
         )
 
@@ -42,10 +37,7 @@ object DerivedStatSystem {
     fun actionSpeed(state: GameState, contentRegistry: ContentRegistry): Ratio =
         ModifierSystem.actionSpeed(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).actionSpeed,
+            baseStats(state).actionSpeed,
             contentRegistry
         )
 
@@ -55,10 +47,7 @@ object DerivedStatSystem {
         contentRegistry: ContentRegistry? = null
     ): GameDuration {
         val actionSpeed = contentRegistry?.let { DerivedStatSystem.actionSpeed(state, it) }
-            ?: PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).actionSpeed
+            ?: baseStats(state).actionSpeed
         var interval = com.idlerpg.game.domain.system.combat.CombatMath.actionInterval(
             base = base,
             actionSpeed = actionSpeed
@@ -87,49 +76,42 @@ object DerivedStatSystem {
     fun maximumHealth(state: GameState, contentRegistry: ContentRegistry): GameNumber =
         ModifierSystem.maximumHealth(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).maxHealth,
+            baseStats(state).maxHealth,
             contentRegistry
         )
     fun criticalChance(state: GameState, contentRegistry: ContentRegistry) =
         ModifierSystem.criticalChance(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).criticalChance,
+            baseStats(state).criticalChance,
             contentRegistry
         )
             .let { Ratio.ofUnits(it.units.coerceAtMost(Ratio.UNITS_PER_ONE)) }
     fun criticalMultiplier(state: GameState, contentRegistry: ContentRegistry) =
         ModifierSystem.criticalMultiplier(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).criticalMultiplier,
+            baseStats(state).criticalMultiplier,
             contentRegistry
         )
     fun effectPower(state: GameState, contentRegistry: ContentRegistry) =
         ModifierSystem.effectPower(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).effectPower,
+            baseStats(state).effectPower,
             contentRegistry
         )
     fun healingPower(state: GameState, contentRegistry: ContentRegistry) =
         ModifierSystem.healingPower(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
-            ).healingPower,
+            baseStats(state).healingPower,
             contentRegistry
         )
+
+    private fun baseStats(state: GameState) = RebirthStatSystem.apply(
+        PlayerScalingSystem.baseStatsForLevel(
+            state.run.player.baseStats,
+            state.run.progression.playerLevel.level
+        ),
+        state.meta.rebirth
+    )
 
     /** Armor's readable percentage for stat panels and tooltips. */
     fun damageReduction(state: GameState, contentRegistry: ContentRegistry): Ratio {
