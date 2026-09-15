@@ -30,7 +30,8 @@ data class ItemInstance(
     val affixes: List<RolledAffix> = emptyList(),
     val sourceDefinitionId: ContentId? = null,
     val mainStat: RolledAffix? = null,
-    val enhancementLevel: Int = EnhancementLevel.INITIAL
+    val enhancementLevel: Int = EnhancementLevel.INITIAL,
+    val enhancementFailstack: Int = 0
 ) {
     init {
         require(affixes.map { it.affixId }.size == affixes.map { it.affixId }.toSet().size) {
@@ -43,6 +44,9 @@ data class ItemInstance(
         }
         require(enhancementLevel in EnhancementLevel.INITIAL..EnhancementLevel.MAX) {
             "ItemInstance enhancement level is invalid: $enhancementLevel"
+        }
+        require(enhancementFailstack in 0..EnhancementLevel.MAX_FAILSTACK) {
+            "ItemInstance enhancement failstack is invalid: $enhancementFailstack"
         }
     }
 }
