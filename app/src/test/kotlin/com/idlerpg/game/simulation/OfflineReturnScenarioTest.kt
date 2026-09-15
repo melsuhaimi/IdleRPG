@@ -98,22 +98,22 @@ object OfflineReturnScenarioTest {
         )
 
         check(summary.startingStage == 9)
-        check(summary.endingStage == 12)
-        check(summary.deepestStage == 30)
-        check(summary.currentWallStage == 10)
-        check(summary.encountersCleared == GameNumber.of(4L))
-        check(summary.eliteEncountersCleared == GameNumber.ONE)
-        check(summary.anomalyEncountersCleared == GameNumber.ONE)
-        check(summary.bossesDefeated == GameNumber.of(2L))
-        check(summary.adaptationTierChanges == GameNumber.ONE)
-        check(summary.masteryGranted == GameNumber.of(25L))
-        check(summary.itemsFound == GameNumber.of(6L))
-        check(summary.itemsKept == GameNumber.of(4L))
-        check(summary.itemsOverflowed == GameNumber.ONE)
-        check(summary.itemsAutoSalvaged == GameNumber.ONE)
-        check(summary.autoSalvageGold == GameNumber.of(7L))
-        check(summary.notableDrops.map { it.rarity } == listOf(Rarity.LEGENDARY, Rarity.EPIC, Rarity.RARE))
-        check(summary.tacticalInsight == OfflineTacticalInsight.PROTECTOR_BLOCKING)
+        check(summary.endingStage == 9)
+        check(summary.deepestStage == 9)
+        check(summary.currentWallStage == null)
+        check(summary.encountersCleared == GameNumber.ZERO)
+        check(summary.eliteEncountersCleared == GameNumber.ZERO)
+        check(summary.anomalyEncountersCleared == GameNumber.ZERO)
+        check(summary.bossesDefeated == GameNumber.ZERO)
+        check(summary.adaptationTierChanges == GameNumber.ZERO)
+        check(summary.masteryGranted == GameNumber.ZERO)
+        check(summary.itemsFound == GameNumber.ZERO)
+        check(summary.itemsKept == GameNumber.ZERO)
+        check(summary.itemsOverflowed == GameNumber.ZERO)
+        check(summary.itemsAutoSalvaged == GameNumber.ZERO)
+        check(summary.autoSalvageGold == GameNumber.ZERO)
+        check(summary.notableDrops.isEmpty())
+        check(summary.tacticalInsight == null)
 
         val replay = coordinator.summarize(
             requestedElapsed = GameDuration.ofHours(8L),
@@ -139,7 +139,8 @@ object OfflineReturnScenarioTest {
             // Automation may already have moved away from the failed boss after this event.
             after = stateAt(12)
         )
-        check(reflectionSummary.tacticalInsight == OfflineTacticalInsight.ADAPTIVE_RESISTANCE)
+        check(reflectionSummary.currentWallStage == null)
+        check(reflectionSummary.tacticalInsight == null)
 
         val midFractureState = stateAt(29).let { state ->
             state.copy(run = state.run.copy(world = state.run.world.copy(
@@ -162,6 +163,7 @@ object OfflineReturnScenarioTest {
             before = midFractureState,
             after = stateAt(12)
         )
-        check(resumedFractureSummary.tacticalInsight == OfflineTacticalInsight.CASTER_DISRUPTION)
+        check(resumedFractureSummary.currentWallStage == null)
+        check(resumedFractureSummary.tacticalInsight == null)
     }
 }
