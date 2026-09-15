@@ -353,6 +353,7 @@ private fun SkillFocusPane(
             }
 
             SkillFacts(skill)
+            SkillInvestmentActions(skill, onIntent)
             SkillEvolutionChoices(skill, onIntent)
             GameDivider()
             SkillLoadoutActions(
@@ -457,6 +458,47 @@ private fun SkillFacts(skill: SkillLoadoutSkillUiState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = ResourceGold
             )
+        }
+    }
+}
+
+@Composable
+private fun SkillInvestmentActions(
+    skill: SkillLoadoutSkillUiState,
+    onIntent: (SkillLoadoutUiIntent) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Text(
+            text = "Rank " + skill.rank + "/" + (skill.maxRank ?: "∞") +
+                " · Mastery " + skill.mastery + "/" + skill.masteryCap +
+                " · Refinement " + skill.refinement + "/" + skill.refinementCap,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            GameOutlinedButton(
+                onClick = { onIntent(SkillLoadoutUiIntent.UpgradeRank(skill.skillId)) },
+                enabled = skill.canUpgradeRank
+            ) {
+                Text("Rank +1 · " + skill.rankUpgradeCostDisplay, maxLines = 1)
+            }
+            GameOutlinedButton(
+                onClick = { onIntent(SkillLoadoutUiIntent.UpgradeMastery(skill.skillId)) },
+                enabled = skill.canUpgradeMastery
+            ) {
+                Text("Mastery +1 · " + skill.masteryUpgradeCostDisplay, maxLines = 1)
+            }
+            GameOutlinedButton(
+                onClick = { onIntent(SkillLoadoutUiIntent.Refine(skill.skillId)) },
+                enabled = skill.canRefine
+            ) {
+                Text("Refine +1 · " + skill.refinementCostDisplay, maxLines = 1)
+            }
         }
     }
 }
