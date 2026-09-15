@@ -15,21 +15,21 @@ This review separates implementation standards from the requested gameplay contr
 - **Evidence:** `app/src/main/kotlin/com/idlerpg/game/domain/system/world/WorldSystem.kt:224-230` accepts wave formations in `1..5`.
 - **Contract source:** `EncounterDefinition.MAX_ACTIVE_ENEMIES` is `3`, and encounter construction already enforces the elite/boss single-enemy rule.
 - **Risk:** direct combat or future callers can bypass authored encounter validation and create formations the game design does not support.
-- **Fix target:** use the shared domain constant in both systems and add a regression test for the upper bound.
+- **Resolution:** both systems now use the shared `EncounterDefinition.MAX_ACTIVE_ENEMIES` constant, and the multi-enemy scenario covers the three-enemy ceiling.
 
 ### S2 — world projection relies on a nullable attack id
 
 - **Evidence:** `app/src/main/kotlin/com/idlerpg/game/presentation/projection/WorldProjector.kt:73-76` calls `enemyDefinition.attackDefinitionId!!`.
 - **Evidence:** `app/src/main/kotlin/com/idlerpg/game/data/content/ContentValidator.kt:358-365` permits a null attack id.
 - **Risk:** a content-valid enemy can crash the world screen when its first wave is projected. The combat loop intentionally supports enemies without an attack by skipping their scheduled action, so the projection and content contract disagree.
-- **Fix target:** make encounter-referenced enemies require an authored attack, and replace the assertion with a descriptive validated-contract failure. A regression test will prove the validator rejects the invalid encounter content.
+- **Resolution:** encounter-referenced enemies now require an authored attack during validation, and projection reports the validated-contract failure instead of asserting on a nullable id. The regression scenario covers the missing-attack path.
 
 ### S3 — low nonzero rates are displayed as zero
 
 - **Evidence:** `app/src/main/kotlin/com/idlerpg/game/presentation/format/GameNumberFormatter.kt:23-28` truncates any rate with at most three integer digits to at most two decimals.
 - **Example:** a stored rate of `0.001` becomes `0`.
 - **Risk:** players lose meaningful progression information in the UI, especially for early or slow idle rates.
-- **Fix target:** preserve a readable nonzero fractional value at the presentation boundary and add formatter tests.
+- **Resolution:** fractional rates now retain three readable decimal places, show `<0.001` below the display floor, and have regression coverage.
 
 ## Requested gameplay findings
 
@@ -44,13 +44,13 @@ This review separates implementation standards from the requested gameplay contr
 
 - **Evidence:** the current content has a small initial equipment/skill catalog, while the runtime already has deterministic loot, salvage, equipment, skill loadout, and upgrade systems.
 - **Risk:** the systems read as prototype scaffolding because the player reaches the end of authored content before those decisions can mature.
-- **Fix target:** expand content using the existing domain primitives, with readable trade-offs and no AI/LLM decision-making in runtime code.
+- **Resolution:** authored content now includes 120 stages, eight milestone bosses, 15 skills, 11 item definitions, and five build-defining mid/late-game equipment pieces. Existing deterministic systems own the outcomes; no AI/LLM decision path was added.
 
 ### P3 — automation must preserve meaningful player decisions
 
 - **Evidence:** existing design docs define the loop as battle → rewards → inspect/equip/salvage or upgrade → battle.
 - **Risk:** presenting automation as the game itself creates the “AI-oriented” feel the user rejected.
-- **Fix target:** keep simulation deterministic and transparent; make auto-battle remove repetition, while stages, loot choices, salvage policy, skill loadout, and push/farm choices remain explicit player decisions.
+- **Resolution:** the existing auto-battle mode remains a repetition reducer, while push/farm mode, skill queue/loadout, all-rarity salvage threshold, lock/equip/salvage actions, and capacity expansion remain explicit commands. The capacity harness now follows the actual safe-overflow contract rather than waiting for a hard block that cannot occur.
 
 ## Baseline verification
 
@@ -58,3 +58,10 @@ This review separates implementation standards from the requested gameplay contr
 - The clean baseline PR workflow passed before this audit.
 - No TODO/FIXME/XXX/HACK markers were found in production Kotlin.
 - The full runtime/device path is not proven by this static pass; after fixes, CI and Android emulator/device checks are required.
+
+## Implementation follow-up
+
+- `ContentRegistry.contains` now includes authored status IDs, closing a lookup gap between `statusOrNull` and generic content membership.
+- Inventory capacity remains lossless: normal slots fill first, retained loot moves to soft overflow, and overflow can be claimed or salvaged. The simulator’s capacity scenario now stops when both capacities are actually full.
+- Battle nameplates can wrap title/health text to two lines, health separators are breakable, and compact HUD resource values scale down by length so long gold/Lumen values remain readable on narrow screens.
+- The all-rarity auto-salvage policy is preserved: the player can choose Off, Common+, Uncommon+, Rare+, Epic+, or Legendary+, while build-defining traits are protected by the authored loot rule.
