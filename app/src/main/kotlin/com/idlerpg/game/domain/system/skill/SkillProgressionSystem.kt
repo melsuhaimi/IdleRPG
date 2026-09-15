@@ -84,16 +84,19 @@ object SkillProgressionSystem : GameCommandHandler {
         command: UpgradeSkillRank,
         context: EngineContext
     ): CommandHandlingResult {
-        val definition = knownUnlockedSkill(state, command.skillId, context)
-            ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.skillId)
+        val definition = try {
+            knownUnlockedSkill(state, command.skillId, context)
+        } catch (rejection: SkillProgressionRejection) {
+            return CommandHandlingResult.Rejected(rejection.reason)
+        } ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.skillId)
         val currentRank = SkillScalingSystem.rank(state, definition)
         val maximumRank = definition.maxRank ?: MAX_UNBOUNDED_RANK
         if (currentRank >= maximumRank) {
-            return rejected(CommandRejectionCode.ALREADY_MAXIMUM, definition.id)
+            return rejected(CommandRejectionCode.NOT_READY, definition.id)
         }
         val cost = rankUpgradeCost(currentRank)
         val charged = chargeGold(state, cost)
-            ?: return rejected(CommandRejectionCode.INSUFFICIENT_CURRENCY, CurrencyId.GOLD.id)
+            ?: return rejected(CommandRejectionCode.INSUFFICIENT_RESOURCE, CurrencyId.GOLD.id)
         val next = state.run.progression.skillProgression.copy(
             rankBySkillId = state.run.progression.skillProgression.rankBySkillId +
                 (definition.id to currentRank + 1L)
@@ -116,16 +119,19 @@ object SkillProgressionSystem : GameCommandHandler {
         command: UpgradeSkillMastery,
         context: EngineContext
     ): CommandHandlingResult {
-        val definition = knownUnlockedSkill(state, command.skillId, context)
-            ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.skillId)
+        val definition = try {
+            knownUnlockedSkill(state, command.skillId, context)
+        } catch (rejection: SkillProgressionRejection) {
+            return CommandHandlingResult.Rejected(rejection.reason)
+        } ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.skillId)
         val progression = state.run.progression.skillProgression
         val current = progression.masteryBySkillId[definition.id] ?: 0L
         if (current >= MAX_MASTERY) {
-            return rejected(CommandRejectionCode.ALREADY_MAXIMUM, definition.id)
+            return rejected(CommandRejectionCode.NOT_READY, definition.id)
         }
         val cost = masteryUpgradeCost(current)
         val charged = chargeGold(state, cost)
-            ?: return rejected(CommandRejectionCode.INSUFFICIENT_CURRENCY, CurrencyId.GOLD.id)
+            ?: return rejected(CommandRejectionCode.INSUFFICIENT_RESOURCE, CurrencyId.GOLD.id)
         val next = progression.copy(
             masteryBySkillId = progression.masteryBySkillId +
                 (definition.id to current + 1L)
@@ -148,16 +154,19 @@ object SkillProgressionSystem : GameCommandHandler {
         command: RefineSkill,
         context: EngineContext
     ): CommandHandlingResult {
-        val definition = knownUnlockedSkill(state, command.skillId, context)
-            ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.skillId)
+        val definition = try {
+            knownUnlockedSkill(state, command.skillId, context)
+        } catch (rejection: SkillProgressionRejection) {
+            return CommandHandlingResult.Rejected(rejection.reason)
+        } ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.skillId)
         val progression = state.run.progression.skillProgression
         val current = progression.refinementBySkillId[definition.id] ?: 0L
         if (current >= MAX_REFINEMENT) {
-            return rejected(CommandRejectionCode.ALREADY_MAXIMUM, definition.id)
+            return rejected(CommandRejectionCode.NOT_READY, definition.id)
         }
         val cost = refinementCost(current)
         val charged = chargeGold(state, cost)
-            ?: return rejected(CommandRejectionCode.INSUFFICIENT_CURRENCY, CurrencyId.GOLD.id)
+            ?: return rejected(CommandRejectionCode.INSUFFICIENT_RESOURCE, CurrencyId.GOLD.id)
         val next = progression.copy(
             refinementBySkillId = progression.refinementBySkillId +
                 (definition.id to current + 1L)
@@ -179,9 +188,16 @@ object SkillProgressionSystem : GameCommandHandler {
         state: GameState,
         skillId: ContentId,
         context: EngineContext
-    ) = context.contentRegistry.skillOrNull(skillId)?.takeIf { definition ->
-        SkillValidationSystem.unlockRejectionReason(state, definition) == null
+    ) = context.contentRegistry.skillOrNull(skillId)?.also { definition ->
+        val rejection = SkillValidationSystem.unlockRejectionReason(state, definition)
+        if (rejection != null) {
+            throw SkillProgressionRejection(rejection)
+        }
     }
+
+    private class SkillProgressionRejection(
+        val reason: CommandRejectionReason
+    ) : RuntimeException()
 
     private fun chargeGold(
         state: GameState,
