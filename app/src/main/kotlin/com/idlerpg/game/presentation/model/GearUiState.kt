@@ -27,7 +27,8 @@ data class GearAffixUiState(
     val affixId: ContentId,
     val titleStringKey: PresentationStringKey,
     val iconAssetKey: PresentationAssetKey,
-    val rolledValue: Long
+    val rolledValue: Long,
+    val isMainStat: Boolean = false
 )
 
 /**
@@ -66,7 +67,10 @@ data class GearItemUiState(
     val canSalvage: Boolean,
     val canClaimOverflow: Boolean,
     val canSalvageOverflow: Boolean,
-    val comparison: GearComparisonUiState? = null
+    val comparison: GearComparisonUiState? = null,
+    val mainStat: GearAffixUiState? = null,
+    val enhancementLevel: Int = 0,
+    val enhancementLabel: String = "+0"
 )
 
 data class GearEquipmentSlotUiState(
