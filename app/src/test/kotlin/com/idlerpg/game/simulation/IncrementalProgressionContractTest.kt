@@ -36,7 +36,32 @@ object IncrementalProgressionContractTest {
             )
             PlayerProgressionSystem.experienceToNextLevel(state, registry)
         }
-        check(xpCosts == listOf(20L, 110L, 365L, 1_290L, 5_015L).map(GameNumber::of))
+        check(xpCosts == listOf(100L, 108L, 122L, 148L, 221L).map(GameNumber::of))
+
+        fun stateAtLevel(level: Long) = levelBase.copy(
+            run = levelBase.run.copy(
+                progression = levelBase.run.progression.copy(
+                    playerLevel = levelBase.run.progression.playerLevel.copy(level = level)
+                )
+            )
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(800L), registry) ==
+                GameNumber.of(58_206L)
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(801L), registry) ==
+                GameNumber.of(58_905L)
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(1_000L), registry) ==
+                GameNumber.of(632_511L)
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(14_999L), registry).toPlainString() ==
+                "1736681689828688423672605407345848192064237607405376617300084897172117018074535"
+        )
+        check(PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(15_000L), registry) == GameNumber.ZERO)
         val baselines = checkpoints.map { level ->
             PlayerScalingSystem.baseStatsForLevel(BaseStats(), level)
         }
