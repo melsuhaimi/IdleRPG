@@ -4,5 +4,6 @@ package com.idlerpg.game.domain.model.progression
 data class ProgressionState(
     val playerLevel: PlayerLevelState = PlayerLevelState(),
     val featureUnlocks: FeatureUnlockState = FeatureUnlockState(),
-    val affinityMastery: AffinityMasteryState = AffinityMasteryState()
+    val affinityMastery: AffinityMasteryState = AffinityMasteryState(),
+    val skillProgression: SkillProgressionState = SkillProgressionState()
 )
