@@ -1,6 +1,7 @@
 package com.idlerpg.game.presentation.projection
 
 import com.idlerpg.game.core.id.ContentId
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.definition.CurrencyId
 import com.idlerpg.game.domain.definition.combat.SkillDefinition
@@ -143,9 +144,110 @@ class SkillLoadoutProjector(
             canUpgradeMastery = unlocked &&
                 mastery < SkillProgressionSystem.MAX_MASTERY && gold >= masteryCost,
             canRefine = unlocked &&
-                refinement < SkillProgressionSystem.MAX_REFINEMENT && gold >= refinementCost
+                refinement < SkillProgressionSystem.MAX_REFINEMENT && gold >= refinementCost,
+            technicalDetails = technicalDetails(definition)
         )
     }
+
+    private fun technicalDetails(definition: SkillDefinition): List<String> = buildList {
+        add("Target: " + readable(definition.targetingRule.name))
+        add(
+            "Timing: cooldown " + definition.cooldown.millis + " ms; recovery " +
+                definition.recovery.millis + " ms"
+        )
+        if (definition.resourceCosts.isNotEmpty()) {
+            add(
+                "Resources: " + definition.resourceCosts.entries
+                    .sortedBy { it.key }
+                    .joinToString(", ") { (id, amount) ->
+                        id.value + " " + amount.toPlainString()
+                    }
+            )
+        }
+        if (definition.affinityTags.isNotEmpty()) {
+            add(
+                "Affinities: " + definition.affinityTags
+                    .map { it.id.value }
+                    .sorted()
+                    .joinToString(", ")
+            )
+        }
+        definition.effects.forEachIndexed { index, effect ->
+            val prefix = "Effect " + (index + 1) + ": "
+            when (effect) {
+                is com.idlerpg.game.domain.definition.combat.EffectSpec.DealDamage -> {
+                    add(
+                        prefix + "damage " + readable(effect.damageKind.name) +
+                            " · " + percentage(effect.powerRatio) + " coefficient · " +
+                            readable(effect.scalingPolicy.name) +
+                            " · flat +" + effect.flatBonus.toPlainString() +
+                            " · " + effect.hitCount + " hit(s) · targets " +
+                            readable(effect.targetPattern.name) +
+                            " · critical " + if (effect.canCritical) "eligible" else "ineligible"
+                    )
+                    effect.conditions.forEach { condition ->
+                        when (condition) {
+                            is com.idlerpg.game.domain.definition.combat.EffectSpec.DamageCondition.TargetHasStatus ->
+                                add(
+                                    "Condition: target has " +
+                                        condition.statusDefinitionId.value +
+                                        " → +" + percentage(condition.bonusPowerRatio) +
+                                        " power"
+                                )
+                            is com.idlerpg.game.domain.definition.combat.EffectSpec.DamageCondition.TargetHealthAtOrBelow ->
+                                add(
+                                    "Condition: target HP ≤ " +
+                                        percentage(condition.threshold) + " → +" +
+                                        percentage(condition.bonusPowerRatio) + " power"
+                                )
+                        }
+                    }
+                }
+                is com.idlerpg.game.domain.definition.combat.EffectSpec.Heal ->
+                    add(
+                        prefix + "heal " + effect.flatAmount.toPlainString() +
+                            " · targets " + readable(effect.targetPattern.name)
+                    )
+                is com.idlerpg.game.domain.definition.combat.EffectSpec.ApplyStatus ->
+                    add(
+                        prefix + "apply " + effect.statusDefinitionId.value +
+                            " · targets " + readable(effect.targetPattern.name)
+                    )
+                is com.idlerpg.game.domain.definition.combat.EffectSpec.RemoveStatus ->
+                    add(
+                        prefix + "remove " + effect.statusDefinitionId.value +
+                            " · targets " + readable(effect.targetPattern.name)
+                    )
+                is com.idlerpg.game.domain.definition.combat.EffectSpec.ShiftResonance ->
+                    add(
+                        prefix + "shift " + effect.amount.toPlainString() + " " +
+                            effect.fromAffinity.id.value + " → " +
+                            effect.toAffinity.id.value
+                    )
+            }
+        }
+        add(
+            "Investments: rank +" + percentage(definition.powerGrowthPerPlayerLevel) +
+                " power/step; mastery +" +
+                percentage(Ratio.ofUnits(SkillScalingSystem.MASTERY_DAMAGE_UNITS_PER_LEVEL)) +
+                " damage/level and +" +
+                percentage(Ratio.ofUnits(SkillScalingSystem.MASTERY_HEALING_UNITS_PER_LEVEL)) +
+                " healing/level; refinement +" +
+                percentage(Ratio.ofUnits(SkillScalingSystem.REFINEMENT_DAMAGE_UNITS_PER_LEVEL)) +
+                " damage/level and +" +
+                percentage(Ratio.ofUnits(SkillScalingSystem.REFINEMENT_HEALING_UNITS_PER_LEVEL)) +
+                " healing/level"
+        )
+    }
+
+    private fun percentage(ratio: Ratio): String {
+        val whole = ratio.units / 100L
+        val fraction = (ratio.units % 100L).toString().padStart(2, '0')
+        return whole.toString() + "." + fraction + "%"
+    }
+
+    private fun readable(value: String): String =
+        value.lowercase().replace('_', ' ')
 
     private fun projectUnlock(
         state: GameState,
