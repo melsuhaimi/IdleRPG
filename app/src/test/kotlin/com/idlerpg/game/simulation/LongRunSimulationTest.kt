@@ -198,6 +198,7 @@ fun main() {
     ContentValidatorRegressionScenarioTest.run()
     NewGameDeploymentScenarioTest.run()
     SkillEvolutionScenarioTest.run()
+    SkillProgressionScenarioTest.run()
     DamageKindIdentityScenarioTest.run()
     OfflineReturnScenarioTest.run()
     AdaptationScenarioTest.run()
