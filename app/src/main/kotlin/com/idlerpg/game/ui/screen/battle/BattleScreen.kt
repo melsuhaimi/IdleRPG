@@ -1122,9 +1122,9 @@ private fun EnemyFormationStage(
             maxHeight - verticalSpacing * (rows.size - 1)
             ).coerceAtLeast(0.dp) / rows.size
         val reservedHeight = when {
-            formation.size == 1 -> if (compact) 70.dp else 82.dp
-            formation.size <= 3 -> if (compact) 62.dp else 72.dp
-            else -> if (compact) 82.dp else 94.dp
+            formation.size == 1 -> if (compact) 78.dp else 90.dp
+            formation.size <= 3 -> if (compact) 72.dp else 82.dp
+            else -> if (compact) 88.dp else 100.dp
         }
         val imageHeight = (maxRowHeight - reservedHeight).coerceAtLeast(
             if (compact) 42.dp else 54.dp
@@ -1279,7 +1279,7 @@ private fun ActorNameplate(
 ) {
     Surface(
         modifier = modifier
-            .heightIn(min = if (compact) 36.dp else 42.dp)
+            .heightIn(min = if (compact) 38.dp else 44.dp)
             .widthIn(min = 0.dp),
         shape = RoundedCornerShape(10.dp),
         color = ObsidianSurface1.copy(alpha = 0.82f),
@@ -1296,23 +1296,30 @@ private fun ActorNameplate(
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
-                    fontSize = if (compact) 9.sp else 10.sp
+                    fontSize = if (compact) 8.sp else 9.sp,
+                    lineHeight = if (compact) 10.sp else 11.sp,
+                    letterSpacing = 0.sp
                 ),
                 color = TextPrimary,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Clip
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 2,
+                softWrap = true,
+                overflow = TextOverflow.Clip,
+                textAlign = TextAlign.Center
             )
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall.battleTerminal().copy(
                     fontSize = if (compact) 7.sp else 8.sp,
-                    letterSpacing = 0.15.sp
+                    lineHeight = if (compact) 9.sp else 10.sp,
+                    letterSpacing = 0.sp
                 ),
                 color = accent,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Clip
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 2,
+                softWrap = true,
+                overflow = TextOverflow.Clip,
+                textAlign = TextAlign.Center
             )
         }
     }

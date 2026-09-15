@@ -162,8 +162,8 @@ fun GlobalHud(
                                 stringResource(it.stringResId())
                             } ?: stringResource(R.string.hud_no_region),
                             style = MaterialTheme.typography.headlineSmall.copy(
-                                fontSize = if (compact) 17.sp else 19.sp,
-                                lineHeight = if (compact) 21.sp else 23.sp
+                                fontSize = if (compact) 15.sp else 17.sp,
+                                lineHeight = if (compact) 18.sp else 20.sp
                             ),
                             maxLines = 1,
                             overflow = TextOverflow.Clip
@@ -236,6 +236,7 @@ fun GlobalHud(
                         value = state.goldDisplay,
                         accent = ResourceGold,
                         iconResId = R.drawable.gold_coin_stack_generated,
+                        compact = compact,
                         contentDescriptionText = stringResource(
                             R.string.hud_gold_value_format,
                             state.goldDisplay
@@ -248,6 +249,7 @@ fun GlobalHud(
                         value = state.echoDisplay,
                         accent = ResonanceTeal,
                         iconResId = R.drawable.lumen_crystal_generated,
+                        compact = compact,
                         contentDescriptionText = stringResource(
                             R.string.hud_legacy_value_format,
                             state.echoDisplay
@@ -311,12 +313,13 @@ private fun HudResourceValue(
     accent: Color,
     contentDescriptionText: String,
     iconResId: Int,
+    compact: Boolean,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-             .heightIn(min = 40.dp)
+             .heightIn(min = if (compact) 38.dp else 40.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = contentDescriptionText
             },
@@ -327,14 +330,17 @@ private fun HudResourceValue(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(
+                    horizontal = if (compact) 5.dp else 6.dp,
+                    vertical = if (compact) 3.dp else 4.dp
+                ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 5.dp)
         ) {
             Box(
                 modifier = Modifier
                     .width(2.dp)
-                        .height(22.dp)
+                    .height(if (compact) 20.dp else 22.dp)
                     .background(
                         Brush.verticalGradient(
                             listOf(accent.copy(alpha = 0.38f), accent)
@@ -345,7 +351,7 @@ private fun HudResourceValue(
             Image(
                 painter = painterResource(iconResId),
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(if (compact) 18.dp else 20.dp),
                 contentScale = ContentScale.Fit
             )
             Column(
@@ -357,17 +363,28 @@ private fun HudResourceValue(
                 Text(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 8.sp,
-                        letterSpacing = 0.7.sp
+                        fontSize = if (compact) 7.sp else 8.sp,
+                        letterSpacing = if (compact) 0.55.sp else 0.7.sp
                     ),
                     color = accent,
+                    modifier = Modifier.fillMaxWidth(),
                     maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Clip
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleSmall.copy(fontSize = 11.sp),
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = when {
+                            value.length >= 10 -> 8.sp
+                            value.length >= 8 -> 9.sp
+                            value.length >= 6 -> 10.sp
+                            else -> 11.sp
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
                     maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Clip
                 )
             }

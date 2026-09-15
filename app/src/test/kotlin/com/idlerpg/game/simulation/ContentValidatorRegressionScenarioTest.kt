@@ -1,6 +1,7 @@
 package com.idlerpg.game.simulation
 
 import com.idlerpg.game.core.id.ContentId
+import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.data.content.ContentValidator
 import com.idlerpg.game.data.content.DefaultGameContent
 
@@ -9,6 +10,13 @@ object ContentValidatorRegressionScenarioTest {
     fun run() {
         val baseline = DefaultGameContent.create()
         check(ContentValidator.validate(baseline).isValid)
+
+        val registry = ContentRegistry(baseline)
+        val statusId = baseline.statuses.firstOrNull()?.id
+            ?: error("Default content must contain a status definition")
+        check(registry.contains(statusId)) {
+            "Content registry must expose authored status definitions"
+        }
 
         val target = baseline.encounters.firstOrNull { it.rewardLootTableId != null }
             ?: error("Training Hollow must contain an encounter reward loot table")

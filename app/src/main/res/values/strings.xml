@@ -310,8 +310,8 @@
     <string name="battle_retry_failed_encounter">Retry failed encounter</string>
     <string name="battle_defeat_title">Hero defeated</string>
     <string name="battle_defeat_detail">The fight failed without rewards. Retry restores your hero before the same encounter.</string>
-    <string name="battle_health_format">HP %1$s/%2$s</string>
-    <string name="battle_health_compact_format">%1$s/%2$s</string>
+    <string name="battle_health_format">HP %1$s / %2$s</string>
+    <string name="battle_health_compact_format">%1$s / %2$s</string>
     <string name="battle_theater_auto_format">AUTO · %1$d RULES</string>
     <string name="battle_theater_header_format">%1$s · Stage %2$s · Wave %3$d/%4$d · %5$s</string>
     <string name="battle_stage_format">STAGE %1$s</string>

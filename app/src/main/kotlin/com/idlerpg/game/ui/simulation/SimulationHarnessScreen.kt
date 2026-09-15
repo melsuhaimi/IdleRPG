@@ -142,11 +142,11 @@ fun SimulationHarnessScreen(
 
         SectionTitle("FBE-04 — Inventory capacity + overflow")
         Text(
-            text = "The block scenario resets to normal capacity and advances canonical combat until 60 normal slots + 20 overflow slots are full. The active encounter finishes; only the next encounter is blocked.",
+            text = "The safe-overflow scenario resets to normal capacity and advances canonical combat until 60 normal slots + 20 overflow slots are full. The active encounter finishes and retained loot stays claimable or salvageable.",
             style = MaterialTheme.typography.bodySmall
         )
         SimulatorButton(
-            "Run normal-capacity block scenario",
+            "Run normal-capacity safety scenario",
             enabled,
             viewModel::runNormalCapacityBlockScenario
         )
@@ -179,7 +179,7 @@ fun SimulationHarnessScreen(
             "Overflow",
             "${uiState.snapshot.overflowItems} / ${uiState.snapshot.overflowCapacity}"
         )
-        KeyValue("Inventory blocked", uiState.snapshot.inventoryBlocked.toString())
+        KeyValue("Progression hard-blocked", uiState.snapshot.inventoryBlocked.toString())
         KeyValue("Next expansion Gold cost", uiState.snapshot.nextExpansionGoldCost)
         KeyValue("Active region", uiState.snapshot.activeRegion)
         KeyValue("Encounter index", uiState.snapshot.encounterIndex?.toString() ?: "none")
