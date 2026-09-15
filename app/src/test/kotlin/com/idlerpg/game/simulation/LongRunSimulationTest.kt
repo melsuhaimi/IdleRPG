@@ -183,6 +183,7 @@ fun main() {
     PowerScoreScenarioTest.run()
     LootWorldAutomationScenarioTest.run()
     SaveV3WaveMigrationTest.run()
+    SaveV10FailstackMigrationTest.run()
     ResonanceScenarioTest.run()
     DefeatedTargetFollowUpScenarioTest.run()
     ProgressionRepairScenarioTest.run()
