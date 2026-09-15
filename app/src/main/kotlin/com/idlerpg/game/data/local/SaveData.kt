@@ -52,6 +52,7 @@ import com.idlerpg.game.domain.model.progression.AffinityMasteryState
 import com.idlerpg.game.domain.model.progression.FeatureUnlockState
 import com.idlerpg.game.domain.model.progression.PlayerLevelState
 import com.idlerpg.game.domain.model.progression.ProgressionState
+import com.idlerpg.game.domain.model.progression.SkillProgressionState
 import com.idlerpg.game.domain.model.rebirth.RebirthState
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.domain.model.quest.QuestProgressState
@@ -2048,6 +2049,11 @@ private object SaveDataMapper {
             "$path.affinityMastery",
             state.affinityMastery
         )
+        writeSkillProgressionState(
+            writer,
+            "$path.skillProgression",
+            state.skillProgression
+        )
     }
 
     private fun readProgressionState(
@@ -2066,6 +2072,10 @@ private object SaveDataMapper {
             affinityMastery = readAffinityMasteryState(
                 reader,
                 "$path.affinityMastery"
+            ),
+            skillProgression = readSkillProgressionState(
+                reader,
+                "$path.skillProgression"
             )
         )
 
@@ -2350,6 +2360,57 @@ private object SaveDataMapper {
             completed = reader.boolean("$path.completed"),
             rewardClaimed = reader.boolean("$path.rewardClaimed")
         )
+    }
+
+
+    private fun writeSkillProgressionState(
+        writer: FieldWriter,
+        path: String,
+        state: SkillProgressionState
+    ) {
+        writeSkillLongMap(writer, "$path.rankBySkillId", state.rankBySkillId)
+        writeSkillLongMap(writer, "$path.masteryBySkillId", state.masteryBySkillId)
+        writeSkillLongMap(writer, "$path.refinementBySkillId", state.refinementBySkillId)
+    }
+
+    private fun readSkillProgressionState(
+        reader: FieldReader,
+        path: String
+    ): SkillProgressionState =
+        SkillProgressionState(
+            rankBySkillId = readSkillLongMap(reader, "$path.rankBySkillId"),
+            masteryBySkillId = readSkillLongMap(reader, "$path.masteryBySkillId"),
+            refinementBySkillId = readSkillLongMap(reader, "$path.refinementBySkillId")
+        )
+
+    private fun writeSkillLongMap(
+        writer: FieldWriter,
+        path: String,
+        values: Map<ContentId, Long>
+    ) {
+        val entries = values.entries.sortedBy { it.key }
+        writer.count(path, entries.size)
+        entries.forEachIndexed { index, entry ->
+            val entryPath = "$path.$index"
+            writer.contentId("$entryPath.skillId", entry.key)
+            writer.long("$entryPath.value", entry.value)
+        }
+    }
+
+    private fun readSkillLongMap(
+        reader: FieldReader,
+        path: String
+    ): Map<ContentId, Long> {
+        val result = linkedMapOf<ContentId, Long>()
+        repeat(reader.count(path)) { index ->
+            val entryPath = "$path.$index"
+            val skillId = reader.contentId("$entryPath.skillId")
+            val previous = result.put(skillId, reader.long("$entryPath.value"))
+            if (previous != null) {
+                throw SaveDataException("Duplicate skill progression ID: $skillId")
+            }
+        }
+        return result
     }
 
     // -------------------------------------------------------------------------
