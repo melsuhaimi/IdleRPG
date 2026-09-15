@@ -53,7 +53,19 @@ data class SkillLoadoutSkillUiState(
     val canMoveEarlier: Boolean,
     val canMoveLater: Boolean,
     val evolutions: List<SkillEvolutionBranchUiState> = emptyList(),
-    val descriptionStringKey: PresentationStringKey = PresentationStringKey.DESC_SKILL
+    val descriptionStringKey: PresentationStringKey = PresentationStringKey.DESC_SKILL,
+    val rank: Long = 1L,
+    val maxRank: Long? = null,
+    val mastery: Long = 0L,
+    val masteryCap: Long = 50L,
+    val refinement: Long = 0L,
+    val refinementCap: Long = 10L,
+    val rankUpgradeCostDisplay: String = "—",
+    val masteryUpgradeCostDisplay: String = "—",
+    val refinementCostDisplay: String = "—",
+    val canUpgradeRank: Boolean = false,
+    val canUpgradeMastery: Boolean = false,
+    val canRefine: Boolean = false
 )
 
 data class SkillEvolutionBranchUiState(
