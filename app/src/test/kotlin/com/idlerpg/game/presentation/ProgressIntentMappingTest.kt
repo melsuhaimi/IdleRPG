@@ -1,13 +1,18 @@
 package com.idlerpg.game.presentation
 
 import com.idlerpg.game.core.id.ContentId
+import com.idlerpg.game.domain.command.AllocateRebirthPoints
 import com.idlerpg.game.domain.command.ClaimAchievementReward
 import com.idlerpg.game.domain.command.ClaimQuestReward
 import com.idlerpg.game.domain.command.CommandCorrelationId
 import com.idlerpg.game.domain.command.CommitChronicleCollapse
 import com.idlerpg.game.domain.command.PurchaseEchoOffer
+import com.idlerpg.game.domain.command.PerformRebirth
 import com.idlerpg.game.domain.command.PurchaseUpgrade
 import com.idlerpg.game.domain.command.RequestChroniclePreview
+import com.idlerpg.game.domain.command.ResetRebirthAllocations
+import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
+import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.presentation.intent.ProgressUiIntent
 import com.idlerpg.game.presentation.intent.toGameCommand
 
@@ -43,6 +48,28 @@ object ProgressIntentMappingTest {
         check(
             ProgressUiIntent.RequestChronicle.toGameCommand(correlationId) ==
                 RequestChroniclePreview(correlationId)
+        )
+        check(
+            ProgressUiIntent.PerformRebirth.toGameCommand(correlationId) ==
+                PerformRebirth(correlationId)
+        )
+        check(
+            ProgressUiIntent.AllocateRebirth(
+                pool = RebirthPointPool.NORMAL,
+                stat = RebirthStat.CRITICAL_CHANCE,
+                amount = 3L
+            ).toGameCommand(correlationId) ==
+                AllocateRebirthPoints(
+                    pool = RebirthPointPool.NORMAL,
+                    stat = RebirthStat.CRITICAL_CHANCE,
+                    amount = 3L,
+                    correlationId = correlationId
+                )
+        )
+        check(
+            ProgressUiIntent.ResetRebirth(RebirthPointPool.LEGACY)
+                .toGameCommand(correlationId) ==
+                ResetRebirthAllocations(RebirthPointPool.LEGACY, correlationId)
         )
         check(
             ProgressUiIntent.ConfirmChronicleCollapse.toGameCommand(
