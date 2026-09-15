@@ -43,6 +43,8 @@ object SkillLoadoutProjectionTest {
             it.skillId == DefaultGameContent.QUICK_SLASH_ID
         }
         check(heavy.unlock.unlocked)
+        check(heavy.technicalDetails.any { it.contains("coefficient") })
+        check(heavy.technicalDetails.any { it.contains("critical eligible") })
         check(quick.unlock.unlocked)
         check(heavy.canEquip)
         check(quick.canEquip)
