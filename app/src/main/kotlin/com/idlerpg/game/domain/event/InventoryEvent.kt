@@ -3,6 +3,7 @@ package com.idlerpg.game.domain.event
 import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.id.InstanceId
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.domain.definition.EquipmentSlot
 import com.idlerpg.game.domain.definition.Rarity
 
@@ -121,13 +122,19 @@ data class GearEnhancementAttempted(
     val success: Boolean,
     val protectionUsed: Boolean,
     val materialCost: GameNumber,
-    val gemCost: GameNumber
+    val gemCost: GameNumber,
+    val successChance: Ratio = Ratio.ZERO,
+    val previousFailstack: Int = 0,
+    val resultingFailstack: Int = 0
 ) : InventoryEvent {
     init {
         require(previousEnhancementLevel in 0..20)
         require(resultingEnhancementLevel in 0..20)
         require(materialCost > GameNumber.ZERO)
         require(gemCost >= GameNumber.ZERO)
+        require(successChance >= Ratio.ZERO)
+        require(previousFailstack in 0..com.idlerpg.game.domain.model.inventory.EnhancementLevel.MAX_FAILSTACK)
+        require(resultingFailstack in 0..com.idlerpg.game.domain.model.inventory.EnhancementLevel.MAX_FAILSTACK)
     }
 }
 
