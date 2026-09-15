@@ -11,7 +11,32 @@ object EnhancementLevel {
     const val PEN: Int = 20
     const val MAX: Int = PEN
 
+    /**
+     * Failstacks are a bounded additive chance bonus, not a pity or guarantee.
+     * Twenty failures can add at most five percentage points to the authored chance.
+     */
+    const val MAX_FAILSTACK: Int = 20
+    const val FAILSTACK_BONUS_UNITS_PER_STACK: Long = 25L
+    const val MAX_FAILSTACK_BONUS_UNITS: Long = 500L
+
     fun isHighRisk(level: Int): Boolean = level >= PRI
+
+    fun nextFailstack(value: Int): Int {
+        require(value in 0..MAX_FAILSTACK) {
+            "Failstack is invalid: $value"
+        }
+        return (value + 1).coerceAtMost(MAX_FAILSTACK)
+    }
+
+    fun failstackBonusUnits(value: Int): Long {
+        require(value in 0..MAX_FAILSTACK) {
+            "Failstack is invalid: $value"
+        }
+        return minOf(
+            value.toLong() * FAILSTACK_BONUS_UNITS_PER_STACK,
+            MAX_FAILSTACK_BONUS_UNITS
+        )
+    }
 
     fun displayName(level: Int): String {
         require(level in INITIAL..MAX) { "Unknown enhancement level: $level" }
