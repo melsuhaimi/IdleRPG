@@ -21,5 +21,8 @@ data class CurrencyId(
         val GOLD: CurrencyId = CurrencyId(
             ContentId("currency.gold")
         )
+        val GEMS: CurrencyId = CurrencyId(
+            ContentId("currency.gems")
+        )
     }
 }
