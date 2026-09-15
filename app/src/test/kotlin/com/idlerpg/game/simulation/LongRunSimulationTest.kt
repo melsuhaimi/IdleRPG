@@ -178,6 +178,7 @@ fun main() {
     StrategyEcosystemScenarioTest.run()
     IncrementalProgressionContractTest.run()
     RebirthScenarioTest.run()
+    GearEnhancementScenarioTest.run()
     LootWorldAutomationScenarioTest.run()
     SaveV3WaveMigrationTest.run()
     ResonanceScenarioTest.run()
