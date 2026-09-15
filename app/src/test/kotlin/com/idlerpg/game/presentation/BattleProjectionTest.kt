@@ -27,6 +27,7 @@ import com.idlerpg.game.domain.model.resonance.ResonanceState
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.WorldState
 import com.idlerpg.game.presentation.content.PresentationContentRegistry
+import com.idlerpg.game.presentation.format.GameNumberFormatter
 import com.idlerpg.game.presentation.model.BattleSkillReadinessUi
 import com.idlerpg.game.presentation.projection.BattleProjector
 import com.idlerpg.game.presentation.query.GameReadQueries
@@ -72,6 +73,9 @@ object BattleProjectionTest {
         check(activeUi.player.nextDecisionRemainingMillis == 1_000L)
         check(activeUi.player.basicAttackDpsDisplay == "10") {
             "GameRate DPS must be formatted through GameRate, not GameNumberFormatter"
+        }
+        check(GameNumberFormatter.compact(GameRate.parse("1398.190045")) == "1.39K") {
+            "Fractional DPS must use a compact, readable display"
         }
         check(activeUi.equippedSkills.all { it.queueAllowed })
         check(activeUi.equippedSkills.all { it.resourceCosts.isEmpty() })
