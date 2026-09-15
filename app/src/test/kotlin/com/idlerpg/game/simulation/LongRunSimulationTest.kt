@@ -177,6 +177,7 @@ fun main() {
     SkillBuildcraftCoreScenarioTest.run()
     StrategyEcosystemScenarioTest.run()
     IncrementalProgressionContractTest.run()
+    RebirthScenarioTest.run()
     LootWorldAutomationScenarioTest.run()
     SaveV3WaveMigrationTest.run()
     ResonanceScenarioTest.run()
