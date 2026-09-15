@@ -26,6 +26,7 @@ import com.idlerpg.game.presentation.model.EchoShopUiState
 import com.idlerpg.game.presentation.model.MasteryProgressUiState
 import com.idlerpg.game.presentation.model.MasteryUnlockUiState
 import com.idlerpg.game.domain.system.quest.QuestClaimSystem
+import com.idlerpg.game.domain.system.stats.PowerScoreSystem
 import com.idlerpg.game.presentation.model.ObjectiveProgressUiState
 import com.idlerpg.game.presentation.model.PersistentDiscoveryKind
 import com.idlerpg.game.presentation.model.PersistentDiscoveryUiState
@@ -33,6 +34,8 @@ import com.idlerpg.game.presentation.model.ProgressClaimStatus
 import com.idlerpg.game.presentation.model.ProgressFeatureUiState
 import com.idlerpg.game.presentation.model.ProgressFeedbackUiState
 import com.idlerpg.game.presentation.model.ProgressGoalRequirementUiState
+import com.idlerpg.game.presentation.model.PowerScoreComponentUiState
+import com.idlerpg.game.presentation.model.PowerScoreUiState
 import com.idlerpg.game.presentation.model.ProgressOverviewUiState
 import com.idlerpg.game.presentation.model.ProgressNextGoalKind
 import com.idlerpg.game.presentation.model.ProgressNextGoalUiState
@@ -258,6 +261,7 @@ class ProgressProjector(
             )
         )
 
+        val powerScore = PowerScoreSystem.calculate(state, contentRegistry)
         return ProgressOverviewUiState(
             playerLevel = player.level,
             currentExperienceDisplay = GameNumberFormatter.full(player.currentExperience),
@@ -281,7 +285,45 @@ class ProgressProjector(
             echoSpentDisplay = GameNumberFormatter.full(state.meta.echoes.spent),
             chronicleEligible = readQueries.chronicleEligible(state),
             statCards = statCards,
-            nextGoal = projectNextGoal(state)
+            nextGoal = projectNextGoal(state),
+            powerScore = PowerScoreUiState(
+                totalDisplay = GameNumberFormatter.full(powerScore.total),
+                components = listOf(
+                    PowerScoreComponentUiState(
+                        id = "offense",
+                        label = "OFFENSE",
+                        valueDisplay = GameNumberFormatter.full(powerScore.offense),
+                        formula = "Expected Basic Attack damage with critical chance and multiplier"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "defense",
+                        label = "DEFENSE",
+                        valueDisplay = GameNumberFormatter.full(powerScore.defense),
+                        formula = "Max Health + Armor × 10"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "gear",
+                        label = "GEAR",
+                        valueDisplay = GameNumberFormatter.full(powerScore.gear),
+                        formula = "Equipped rarity + enhancement + rolled affix values"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "skills",
+                        label = "SKILLS",
+                        valueDisplay = GameNumberFormatter.full(powerScore.skills),
+                        formula = "Equipped skill rank + mastery + refinement"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "rebirth",
+                        label = "REBIRTH",
+                        valueDisplay = GameNumberFormatter.full(powerScore.rebirth),
+                        formula = "Allocated Normal and Legacy points"
+                    )
+                ),
+                expectedBasicAttackDamageDisplay =
+                    GameNumberFormatter.full(powerScore.expectedBasicAttackDamage),
+                effectiveHealthDisplay = GameNumberFormatter.full(powerScore.effectiveHealth)
+            )
         )
     }
 
