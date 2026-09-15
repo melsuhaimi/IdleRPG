@@ -57,6 +57,19 @@ object LootWorldAutomationScenarioTest {
         }
         check(eliteDrops > drops * 2)
 
+        val selectableKeepTiers = Rarity.ordered()
+        selectableKeepTiers.forEach { keepTier ->
+            val filter = LootFilterState(
+                autoSalvageEnabled = true,
+                minimumKeepRarity = keepTier
+            )
+            Rarity.ordered().forEach { rarity ->
+                check(filter.shouldKeep(rarity) == (rarity.rank >= keepTier.rank)) {
+                    "Auto-salvage threshold $keepTier must keep only $keepTier and above; got $rarity"
+                }
+            }
+        }
+
         val strictFilter = LootFilterState(autoSalvageEnabled = true, minimumKeepRarity = Rarity.RARE)
         check(
             !LootSystem.shouldKeepGeneratedItem(
