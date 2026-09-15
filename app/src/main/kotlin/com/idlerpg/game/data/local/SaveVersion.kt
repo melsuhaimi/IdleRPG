@@ -42,6 +42,9 @@ data class SaveVersion(
         /** Permanent Rebirth/Legacy point pools and stat allocations. */
         val V8: SaveVersion = SaveVersion(8)
 
-        val CURRENT: SaveVersion = V8
+        /** Explicit per-skill rank, mastery, and refinement tracks. */
+        val V9: SaveVersion = SaveVersion(9)
+
+        val CURRENT: SaveVersion = V9
     }
 }
