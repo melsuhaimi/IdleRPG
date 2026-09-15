@@ -175,6 +175,14 @@ fun GearScreen(
         }
     }
 
+    LaunchedEffect(rarityFilterId, slotFilterId, lockedOnly, storageTabId) {
+        val visibleOwnedIds = visibleOwnedItems.map { it.instanceId }.toSet()
+        val visibleOverflowIds = visibleOverflowItems.map { it.instanceId }.toSet()
+        selectedItemIds = selectedItemIds.intersect(visibleOwnedIds)
+        selectedOverflowIds = selectedOverflowIds.intersect(visibleOverflowIds)
+    }
+
+
     if (confirmBulkSalvage) {
         AlertDialog(
             onDismissRequest = { confirmBulkSalvage = false },
@@ -1265,22 +1273,20 @@ private fun AutoSalvagePolicy(
                     }
                 }
             }
-            if (state.autoSalvageEnabled) {
-                GameOutlinedButton(
-                    onClick = onSalvageBelow,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
-                ) {
-                    Text(
-                        stringResource(
-                            R.string.gear_salvage_below_action,
-                            rarityLabel(state.minimumKeepRarity)
-                        ),
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Clip
-                    )
-                }
+            GameOutlinedButton(
+                onClick = onSalvageBelow,
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)
+            ) {
+                Text(
+                    stringResource(
+                        R.string.gear_salvage_below_action,
+                        rarityLabel(state.minimumKeepRarity)
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip
+                )
             }
         }
     }
