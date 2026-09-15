@@ -43,7 +43,9 @@ class BattleIdentityContractTest {
     fun v6Save_migratesToAnExplicitUnnamedIdentityWithoutReplacingProgress() {
         val original = GameState.newGame(randomSeed = 12_512L)
         val v6Fields = SaveData.fromGameState(original).fields.filterKeys { key ->
-            !key.startsWith("meta.heroName")
+            !key.startsWith("meta.heroName") &&
+                !key.startsWith("meta.rebirth") &&
+                !key.startsWith("run.progression.skillProgression")
         }
         val envelope = SaveEnvelope(
             schemaVersion = SaveVersion.V6,
