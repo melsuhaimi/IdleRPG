@@ -57,6 +57,34 @@ object GameMath {
         )
     }
 
+    /**
+     * Applies two fixed-point compounding segments and rounds only once at the end.
+     *
+     * Keeping both segments rational until the final division is important at the level soft cap:
+     * rounding the first segment early would make the 800-to-801 transition drift.
+     */
+    fun compoundCeil(
+        value: GameNumber,
+        firstMultiplier: Ratio,
+        firstSteps: Long,
+        secondMultiplier: Ratio,
+        secondSteps: Long
+    ): GameNumber {
+        require(firstSteps >= 0L) { "firstSteps cannot be negative: $firstSteps" }
+        require(secondSteps >= 0L) { "secondSteps cannot be negative: $secondSteps" }
+        val numerator = value.toBigInteger()
+            .multiply(exactPower(BigInteger.valueOf(firstMultiplier.units), firstSteps))
+            .multiply(exactPower(BigInteger.valueOf(secondMultiplier.units), secondSteps))
+        val denominator = exactPower(
+            BigInteger.valueOf(Ratio.UNITS_PER_ONE),
+            Math.addExact(firstSteps, secondSteps)
+        )
+        val (quotient, remainder) = numerator.divideAndRemainder(denominator)
+        return GameNumber.fromBigInteger(
+            if (remainder.signum() == 0) quotient else quotient.add(BigInteger.ONE)
+        )
+    }
+
     /** Exact exponentiation for non-negative [exponent] values. */
     private fun exactPower(base: BigInteger, exponent: Long): BigInteger {
         var remaining = exponent
