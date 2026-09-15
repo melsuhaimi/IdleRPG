@@ -137,8 +137,13 @@ object DerivedStatSystem {
         require(interval > GameDuration.ZERO) {
             "Basic attack interval must be positive to derive DPS"
         }
-        val attack = attackPower(state, contentRegistry).toBigInteger()
-        val numerator = BigDecimal(attack).multiply(BigDecimal.valueOf(1_000L))
+        val expectedAttack = CombatMath.expectedCriticalDamage(
+            baseDamage = attackPower(state, contentRegistry),
+            criticalChance = criticalChance(state, contentRegistry),
+            criticalMultiplier = criticalMultiplier(state, contentRegistry)
+        )
+        val numerator = BigDecimal(expectedAttack.toBigInteger())
+            .multiply(BigDecimal.valueOf(1_000L))
         return GameRate.fromBigDecimal(
             numerator.divide(
                 BigDecimal.valueOf(interval.millis),
