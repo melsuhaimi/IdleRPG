@@ -72,7 +72,7 @@ object BattleProjectionTest {
         ))
         check(activeUi.player.nextDecisionRemainingMillis == 1_000L)
         check(activeUi.player.basicAttackDpsDisplay == "10") {
-            "GameRate DPS must be formatted through GameRate, not GameNumberFormatter"
+            "GameRate DPS must use the compact rate formatter"
         }
         check(GameNumberFormatter.compact(GameRate.parse("1398.190045")) == "1.39K") {
             "Fractional DPS must use a compact, readable display"
