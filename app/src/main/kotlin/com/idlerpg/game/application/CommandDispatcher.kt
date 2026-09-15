@@ -17,6 +17,9 @@ import com.idlerpg.game.domain.command.PlayerCommand
 import com.idlerpg.game.domain.command.QueueSkillCast
 import com.idlerpg.game.domain.command.RebirthCommand
 import com.idlerpg.game.domain.command.SelectSkillEvolution
+import com.idlerpg.game.domain.command.UpgradeSkillRank
+import com.idlerpg.game.domain.command.UpgradeSkillMastery
+import com.idlerpg.game.domain.command.RefineSkill
 import com.idlerpg.game.domain.command.QuestCommand
 import com.idlerpg.game.domain.command.SkillCommand
 import com.idlerpg.game.domain.command.UnequipSkill
@@ -37,6 +40,7 @@ import com.idlerpg.game.domain.system.quest.QuestClaimSystem
 import com.idlerpg.game.domain.system.skill.ManualSkillInputSystem
 import com.idlerpg.game.domain.system.skill.SkillLoadoutSystem
 import com.idlerpg.game.domain.system.skill.SkillEvolutionSystem
+import com.idlerpg.game.domain.system.skill.SkillProgressionSystem
 import com.idlerpg.game.domain.system.player.PlayerSystem
 import com.idlerpg.game.domain.system.rebirth.RebirthSystem
 import com.idlerpg.game.domain.system.world.WorldSystem
@@ -56,6 +60,9 @@ object ApplicationCommandRouter : GameCommandHandler {
             is UnequipSkill -> SkillLoadoutSystem.handle(state, command, context)
             is MoveEquippedSkill -> SkillLoadoutSystem.handle(state, command, context)
             is SelectSkillEvolution -> SkillEvolutionSystem.handle(state, command, context)
+            is UpgradeSkillRank,
+            is UpgradeSkillMastery,
+            is RefineSkill -> SkillProgressionSystem.handle(state, command, context)
         }
         is QuestCommand -> when (command) { is ClaimQuestReward -> QuestClaimSystem.handle(state, command, context) }
         is AchievementCommand -> when (command) { is ClaimAchievementReward -> AchievementClaimSystem.handle(state, command, context) }
