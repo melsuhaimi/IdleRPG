@@ -9,6 +9,7 @@ import com.idlerpg.game.domain.definition.EquipmentSlot
 import com.idlerpg.game.domain.definition.item.EquipmentEffectDefinition
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.model.inventory.InventoryState
+import com.idlerpg.game.domain.model.inventory.EnhancementLevel
 import com.idlerpg.game.domain.model.inventory.ItemInstance
 import com.idlerpg.game.domain.model.inventory.EquipmentLoadoutState
 import com.idlerpg.game.domain.system.stats.DerivedStatSystem
@@ -157,6 +158,18 @@ class GearProjector(
             canSalvage = !overflow && !locked && equippedSlot == null,
             canClaimOverflow = overflow && canClaimOverflow,
             canSalvageOverflow = overflow,
+            mainStat = item.mainStat?.let { rolled ->
+                val affixPresentation = presentationContentRegistry.entry(rolled.affixId)
+                GearAffixUiState(
+                    affixId = rolled.affixId,
+                    titleStringKey = affixPresentation.titleStringKey,
+                    iconAssetKey = affixPresentation.iconAssetKey,
+                    rolledValue = rolled.value,
+                    isMainStat = true
+                )
+            },
+            enhancementLevel = item.enhancementLevel,
+            enhancementLabel = EnhancementLevel.displayName(item.enhancementLevel),
             comparison = comparisonFor(
                 item = item,
                 state = state,
