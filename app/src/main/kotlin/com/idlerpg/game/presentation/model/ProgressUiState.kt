@@ -116,6 +116,20 @@ data class ProgressNextGoalUiState(
     val requirements: List<ProgressGoalRequirementUiState> = emptyList()
 )
 
+data class PowerScoreComponentUiState(
+    val id: String,
+    val label: String,
+    val valueDisplay: String,
+    val formula: String
+)
+
+data class PowerScoreUiState(
+    val totalDisplay: String = "0",
+    val components: List<PowerScoreComponentUiState> = emptyList(),
+    val expectedBasicAttackDamageDisplay: String = "0",
+    val effectiveHealthDisplay: String = "0"
+)
+
 data class ProgressOverviewUiState(
     val playerLevel: Long,
     val currentExperienceDisplay: String,
@@ -128,7 +142,8 @@ data class ProgressOverviewUiState(
     val chronicleEligible: Boolean,
     val experienceRemainingDisplay: String = "0",
     val statCards: List<StatOverviewUiState> = emptyList(),
-    val nextGoal: ProgressNextGoalUiState = ProgressNextGoalUiState()
+    val nextGoal: ProgressNextGoalUiState = ProgressNextGoalUiState(),
+    val powerScore: PowerScoreUiState = PowerScoreUiState()
 )
 
 data class MasteryUnlockUiState(
