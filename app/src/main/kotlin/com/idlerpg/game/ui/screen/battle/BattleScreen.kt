@@ -1278,28 +1278,40 @@ private fun ActorNameplate(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.heightIn(min = if (compact) 30.dp else 34.dp),
-        shape = RoundedCornerShape(GameDimensions.ActorNameplateRadius),
+        modifier = modifier
+            .heightIn(min = if (compact) 36.dp else 42.dp)
+            .widthIn(min = 0.dp),
+        shape = RoundedCornerShape(10.dp),
         color = ObsidianSurface1.copy(alpha = 0.82f),
         border = BorderStroke(1.dp, accent.copy(alpha = 0.52f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = 3.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(min = 0.dp)
+                .padding(horizontal = 7.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
+                    fontSize = if (compact) 9.sp else 10.sp
+                ),
                 color = TextPrimary,
                 maxLines = 1,
+                softWrap = false,
                 overflow = TextOverflow.Clip
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                style = MaterialTheme.typography.labelSmall.battleTerminal().copy(
+                    fontSize = if (compact) 7.sp else 8.sp,
+                    letterSpacing = 0.15.sp
+                ),
                 color = accent,
                 maxLines = 1,
+                softWrap = false,
                 overflow = TextOverflow.Clip
             )
         }
@@ -1723,74 +1735,74 @@ private fun BattleStatChip(
     modifier: Modifier = Modifier
 ) {
     val valueFontSize = when {
-        stat.value.length >= 16 -> 9.sp
-        stat.value.length >= 12 -> 10.sp
-        compact -> 11.sp
-        else -> 12.sp
+        stat.value.length >= 15 -> 9.sp
+        stat.value.length >= 11 -> 10.sp
+        compact -> 12.sp
+        else -> 14.sp
     }
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = if (compact) 54.dp else 62.dp)
-            .semantics { contentDescription = "${stat.label}: ${stat.value}. ${stat.description}" },
-        shape = RoundedCornerShape(GameDimensions.CombatCardRadius),
+            .heightIn(min = if (compact) 68.dp else 76.dp)
+            .semantics {
+                contentDescription = stat.label + ": " + stat.value + ". " + stat.description
+            },
+        shape = RoundedCornerShape(10.dp),
         color = ObsidianSurface2.copy(alpha = 0.88f),
         border = BorderStroke(1.dp, stat.color.copy(alpha = 0.42f))
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(20.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(stat.color.copy(alpha = 0.38f), stat.color)
-                        ),
-                        RoundedCornerShape(99.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(if (compact) 25.dp else 28.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    color = stat.color.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, stat.color.copy(alpha = 0.32f))
+                ) {
+                    Icon(
+                        painter = painterResource(stat.icon),
+                        contentDescription = null,
+                        tint = stat.color,
+                        modifier = Modifier.padding(if (compact) 5.dp else 6.dp)
                     )
-            )
-            Surface(
-                modifier = Modifier.size(if (compact) 24.dp else 28.dp),
-                shape = RoundedCornerShape(9.dp),
-                color = stat.color.copy(alpha = 0.14f),
-                border = BorderStroke(1.dp, stat.color.copy(alpha = 0.32f))
-            ) {
-                Icon(
-                    painter = painterResource(stat.icon),
-                    contentDescription = null,
-                    tint = stat.color,
-                    modifier = Modifier.padding(if (compact) 5.dp else 6.dp)
-                )
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
-            ) {
+                }
                 Text(
                     text = stat.label.uppercase(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = 0.dp),
                     style = MaterialTheme.typography.labelSmall.battleTerminal().copy(
-                        fontSize = if (compact) 7.sp else 8.sp,
-                        letterSpacing = 0.35.sp
+                        fontSize = if (compact) 8.sp else 9.sp,
+                        letterSpacing = 0.3.sp
                     ),
                     color = TextSecondary,
                     maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Clip
                 )
-                Text(
-                    text = stat.value,
-                    style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
-                        fontSize = valueFontSize
-                    ),
-                    color = TextPrimary,
-                    maxLines = 2,
-                    softWrap = true,
-                    overflow = TextOverflow.Visible
-                )
             }
+            Text(
+                text = stat.value,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(min = 0.dp),
+                style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
+                    fontSize = valueFontSize
+                ),
+                color = TextPrimary,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip
+            )
         }
     }
 }
