@@ -29,5 +29,33 @@ object ContentValidatorRegressionScenarioTest {
             issue.code == "content.encounter.unknown_reward_loot_table" &&
                 issue.path == "encounters[${target.id}].rewardLootTableId"
         })
+
+        val targetEnemy = baseline.enemies.firstOrNull { enemy ->
+            baseline.encounters.any { encounter ->
+                encounter.waveEnemyDefinitionIds.isEmpty() &&
+                    enemy.id in encounter.enemyDefinitionIds
+            }
+        } ?: error("Expected an encounter-referenced enemy")
+        val targetEncounter = baseline.encounters.first { encounter ->
+            encounter.waveEnemyDefinitionIds.isEmpty() &&
+                targetEnemy.id in encounter.enemyDefinitionIds
+        }
+        val missingAttack = baseline.copy(
+            enemies = baseline.enemies.map { enemy ->
+                if (enemy.id == targetEnemy.id) {
+                    enemy.copy(attackDefinitionId = null)
+                } else {
+                    enemy
+                }
+            }
+        )
+        val missingAttackResult = ContentValidator.validate(missingAttack)
+
+        check(!missingAttackResult.isValid)
+        check(missingAttackResult.errors.any { issue ->
+            issue.code == "content.encounter.enemy_missing_attack" &&
+                issue.path ==
+                    "encounters[${targetEncounter.id}].enemyDefinitionIds[${targetEnemy.id}].attackDefinitionId"
+        })
     }
 }

@@ -77,6 +77,12 @@ object BattleProjectionTest {
         check(GameNumberFormatter.compact(GameRate.parse("1398.190045")) == "1.39K") {
             "Fractional DPS must use a compact, readable display"
         }
+        check(GameNumberFormatter.compact(GameRate.parse("0.001")) == "0.001") {
+            "Small nonzero rates must remain visible"
+        }
+        check(GameNumberFormatter.compact(GameRate.parse("0.000001")) == "<0.001") {
+            "Tiny nonzero rates must not be displayed as zero"
+        }
         check(activeUi.equippedSkills.all { it.queueAllowed })
         check(activeUi.equippedSkills.all { it.resourceCosts.isEmpty() })
         check(activeUi.equippedSkills.all { it.readiness == BattleSkillReadinessUi.READY })

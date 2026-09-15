@@ -14,7 +14,8 @@ object GameNumberFormatter {
 
     /**
      * Compact a fractional rate without exposing the six-decimal storage precision to players.
-     * Rates use the same suffix vocabulary as magnitudes but retain at most two decimals.
+     * Rates use the same suffix vocabulary as magnitudes. Values below one retain three
+     * decimals; values smaller than 0.001 use a visible floor marker instead of becoming zero.
      */
     fun compact(value: GameRate): String {
         val raw = value.toBigDecimal()
@@ -22,6 +23,13 @@ object GameNumberFormatter {
 
         val integerDigits = (raw.precision() - raw.scale()).coerceAtLeast(0)
         if (integerDigits <= 3) {
+            if (raw < BigDecimal.ONE) {
+                val display = raw
+                    .setScale(3, RoundingMode.DOWN)
+                    .stripTrailingZeros()
+                    .toPlainString()
+                return if (display == "0") "<0.001" else display
+            }
             return raw
                 .setScale(minOf(2, raw.scale()), RoundingMode.DOWN)
                 .stripTrailingZeros()

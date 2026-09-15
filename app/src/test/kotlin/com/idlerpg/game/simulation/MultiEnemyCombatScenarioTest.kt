@@ -13,6 +13,7 @@ import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.domain.command.StartEncounter
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.domain.definition.DamageKind
+import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.definition.combat.EffectSpec
 import com.idlerpg.game.domain.definition.combat.SkillDefinition
 import com.idlerpg.game.domain.engine.EngineContext
@@ -28,14 +29,36 @@ import com.idlerpg.game.domain.event.SkillUsed
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
 import com.idlerpg.game.domain.system.combat.ActionResolutionSystem
+import com.idlerpg.game.domain.system.combat.CombatSystem
 import com.idlerpg.game.domain.system.combat.TargetingSystem
 
 /** Production lifecycle plus stable targeting and bounded multi-hit/AoE regressions. */
 object MultiEnemyCombatScenarioTest {
     fun run() {
         authoredMultiEnemyEncounterClearsWithoutSingleEnemyCrash()
+        directCombatRejectsUnsupportedFormation()
         activeAndOfflineWaveTransitionsAreEquivalent()
         primitiveTargetsAndEventsAreStable()
+    }
+
+    private fun directCombatRejectsUnsupportedFormation() {
+        val runtime = SimulationTestSupport.runtime(seed = 1_305L)
+        val factory = SimulationTestSupport.factory()
+        val failure = runCatching {
+            CombatSystem.startCombat(
+                state = runtime.state(),
+                enemyDefinitionIds = List(EncounterDefinition.MAX_ACTIVE_ENEMIES + 1) {
+                    DefaultGameContent.SLIME_ID
+                },
+                encounterDefinitionId = DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
+                regionDefinitionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+                scalingTier = 0L,
+                context = factory.createEngineContext()
+            )
+        }.exceptionOrNull()
+        check(failure is IllegalArgumentException) {
+            "Direct combat must reject formations above the shared active-enemy limit"
+        }
     }
 
     private fun authoredMultiEnemyEncounterClearsWithoutSingleEnemyCrash() {

@@ -1,5 +1,6 @@
 package com.idlerpg.game.data.content
 
+import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.core.validation.ValidationIssue
@@ -601,6 +602,7 @@ object ContentValidator {
     ) {
         val knownRegionIds = content.regions.map { it.id }.toSet()
         val knownEnemyIds = content.enemies.map { it.id }.toSet()
+        val enemiesById = content.enemies.associateBy { it.id }
         val knownLootTableIds = content.lootTables.map { it.id }.toSet()
         val encountersById = content.encounters.associateBy { it.id }
         val bossesById = content.bosses.associateBy { it.id }
@@ -618,28 +620,50 @@ object ContentValidator {
                     )
                 }
 
+                fun validateEncounterEnemyAttack(enemyId: ContentId, path: String) {
+                    val enemy = enemiesById[enemyId] ?: return
+                    if (enemy.attackDefinitionId == null) {
+                        issues += error(
+                            code = "content.encounter.enemy_missing_attack",
+                            path = "$path.attackDefinitionId",
+                            message =
+                                "Encounter ${encounter.id} references enemy $enemyId without an authored attack"
+                        )
+                    }
+                }
+
                 if (encounter.waveEnemyDefinitionIds.isEmpty()) {
                     encounter.enemyDefinitionIds
-                        .filterNot { it in knownEnemyIds }
                         .sorted()
                         .forEach { enemyId ->
-                            issues += error(
-                                code = "content.encounter.unknown_enemy",
-                                path = "encounters[${encounter.id}].enemyDefinitionIds[$enemyId]",
-                                message = "Encounter ${encounter.id} references unknown enemy $enemyId"
-                            )
+                            val path = "encounters[${encounter.id}].enemyDefinitionIds[$enemyId]"
+                            if (enemyId !in knownEnemyIds) {
+                                issues += error(
+                                    code = "content.encounter.unknown_enemy",
+                                    path = path,
+                                    message = "Encounter ${encounter.id} references unknown enemy $enemyId"
+                                )
+                            } else {
+                                validateEncounterEnemyAttack(enemyId, path)
+                            }
                         }
                 } else {
                     (1..encounter.waves).forEach { wave ->
                         encounter.enemyDefinitionIdsForWave(wave)
-                            .filterNot { it in knownEnemyIds }
                             .sorted()
                             .forEach { enemyId ->
-                                issues += error(
-                                    code = "content.encounter.unknown_enemy",
-                                    path = "encounters[${encounter.id}].wave[$wave].enemyDefinitionIds[$enemyId]",
-                                    message = "Encounter ${encounter.id} wave $wave references unknown enemy $enemyId"
-                                )
+                                val path =
+                                    "encounters[${encounter.id}].wave[$wave].enemyDefinitionIds[$enemyId]"
+                                if (enemyId !in knownEnemyIds) {
+                                    issues += error(
+                                        code = "content.encounter.unknown_enemy",
+                                        path = path,
+                                        message =
+                                            "Encounter ${encounter.id} wave $wave references unknown enemy $enemyId"
+                                    )
+                                } else {
+                                    validateEncounterEnemyAttack(enemyId, path)
+                                }
                             }
                     }
                 }

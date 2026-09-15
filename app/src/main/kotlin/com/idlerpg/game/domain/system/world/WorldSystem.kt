@@ -11,6 +11,7 @@ import com.idlerpg.game.domain.command.StartEncounter
 import com.idlerpg.game.domain.command.DeployStartingEncounter
 import com.idlerpg.game.domain.command.WorldCommand
 import com.idlerpg.game.domain.command.ConfigureWorldAutomation
+import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.engine.CommandHandlingResult
 import com.idlerpg.game.domain.engine.EngineContext
 import com.idlerpg.game.domain.engine.GameCommandHandler
@@ -222,7 +223,10 @@ object WorldSystem : GameCommandHandler, ScheduledActionHandler {
         }
 
         if (encounter.waves !in 1..10 ||
-            (1..encounter.waves).any { encounter.enemyDefinitionIdsForWave(it).size !in 1..5 }
+            (1..encounter.waves).any {
+                encounter.enemyDefinitionIdsForWave(it).size !in
+                    1..EncounterDefinition.MAX_ACTIVE_ENEMIES
+            }
         ) {
             return rejected(
                 code = CommandRejectionCode.UNSUPPORTED,

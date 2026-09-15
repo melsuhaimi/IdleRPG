@@ -18,6 +18,7 @@ import com.idlerpg.game.domain.event.SkillCastQueueCleared
 import com.idlerpg.game.domain.event.SkillCastQueueConsumed
 import com.idlerpg.game.domain.event.SkillCastQueueDeferred
 import com.idlerpg.game.domain.event.SkillQueueClearReason
+import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.model.combat.CombatState
 import com.idlerpg.game.domain.model.combat.CombatStatus
@@ -62,8 +63,8 @@ object CombatSystem : ScheduledActionSource, ScheduledActionHandler {
         scalingTier: Long,
         context: EngineContext
     ): CombatStartResult {
-        require(enemyDefinitionIds.size in 1..5) {
-            "Combat requires between one and five active enemies"
+        require(enemyDefinitionIds.size in 1..EncounterDefinition.MAX_ACTIVE_ENEMIES) {
+            "Combat requires between one and ${EncounterDefinition.MAX_ACTIVE_ENEMIES} active enemies"
         }
         val existingCombat = state.run.combat
         require(existingCombat.status != CombatStatus.ACTIVE) {

@@ -72,7 +72,12 @@ class WorldProjector(
                 val active = status == WorldEncounterStatusUi.ACTIVE
                 val enemyDefinition = contentRegistry.enemy(definition.enemyDefinitionIdsForWave(1).first())
                 val enemyMetadata = presentationContentRegistry.entry(enemyDefinition.id)
-                val attack = contentRegistry.enemyAttack(enemyDefinition.attackDefinitionId!!)
+                val attackId = enemyDefinition.attackDefinitionId
+                    ?: error(
+                        "Encounter ${encounter.id} wave 1 enemy ${enemyDefinition.id} " +
+                            "has no authored attack"
+                    )
+                val attack = contentRegistry.enemyAttack(attackId)
                 val scaledAttackDamage = EnemyScalingSystem.scaledAttack(
                     enemyDefinition,
                     attack,
