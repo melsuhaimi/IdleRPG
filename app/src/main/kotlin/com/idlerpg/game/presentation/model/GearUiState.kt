@@ -133,6 +133,7 @@ data class GearFeedbackUiState(
     val previousCapacity: Long? = null,
     val newCapacity: Long? = null,
     val availableStorageSlots: Long? = null,
+    val enhancementSucceeded: Boolean? = null,
     val rejectionCode: CommandRejectionCode? = null
 )
 
