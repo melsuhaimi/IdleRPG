@@ -200,6 +200,18 @@ class IdleRpgViewModel(
                                 runtimeController.save()
                             }
                         }
+                        if (
+                            transition.commandResult == CommandResult.Accepted &&
+                            transition.events.any {
+                                it.event is com.idlerpg.game.domain.event.RebirthPerformed ||
+                                    it.event is com.idlerpg.game.domain.event.RebirthPointsAllocated ||
+                                    it.event is com.idlerpg.game.domain.event.RebirthAllocationsReset
+                            }
+                        ) {
+                            // Permanent Rebirth state and its resource spend are checkpointed
+                            // immediately after the accepted canonical transition.
+                            runtimeController.save()
+                        }
                     }
                     effectiveDestination == GameDestination.DOCTRINE -> {
                         val feedback = gameEventPresenter.presentDoctrine(transition)
