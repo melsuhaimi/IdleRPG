@@ -28,6 +28,7 @@ object RebirthScenarioTest {
         rejectedDuringActiveCombatIsAtomic()
         resetPreservesLongLivedStateAndClearsRunProgression()
         allocationAndGemRespecArePersistent()
+        deepRebirthSkipsPointsAndGrantsModestReward()
     }
 
     private fun rejectedBeforeThresholdIsAtomic() {
@@ -133,6 +134,43 @@ object RebirthScenarioTest {
         check(after.run.resonance == preservedResonance)
         check(after.run.doctrine == preservedDoctrine)
         check(after.run.adaptation == preservedAdaptation)
+    }
+
+    private fun deepRebirthSkipsPointsAndGrantsModestReward() {
+        val runtime = SimulationTestSupport.runtime(seed = 9_005L)
+        val initial = runtime.state()
+        runtime.replaceLoadedState(
+            initial.copy(
+                run = initial.run.copy(
+                    economy = initial.run.economy.copy(
+                        wallet = CurrencyWallet(
+                            amountsByCurrencyId = mapOf(
+                                CurrencyId.GOLD to GameNumber.of(100_000_000L)
+                            )
+                        )
+                    ),
+                    progression = initial.run.progression.copy(
+                        playerLevel = PlayerLevelState(level = 15_000L)
+                    )
+                )
+            )
+        )
+
+        val result = runtime.dispatch(PerformRebirth())
+        SimulationTestSupport.checkAccepted(result)
+        val after = runtime.state()
+        check(after.meta.rebirth.completedRebirths == 1L)
+        check(after.meta.rebirth.normalPointsEarned == 0L)
+        check(after.meta.rebirth.legacyPointsEarned == 0L)
+        check(
+            after.run.economy.wallet.amountsByCurrencyId[CurrencyId.ENHANCEMENT_MATERIAL] ==
+                GameNumber.of(RebirthSystem.DEEP_REBIRTH_ENHANCEMENT_MATERIAL_REWARD)
+        )
+        check(
+            result.events.map { it.event }.filterIsInstance<CurrencyGranted>().single {
+                it.currencyId == CurrencyId.ENHANCEMENT_MATERIAL
+            }.amount == GameNumber.of(RebirthSystem.DEEP_REBIRTH_ENHANCEMENT_MATERIAL_REWARD)
+        )
     }
 
     private fun allocationAndGemRespecArePersistent() {
