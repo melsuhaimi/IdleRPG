@@ -70,7 +70,17 @@ data class GearItemUiState(
     val comparison: GearComparisonUiState? = null,
     val mainStat: GearAffixUiState? = null,
     val enhancementLevel: Int = 0,
-    val enhancementLabel: String = "+0"
+    val enhancementLabel: String = "+0",
+    val enhancementFailstack: Int = 0,
+    val enhancementSuccessChanceDisplay: String = "0%",
+    val enhancementMaterialCostDisplay: String = "0",
+    val enhancementProtectionGemCostDisplay: String = "0",
+    val enhancementFailureLevelDisplay: String = "+0",
+    val enhancementFailureFailstackDisplay: String = "0",
+    val refinementMaterialCostDisplay: String = "0",
+    val canEnhance: Boolean = false,
+    val canEnhanceWithProtection: Boolean = false,
+    val canRefine: Boolean = false
 )
 
 data class GearEquipmentSlotUiState(
