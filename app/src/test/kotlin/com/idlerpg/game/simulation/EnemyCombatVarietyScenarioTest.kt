@@ -144,7 +144,8 @@ object EnemyCombatVarietyScenarioTest {
         runtime.replaceLoadedState(boosted)
         SimulationTestSupport.startTraining(runtime)
 
-        val result = runtime.advance(GameDuration.ofSeconds(5L))
+        // Six seconds clears the two-wave elite at current tier scaling.
+        val result = runtime.advance(GameDuration.ofSeconds(6L))
         val automaticStarts = result.events
             .map { it.event }
             .filterIsInstance<EncounterStarted>()
