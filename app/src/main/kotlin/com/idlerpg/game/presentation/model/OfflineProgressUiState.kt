@@ -35,6 +35,7 @@ data class OfflineProgressUiState(
     val tacticalInsight: OfflineTacticalInsightUi?
 )
 
+/** Presentation form of the offline stopping reason. */
 enum class OfflineStoppingReasonUi {
     ELAPSED,
     CLAIM_WINDOW_CAPPED,
