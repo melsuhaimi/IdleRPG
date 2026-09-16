@@ -1599,6 +1599,18 @@ private fun ProgressFeedbackCard(
             R.string.progress_feedback_echo_granted,
             feedback.amountDisplay ?: "?"
         )
+        ProgressFeedbackKind.REBIRTH_PERFORMED -> stringResource(
+            R.string.progress_feedback_rebirth_performed,
+            feedback.amountDisplay ?: "?"
+        )
+        ProgressFeedbackKind.REBIRTH_POINTS_ALLOCATED -> stringResource(
+            R.string.progress_feedback_rebirth_allocated,
+            feedback.amountDisplay ?: "?"
+        )
+        ProgressFeedbackKind.REBIRTH_RESPEC -> stringResource(
+            R.string.progress_feedback_rebirth_respec,
+            feedback.amountDisplay ?: "?"
+        )
         ProgressFeedbackKind.CHRONICLE_PREVIEW_READY -> stringResource(
             R.string.progress_feedback_chronicle_preview
         )
