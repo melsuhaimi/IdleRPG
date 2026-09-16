@@ -1104,4 +1104,7 @@
     <string name="progress_feedback_rebirth_performed">Rebirth %1$s complete. Permanent points are ready to allocate.</string>
     <string name="progress_feedback_rebirth_allocated">%1$s permanent point allocated.</string>
     <string name="progress_feedback_rebirth_respec">Rebirth allocations reset for %1$s Gems.</string>
+    <string name="gear_feedback_enhancement_success">Enhancement succeeded: %1$s.</string>
+    <string name="gear_feedback_enhancement_failed">Enhancement failed; item remains at %1$s.</string>
+    <string name="gear_feedback_refined">Affix refined to %1$s.</string>
 </resources>
