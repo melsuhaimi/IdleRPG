@@ -113,6 +113,9 @@ object RebirthSystem : GameCommandHandler {
 
     private fun perform(state: GameState): CommandHandlingResult {
         val level = state.run.progression.playerLevel.level
+        if (state.run.combat.status != com.idlerpg.game.domain.model.combat.CombatStatus.IDLE) {
+            return rejected(CommandRejectionCode.INVALID_STATE)
+        }
         if (level < MINIMUM_REBIRTH_LEVEL) {
             return rejected(CommandRejectionCode.NOT_READY)
         }
