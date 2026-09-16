@@ -92,7 +92,11 @@ object EnemyCombatVarietyScenarioTest {
                         (DefaultGameContent.TRAINING_HOLLOW_REGION_ID to progress.copy(
                             highestClearedEncounterTier = 2L,
                             normalClears = GameNumber.of(2L)
-                        ))
+                        )),
+                    clearedEncounterIds = initial.run.world.clearedEncounterIds + setOf(
+                        DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
+                        DefaultGameContent.RIFTFANG_ENCOUNTER_ID
+                    )
                 )
             )
         )
