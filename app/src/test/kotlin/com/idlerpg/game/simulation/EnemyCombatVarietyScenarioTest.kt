@@ -149,15 +149,16 @@ object EnemyCombatVarietyScenarioTest {
             .map { it.event }
             .filterIsInstance<EncounterStarted>()
             .map { it.encounterDefinitionId }
-        check(
-            automaticStarts == listOf(
-                DefaultGameContent.RIFTFANG_ENCOUNTER_ID,
-                DefaultGameContent.CINDER_WISP_ENCOUNTER_ID,
-                DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID,
-                DefaultGameContent.ARCANE_SEER_ENCOUNTER_ID,
-                com.idlerpg.game.data.content.TrainingHollowStrategyContent.FROSTBOUND_MITE_ENCOUNTER_ID
-            )
+        val expectedStarts = listOf(
+            DefaultGameContent.RIFTFANG_ENCOUNTER_ID,
+            DefaultGameContent.CINDER_WISP_ENCOUNTER_ID,
+            DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID,
+            DefaultGameContent.ARCANE_SEER_ENCOUNTER_ID,
+            com.idlerpg.game.data.content.TrainingHollowStrategyContent.FROSTBOUND_MITE_ENCOUNTER_ID
         )
+        check(automaticStarts == expectedStarts) {
+            "Expected automatic starts $expectedStarts, got $automaticStarts"
+        }
         val current = runtime.state().run.world.currentEncounter
             ?: error("Expected sixth encounter")
         check(current.encounterIndex == 6L)
