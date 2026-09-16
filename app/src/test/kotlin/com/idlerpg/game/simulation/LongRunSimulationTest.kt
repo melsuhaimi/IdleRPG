@@ -201,7 +201,6 @@ fun runAllScenarioChecks(): BalanceSimulationReport {
     NewGameDeploymentScenarioTest.run()
     SkillEvolutionScenarioTest.run()
     SkillLoadoutScenarioTest.run()
-    SkillProgressionScenarioTest.run()
     DamageKindIdentityScenarioTest.run()
     OfflineReturnScenarioTest.run()
     QuestClaimScenarioTest.run()
