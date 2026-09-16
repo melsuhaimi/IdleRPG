@@ -34,9 +34,9 @@ Source: [Idle Slayer — official Steam page](https://store.steampowered.com/app
    Battle -> Gold/XP/gear -> compare/equip/salvage or upgrade -> choose Push/Farm -> repeat.
 
 2. **Offline progress must be a real simulation, not a fake reward screen.**
-   The return summary should report the same kinds of results the active simulation can produce:
-   time simulated, encounters cleared, Gold, XP, gear, deaths, and the point where progress
-   stopped.
+   The return summary should report the bounded results the offline contract permits:
+   time simulated, Gold, XP, level changes, and the point where the simulation stopped.
+   Offline play deliberately grants no gear, materials, quests, mastery, achievements, or stage progress.
 
 3. **Stages are the long-term backbone.**
    The route needs authored milestones, ordinary repeatable farming, elite encounters, anomalies,
