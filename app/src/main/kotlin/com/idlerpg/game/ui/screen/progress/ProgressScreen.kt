@@ -1409,6 +1409,15 @@ private fun RebirthPanel(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.secondary
             )
+            Text(
+                if (rebirth.deepLevelRewardDisplay == "—") {
+                    "Deep-push reward unlocks at level 15,000."
+                } else {
+                    "Deep-push reward: ${rebirth.deepLevelRewardDisplay}"
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             GameButton(
                 onClick = onRequestRebirth,
                 enabled = rebirth.eligible,
@@ -1506,6 +1515,13 @@ private fun RebirthConfirmationDialog(
             ) {
                 Text("Spend ${rebirth.goldCostDisplay} Gold from ${rebirth.goldAvailableDisplay} available.")
                 Text("You receive ${rebirth.normalPointsGranted} Normal and ${rebirth.legacyPointsGranted} Legacy points.")
+                Text(
+                    if (rebirth.deepLevelRewardDisplay == "—") {
+                        "Reach level 15,000 for the modest deep-push reward; that reward replaces the point grant."
+                    } else {
+                        "Deep-push reward: ${rebirth.deepLevelRewardDisplay}"
+                    }
+                )
                 Text("Reset now: level and XP, normal stat purchases, skill unlocks/loadout/rank/mastery/evolution/refinement, quests, and stage progress.")
                 Text("Keep: gear and enhancement rolls, refinement materials, inventory, Gems, existing Rebirth allocations, Legacy, and lifetime statistics.")
                 Text("Rebirth is optional. You can continue leveling beyond the threshold when you are not ready.")
