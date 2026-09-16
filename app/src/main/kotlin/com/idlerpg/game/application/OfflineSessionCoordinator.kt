@@ -211,8 +211,6 @@ class OfflineSessionCoordinator(
             simulatedElapsed = simulatedElapsed,
             durationClamped = durationClamped,
             clockRollbackDetected = elapsed.clockRollbackDetected,
-            startingLevel = before.run.progression.playerLevel.level,
-            endingLevel = engineResult.state.run.progression.playerLevel.level,
             stoppingReason = stoppingReasonFor(
                 clockRollbackDetected = elapsed.clockRollbackDetected,
                 durationClamped = durationClamped,
@@ -431,7 +429,8 @@ class OfflineSessionCoordinator(
         clockRollbackDetected: Boolean,
         events: List<GameEventEnvelope>,
         before: GameState,
-        after: GameState
+        after: GameState,
+        stoppingReason: OfflineStoppingReason = OfflineStoppingReason.ELAPSED
     ): OfflineProgressSummary {
         var goldGranted = GameNumber.ZERO
         var experienceGranted = GameNumber.ZERO
@@ -453,7 +452,7 @@ class OfflineSessionCoordinator(
             clockRollbackDetected = clockRollbackDetected,
             startingLevel = before.run.progression.playerLevel.level,
             endingLevel = after.run.progression.playerLevel.level,
-            stoppingReason = OfflineStoppingReason.ELAPSED,
+            stoppingReason = stoppingReason,
             enemiesDefeated = GameNumber.ZERO,
             encountersCleared = GameNumber.ZERO,
             goldGranted = goldGranted,
