@@ -5,6 +5,7 @@ import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.domain.model.player.BaseStats
 import com.idlerpg.game.domain.model.rebirth.RebirthState
+import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
 
 /** Converts permanent Rebirth and Legacy points into base-stat contributions. */
@@ -17,6 +18,24 @@ object RebirthStatSystem {
     const val CRITICAL_MULTIPLIER_UNITS_PER_POINT: Long = 25L
     const val EFFECT_POWER_UNITS_PER_POINT: Long = 10L
     const val HEALING_POWER_UNITS_PER_POINT: Long = 10L
+    const val LEGENDARY_FIND_WEIGHT_PER_POINT: Long = 1L
+    const val MAX_LEGENDARY_FIND_WEIGHT: Long = 500L
+
+    /**
+     * Returns a small additive rarity-weight bonus. It never multiplies the table, changes
+     * drop rolls, or becomes a guarantee; the cap keeps long-lived Legacy investment bounded.
+     */
+    fun legendaryLootBonusWeight(state: RebirthState): Long {
+        val normal = state.allocation(RebirthPointPool.NORMAL, RebirthStat.LEGENDARY_FIND)
+        val legacy = state.allocation(RebirthPointPool.LEGACY, RebirthStat.LEGENDARY_FIND)
+        return minOf(
+            MAX_LEGENDARY_FIND_WEIGHT,
+            Math.multiplyExact(
+                Math.addExact(normal, legacy),
+                LEGENDARY_FIND_WEIGHT_PER_POINT
+            )
+        )
+    }
 
     fun apply(base: BaseStats, state: RebirthState): BaseStats =
         applyPool(
