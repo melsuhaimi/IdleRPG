@@ -131,7 +131,7 @@ class BattleProjector(
                     queueAllowed = queueRejection == null,
                     readiness = readiness,
                     rank = rank,
-                    scalingDisplay = "RANK $rank · ${formatPercent(definition.powerGrowthPerPlayerLevel)} / LVL"
+                    scalingDisplay = "RANK $rank · ${formatPercent(definition.powerGrowthPerPlayerLevel)} / RANK"
                 )
             }
         }
