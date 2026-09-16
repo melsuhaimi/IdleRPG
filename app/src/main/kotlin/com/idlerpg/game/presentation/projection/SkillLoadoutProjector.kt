@@ -228,7 +228,7 @@ class SkillLoadoutProjector(
         }
         add(
             "Investments: rank +" + percentage(definition.powerGrowthPerPlayerLevel) +
-                " power/step; mastery +" +
+                " power/rank; mastery +" +
                 percentage(Ratio.ofUnits(SkillScalingSystem.MASTERY_DAMAGE_UNITS_PER_LEVEL)) +
                 " damage/level and +" +
                 percentage(Ratio.ofUnits(SkillScalingSystem.MASTERY_HEALING_UNITS_PER_LEVEL)) +
