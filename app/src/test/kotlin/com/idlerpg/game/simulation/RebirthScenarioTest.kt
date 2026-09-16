@@ -11,6 +11,7 @@ import com.idlerpg.game.domain.command.SelectRegion
 import com.idlerpg.game.domain.command.StartEncounter
 import com.idlerpg.game.domain.command.PurchaseUpgrade
 import com.idlerpg.game.domain.definition.CurrencyId
+import com.idlerpg.game.domain.event.CurrencyGranted
 import com.idlerpg.game.domain.engine.CommandResult
 import com.idlerpg.game.domain.model.economy.CurrencyWallet
 import com.idlerpg.game.domain.model.economy.UpgradeProgressState
