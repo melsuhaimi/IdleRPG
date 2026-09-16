@@ -71,6 +71,7 @@ data class GearItemUiState(
     val mainStat: GearAffixUiState? = null,
     val enhancementLevel: Int = 0,
     val enhancementLabel: String = "+0",
+    val enhancementTargetLabel: String = "MAX",
     val enhancementFailstack: Int = 0,
     val enhancementSuccessChanceDisplay: String = "0%",
     val enhancementMaterialCostDisplay: String = "0",
