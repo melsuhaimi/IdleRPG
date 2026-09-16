@@ -203,7 +203,7 @@ object EnemyCombatVarietyScenarioTest {
                 "enemyDeadlines=${runtime.state().run.combat.nextEnemyDecisionAt}, " +
                 "actions=${defeat.diagnostics.processedScheduledActions}, " +
                 "events=${defeat.events.map { it.event::class.simpleName }}"
-        )
+        }
         check(runtime.state().run.combat.status == CombatStatus.DEFEAT)
         check(runtime.state().run.world.currentEncounter?.status == EncounterStatus.FAILED)
         check(defeat.events.any { it.event is PlayerDefeated })
