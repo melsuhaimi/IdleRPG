@@ -2,7 +2,6 @@ package com.idlerpg.game.simulation
 
 import com.idlerpg.game.core.random.SeededGameRandom
 import com.idlerpg.game.data.content.DefaultGameContent
-import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
 import com.idlerpg.game.domain.model.rebirth.RebirthState
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.domain.system.rebirth.RebirthStatSystem
