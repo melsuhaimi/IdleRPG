@@ -5,14 +5,14 @@ import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.domain.definition.combat.EffectSpec
 import com.idlerpg.game.domain.definition.combat.SkillDefinition
 import com.idlerpg.game.domain.model.GameState
-import com.idlerpg.game.domain.system.stats.PlayerScalingSystem
 
 /**
- * Applies the shared player-level baseline and the explicit per-skill investment tracks.
+ * Applies the explicit per-skill investment tracks.
  *
- * Rank is never allowed to exceed the authored skill cap. Mastery and refinement are small
- * additive multipliers so their effect is visible but cannot replace gear, stats, or combat
- * decisions as the primary source of power.
+ * Rank is independent from player level and starts at one for an unlocked skill. It is never
+ * allowed to exceed the authored skill cap. Mastery and refinement are small additive
+ * multipliers so their effect is visible but cannot replace gear, stats, or combat decisions as
+ * the primary source of power.
  */
 object SkillScalingSystem {
     const val MASTERY_DAMAGE_UNITS_PER_LEVEL: Long = 150L
@@ -20,16 +20,9 @@ object SkillScalingSystem {
     const val MASTERY_HEALING_UNITS_PER_LEVEL: Long = 100L
     const val REFINEMENT_HEALING_UNITS_PER_LEVEL: Long = 300L
 
-    fun rank(state: GameState, definition: SkillDefinition): Long {
-        val levelRank = PlayerScalingSystem.skillRank(
-            playerLevel = state.run.progression.playerLevel.level,
-            maximumRank = definition.maxRank
-        )
-        val investedRank =
-            state.run.progression.skillProgression.rankBySkillId[definition.id] ?: 1L
-        val maximum = definition.maxRank ?: Long.MAX_VALUE
-        return maxOf(levelRank, investedRank).coerceAtMost(maximum)
-    }
+    fun rank(state: GameState, definition: SkillDefinition): Long =
+        (state.run.progression.skillProgression.rankBySkillId[definition.id] ?: 1L)
+            .coerceAtMost(definition.maxRank ?: Long.MAX_VALUE)
 
     fun mastery(state: GameState, definition: SkillDefinition): Long =
         state.run.progression.skillProgression.masteryBySkillId[definition.id] ?: 0L
