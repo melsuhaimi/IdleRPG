@@ -39,6 +39,21 @@ object SkillProgressionScenarioTest {
         )
 
         val skillId = DefaultGameContent.HEAVY_STRIKE_ID
+        val highLevel = runtime.state().copy(
+            run = runtime.state().run.copy(
+                progression = runtime.state().run.progression.copy(
+                    playerLevel = com.idlerpg.game.domain.model.progression.PlayerLevelState(
+                        level = 1_000L
+                    )
+                )
+            )
+        )
+        check(
+            SkillScalingSystem.rank(
+                highLevel,
+                factory.contentRegistry.skill(skillId)
+            ) == 1L
+        )
         val rankBefore = SkillScalingSystem.rank(
             runtime.state(),
             factory.contentRegistry.skill(skillId)
