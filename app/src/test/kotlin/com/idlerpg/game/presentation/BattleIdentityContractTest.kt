@@ -56,7 +56,7 @@ class BattleIdentityContractTest {
 
         val migrated = SaveMigrationRegistry().migrate(envelope)
 
-        assertEquals(SaveVersion.V7, migrated.schemaVersion)
+        assertEquals(SaveVersion.CURRENT, migrated.schemaVersion)
         assertEquals(original, migrated.gameState())
         assertNull(migrated.gameState().meta.heroName)
     }
