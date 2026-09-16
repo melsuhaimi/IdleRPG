@@ -1598,6 +1598,15 @@ private fun gearFeedbackText(feedback: GearFeedbackUiState): String = when (feed
     GearFeedbackKind.OVERFLOW_CLAIMED -> stringResource(R.string.gear_feedback_overflow_claimed)
     GearFeedbackKind.OVERFLOW_SALVAGED -> stringResource(R.string.gear_feedback_overflow_salvaged_format, feedback.amountDisplay ?: "0")
     GearFeedbackKind.ITEM_TO_OVERFLOW -> stringResource(R.string.gear_feedback_item_to_overflow)
+    GearFeedbackKind.ENHANCED -> if (feedback.enhancementSucceeded == true) {
+        stringResource(R.string.gear_feedback_enhancement_success, feedback.amountDisplay ?: "?")
+    } else {
+        stringResource(R.string.gear_feedback_enhancement_failed, feedback.amountDisplay ?: "?")
+    }
+    GearFeedbackKind.REFINED -> stringResource(
+        R.string.gear_feedback_refined,
+        feedback.amountDisplay ?: "?"
+    )
     GearFeedbackKind.PROGRESSION_BLOCKED -> stringResource(R.string.gear_feedback_blocked)
     GearFeedbackKind.PROGRESSION_UNBLOCKED -> stringResource(R.string.gear_feedback_unblocked_format, feedback.availableStorageSlots ?: 0L)
     GearFeedbackKind.COMMAND_REJECTED -> rejectionMessage(feedback.rejectionCode)
