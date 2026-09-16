@@ -100,6 +100,9 @@ internal object SimulationTestSupport {
             ?.currentHealth
             ?: GameNumber.ZERO
 
+    /** Tier-one Riftfang HP after role and regional scaling. */
+    fun riftfangTierOneHealth(): GameNumber = GameNumber.of(89L)
+
     fun advanceInChunks(
         runtime: GameRuntime,
         total: GameDuration,
@@ -171,7 +174,6 @@ object PrototypeParityTest {
         check(SimulationTestSupport.normalClears(runtime.state()) == GameNumber.ONE)
         val nextEnemy = runtime.state().run.combat.enemies.single()
         check(nextEnemy.definitionId == DefaultGameContent.RIFTFANG_ID)
-        // Tier one applies Riftfang's role and regional health growth.
-        check(SimulationTestSupport.primaryEnemyHealth(runtime.state()) == GameNumber.of(89L))
+        check(SimulationTestSupport.primaryEnemyHealth(runtime.state()) == SimulationTestSupport.riftfangTierOneHealth())
     }
 }
