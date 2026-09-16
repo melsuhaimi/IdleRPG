@@ -251,11 +251,6 @@ class OfflineSessionCoordinator(
         )
     }
 
-    /**
-     * Builds the canonical input for offline farming. A synthetic terminal encounter lets
-     * EncounterSystem start the selected farm target without changing the saved world. The
-     * projected result below discards every world/combat mutation from this temporary run.
-     */
     /** Selects the latest cleared non-boss encounter in the active region. */
     private fun latestEligibleFarmEncounter(state: GameState): ContentId? {
         val world = state.run.world
@@ -269,6 +264,11 @@ class OfflineSessionCoordinator(
             }
     }
 
+    /**
+     * Builds the canonical input for offline farming. A synthetic terminal encounter lets
+     * EncounterSystem start the selected farm target without changing the saved world. The
+     * projected result below discards every world/combat mutation from this temporary run.
+     */
     private fun offlineSimulationState(state: GameState, target: ContentId?): GameState {
         val world = state.run.world
         val activeRegion = world.activeRegionId?.let(engineContext.contentRegistry::regionOrNull)
