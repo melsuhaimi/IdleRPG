@@ -8,6 +8,8 @@ import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.data.local.SaveVersion
 import com.idlerpg.game.data.repository.GameRepository
 import com.idlerpg.game.domain.definition.CurrencyId
+import com.idlerpg.game.domain.definition.Rarity
+import com.idlerpg.game.domain.definition.progression.FeatureUnlockScope
 import com.idlerpg.game.domain.definition.world.EncounterType
 import com.idlerpg.game.domain.engine.EngineContext
 import com.idlerpg.game.domain.engine.EngineDiagnostics
@@ -16,6 +18,7 @@ import com.idlerpg.game.domain.engine.SimulationActionLimitExceededException
 import com.idlerpg.game.domain.engine.SimulationEngine
 import com.idlerpg.game.domain.event.CurrencyGranted
 import com.idlerpg.game.domain.event.ExperienceGranted
+import com.idlerpg.game.domain.event.FeatureUnlocked
 import com.idlerpg.game.domain.event.GameEventEnvelope
 import com.idlerpg.game.domain.event.PlayerLeveledUp
 import com.idlerpg.game.domain.model.GameState
@@ -44,6 +47,13 @@ class OfflineClockRollbackException(
         "savedAtEpochMs=" + savedAtEpochMs + ", currentEpochMs=" + currentEpochMs
 )
 
+enum class OfflineStoppingReason {
+    ELAPSED,
+    CLAIM_WINDOW_CAPPED,
+    CLOCK_ROLLBACK,
+    NO_ELIGIBLE_FARM_STAGE
+}
+
 /**
  * Retained for compatibility with the return-screen vocabulary. The offline contract does
  * not currently expose tactical advice because offline simulation cannot change encounter
@@ -60,7 +70,7 @@ enum class OfflineTacticalInsight {
 
 data class OfflineNotableDrop(
     val displayName: String,
-    val rarity: com.idlerpg.game.domain.definition.Rarity
+    val rarity: Rarity
 )
 
 /**
@@ -75,6 +85,9 @@ data class OfflineProgressSummary(
     val simulatedElapsed: GameDuration,
     val durationClamped: Boolean,
     val clockRollbackDetected: Boolean,
+    val startingLevel: Long = 1L,
+    val endingLevel: Long = 1L,
+    val stoppingReason: OfflineStoppingReason = OfflineStoppingReason.ELAPSED,
     val enemiesDefeated: GameNumber,
     val encountersCleared: GameNumber,
     val goldGranted: GameNumber,
@@ -107,6 +120,12 @@ data class OfflineProgressSummary(
         }
         require(notableDrops.isEmpty()) {
             "Offline summaries cannot contain item drops"
+        }
+        require(startingLevel > 0L && endingLevel > 0L) {
+            "Offline levels must be positive"
+        }
+        require(endingLevel >= startingLevel) {
+            "Offline level cannot decrease"
         }
         require(listOfNotNull(startingStage, endingStage, deepestStage, currentWallStage).all { it > 0 }) {
             "Offline stage numbers must be positive"
@@ -169,10 +188,12 @@ class OfflineSessionCoordinator(
             currentEpochMs = nowEpochMs
         )
         val maximum = engineContext.balanceConfig.maximumOfflineDuration
-        val simulatedElapsed = if (elapsed.requested > maximum) maximum else elapsed.requested
+        val durationClamped = elapsed.requested > maximum
+        val simulatedElapsed = if (durationClamped) maximum else elapsed.requested
+        val farmTarget = latestEligibleFarmEncounter(before)
 
         val canonicalResult = advanceExact(
-            state = offlineSimulationState(before),
+            state = offlineSimulationState(before, farmTarget),
             duration = simulatedElapsed
         )
         val engineResult = projectOfflineResult(
@@ -188,8 +209,15 @@ class OfflineSessionCoordinator(
         val summary = summarize(
             requestedElapsed = elapsed.requested,
             simulatedElapsed = simulatedElapsed,
-            durationClamped = elapsed.requested > simulatedElapsed,
+            durationClamped = durationClamped,
             clockRollbackDetected = elapsed.clockRollbackDetected,
+            startingLevel = before.run.progression.playerLevel.level,
+            endingLevel = engineResult.state.run.progression.playerLevel.level,
+            stoppingReason = stoppingReasonFor(
+                clockRollbackDetected = elapsed.clockRollbackDetected,
+                durationClamped = durationClamped,
+                farmTarget = farmTarget
+            ),
             events = engineResult.events,
             before = before,
             after = engineResult.state
@@ -229,16 +257,22 @@ class OfflineSessionCoordinator(
      * EncounterSystem start the selected farm target without changing the saved world. The
      * projected result below discards every world/combat mutation from this temporary run.
      */
-    private fun offlineSimulationState(state: GameState): GameState {
+    /** Selects the latest cleared non-boss encounter in the active region. */
+    private fun latestEligibleFarmEncounter(state: GameState): ContentId? {
         val world = state.run.world
         val activeRegion = world.activeRegionId?.let(engineContext.contentRegistry::regionOrNull)
-        val target = activeRegion
+        return activeRegion
             ?.encounterIds
             ?.asReversed()
             ?.firstOrNull { candidate ->
                 candidate in world.clearedEncounterIds &&
                     engineContext.contentRegistry.encounterOrNull(candidate)?.type != EncounterType.BOSS
             }
+    }
+
+    private fun offlineSimulationState(state: GameState, target: ContentId?): GameState {
+        val world = state.run.world
+        val activeRegion = world.activeRegionId?.let(engineContext.contentRegistry::regionOrNull)
 
         val farmingWorld = if (target == null || activeRegion == null) {
             world.copy(
@@ -298,7 +332,8 @@ class OfflineSessionCoordinator(
                 )
             ),
             progression = before.run.progression.copy(
-                playerLevel = canonicalResult.state.run.progression.playerLevel
+                playerLevel = canonicalResult.state.run.progression.playerLevel,
+                featureUnlocks = canonicalResult.state.run.progression.featureUnlocks
             )
         )
         val projectedState = before.copy(
@@ -317,6 +352,9 @@ class OfflineSessionCoordinator(
         when (val event = envelope.event) {
             is ExperienceGranted,
             is PlayerLeveledUp -> true
+            is FeatureUnlocked ->
+                engineContext.contentRegistry.featureUnlockOrNull(event.featureId)?.scope ==
+                    FeatureUnlockScope.RUN
             is CurrencyGranted -> event.currencyId == CurrencyId.GOLD
             else -> false
         }
@@ -413,6 +451,9 @@ class OfflineSessionCoordinator(
             simulatedElapsed = simulatedElapsed,
             durationClamped = durationClamped,
             clockRollbackDetected = clockRollbackDetected,
+            startingLevel = before.run.progression.playerLevel.level,
+            endingLevel = after.run.progression.playerLevel.level,
+            stoppingReason = OfflineStoppingReason.ELAPSED,
             enemiesDefeated = GameNumber.ZERO,
             encountersCleared = GameNumber.ZERO,
             goldGranted = goldGranted,
@@ -436,6 +477,17 @@ class OfflineSessionCoordinator(
             tacticalInsight = null,
             eventCount = events.size
         )
+    }
+
+    private fun stoppingReasonFor(
+        clockRollbackDetected: Boolean,
+        durationClamped: Boolean,
+        farmTarget: ContentId?
+    ): OfflineStoppingReason = when {
+        clockRollbackDetected -> OfflineStoppingReason.CLOCK_ROLLBACK
+        farmTarget == null -> OfflineStoppingReason.NO_ELIGIBLE_FARM_STAGE
+        durationClamped -> OfflineStoppingReason.CLAIM_WINDOW_CAPPED
+        else -> OfflineStoppingReason.ELAPSED
     }
 
     private fun stageForState(state: GameState): Int? {

@@ -68,6 +68,9 @@ object OfflineProgressProjectionTest {
                     simulatedElapsed = GameDuration.ofMillis(86_400_000L),
                     durationClamped = true,
                     clockRollbackDetected = false,
+                    startingLevel = 12L,
+                    endingLevel = 27L,
+                    stoppingReason = com.idlerpg.game.application.OfflineStoppingReason.CLAIM_WINDOW_CAPPED,
                     enemiesDefeated = GameNumber.of(8_640L),
                     encountersCleared = GameNumber.of(2_880L),
                     goldGranted = GameNumber.of(86_400L),
@@ -98,6 +101,8 @@ object OfflineProgressProjectionTest {
         check(projected.simulatedDurationDisplay == "1d")
         check(projected.durationClamped)
         check(!projected.clockRollbackDetected)
+        check(projected.levelJourney == "12 → 27")
+        check(projected.stoppingReason.name == "CLAIM_WINDOW_CAPPED")
         check(projected.enemiesDefeated == "0")
         check(projected.encountersCleared == "0")
         check(projected.goldGranted == "86400")
@@ -122,6 +127,9 @@ object OfflineProgressProjectionTest {
                     simulatedElapsed = GameDuration.ZERO,
                     durationClamped = false,
                     clockRollbackDetected = true,
+                    startingLevel = 4L,
+                    endingLevel = 4L,
+                    stoppingReason = com.idlerpg.game.application.OfflineStoppingReason.CLOCK_ROLLBACK,
                     enemiesDefeated = GameNumber.ZERO,
                     encountersCleared = GameNumber.ZERO,
                     goldGranted = GameNumber.ZERO,
@@ -148,6 +156,7 @@ object OfflineProgressProjectionTest {
             )
         )
         check(rollback.clockRollbackDetected)
+        check(rollback.stoppingReason.name == "CLOCK_ROLLBACK")
         check(rollback.simulatedDurationDisplay == "0s")
 
         println("FUI10_OFFLINE_PROGRESS_PROJECTION_PASS")

@@ -11,6 +11,8 @@ data class OfflineProgressUiState(
     val simulatedDurationDisplay: String,
     val durationClamped: Boolean,
     val clockRollbackDetected: Boolean,
+    val levelJourney: String?,
+    val stoppingReason: OfflineStoppingReasonUi,
     val enemiesDefeated: String,
     val encountersCleared: String,
     val goldGranted: String,
@@ -32,6 +34,13 @@ data class OfflineProgressUiState(
     val notableDrops: List<String>,
     val tacticalInsight: OfflineTacticalInsightUi?
 )
+
+enum class OfflineStoppingReasonUi {
+    ELAPSED,
+    CLAIM_WINDOW_CAPPED,
+    CLOCK_ROLLBACK,
+    NO_ELIGIBLE_FARM_STAGE
+}
 
 enum class OfflineTacticalInsightUi {
     ADAPTATION_PRESSURE,

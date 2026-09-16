@@ -967,6 +967,12 @@
     <string name="offline_encounters">Encounters cleared</string>
     <string name="offline_convergences">Combos triggered</string>
     <string name="offline_adaptation_changes">Resistance changes</string>
+    <string name="offline_level_change">Level change</string>
+    <string name="offline_stopping_reason">Stopped because</string>
+    <string name="offline_stop_elapsed">Elapsed time reached</string>
+    <string name="offline_stop_claim_window">Maximum offline window reached</string>
+    <string name="offline_stop_clock_rollback">Device clock moved backward</string>
+    <string name="offline_stop_no_farm_stage">No cleared non-boss stage was available</string>
     <string name="offline_stage_journey">Stage before → after</string>
     <string name="offline_highest_stage">Highest stage reached</string>
     <string name="offline_mastery">Skill Mastery</string>
