@@ -69,7 +69,7 @@ jobs:
           script: |
             set +e
 
-            OUT="$PWD/artifacts/emulator"
+            OUT="artifacts/emulator"
             COMPONENT="$PACKAGE/$ACTIVITY"
             TRACE_DEVICE="/data/local/tmp/idlerpg-launch.pftrace"
             PERF_DATA_DEVICE="/data/local/tmp/idlerpg.perf.data"
@@ -83,7 +83,7 @@ jobs:
             adb shell cmd package resolve-activity --brief "$PACKAGE" > "$OUT/00-resolved-activity.txt" 2>&1
             adb shell dumpsys package "$PACKAGE" > "$OUT/00-package-state.txt" 2>&1
 
-            adb install -r "$GITHUB_WORKSPACE/app/build/outputs/apk/debug/app-debug.apk" > "$OUT/00-install.txt" 2>&1
+            adb install -r "app/build/outputs/apk/debug/app-debug.apk" > "$OUT/00-install.txt" 2>&1
             adb shell pm clear "$PACKAGE" > "$OUT/00-clear-data.txt" 2>&1
             adb shell am force-stop "$PACKAGE" > "$OUT/00-force-stop.txt" 2>&1
             adb shell dumpsys gfxinfo "$PACKAGE" reset > "$OUT/00-gfxinfo-reset.txt" 2>&1
@@ -146,13 +146,7 @@ jobs:
               printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
             } > "$OUT/verdict.txt"
 
-            {
-              echo "## IdleRPG emulator QA"
-              echo
-              echo "- Scenario: \`$SCENARIO\`"
-              echo "- Launch verdict: \`$LAUNCH_VERDICT\`"
-              echo "- Evidence is uploaded under \`artifacts/emulator/\`."
-            } >> "$GITHUB_STEP_SUMMARY"
+            printf "scenario=%s launch_verdict=%s\n" "$SCENARIO" "$LAUNCH_VERDICT"
 
       - name: Upload emulator evidence
         if: always()
