@@ -41,6 +41,7 @@ data class RebirthPreview(
     val goldCost: GameNumber,
     val normalPointsGranted: Long,
     val legacyPointsGranted: Long,
+    val deepLevelReward: GameNumber = GameNumber.ZERO,
     val goldAvailable: GameNumber
 )
 
