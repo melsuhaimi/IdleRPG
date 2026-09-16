@@ -1101,4 +1101,7 @@
     <string name="world_adaptation_quiet">No resistance yet. Win battles using different elements.</string>
     <string name="world_adaptation_active_only">Show active elements only</string>
     <string name="world_adaptation_show_all">Show all eight elements</string>
+    <string name="progress_feedback_rebirth_performed">Rebirth %1$s complete. Permanent points are ready to allocate.</string>
+    <string name="progress_feedback_rebirth_allocated">%1$s permanent point allocated.</string>
+    <string name="progress_feedback_rebirth_respec">Rebirth allocations reset for %1$s Gems.</string>
 </resources>
