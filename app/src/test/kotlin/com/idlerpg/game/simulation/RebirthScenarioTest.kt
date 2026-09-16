@@ -25,6 +25,7 @@ import com.idlerpg.game.domain.system.stats.DerivedStatSystem
 object RebirthScenarioTest {
     fun run() {
         rejectedBeforeThresholdIsAtomic()
+        rejectedDuringActiveCombatIsAtomic()
         resetPreservesLongLivedStateAndClearsRunProgression()
         allocationAndGemRespecArePersistent()
     }
@@ -34,6 +35,30 @@ object RebirthScenarioTest {
         val before = runtime.state()
         val result = runtime.dispatch(PerformRebirth())
         check((result.commandResult as CommandResult.Rejected).reason.code == CommandRejectionCode.NOT_READY)
+        check(runtime.state() == before)
+    }
+
+    private fun rejectedDuringActiveCombatIsAtomic() {
+        val runtime = SimulationTestSupport.runtime(seed = 9_004L)
+        SimulationTestSupport.startTraining(runtime)
+        val active = runtime.state().copy(
+            run = runtime.state().run.copy(
+                economy = runtime.state().run.economy.copy(
+                    wallet = CurrencyWallet(
+                        amountsByCurrencyId = mapOf(
+                            CurrencyId.GOLD to GameNumber.of(100_000_000L)
+                        )
+                    )
+                ),
+                progression = runtime.state().run.progression.copy(
+                    playerLevel = PlayerLevelState(RebirthSystem.MINIMUM_REBIRTH_LEVEL)
+                )
+            )
+        )
+        runtime.replaceLoadedState(active)
+        val before = runtime.state()
+        val result = runtime.dispatch(PerformRebirth())
+        check((result.commandResult as CommandResult.Rejected).reason.code == CommandRejectionCode.INVALID_STATE)
         check(runtime.state() == before)
     }
 
