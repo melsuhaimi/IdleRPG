@@ -150,6 +150,7 @@ data class RebirthUiState(
     val goldAvailableDisplay: String = "0",
     val normalPointsGranted: Long = 0L,
     val legacyPointsGranted: Long = 0L,
+    val deepLevelRewardDisplay: String = "—",
     val normalPointsEarned: Long = 0L,
     val normalUnspent: Long = 0L,
     val legacyPointsEarned: Long = 0L,
