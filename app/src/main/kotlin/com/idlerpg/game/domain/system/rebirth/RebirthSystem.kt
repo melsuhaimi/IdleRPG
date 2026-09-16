@@ -22,6 +22,7 @@ import com.idlerpg.game.domain.event.RebirthPerformed
 import com.idlerpg.game.domain.event.RebirthPointsAllocated
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.model.combat.CombatState
+import com.idlerpg.game.domain.model.combat.CombatStatus
 import com.idlerpg.game.domain.model.economy.UpgradeProgressState
 import com.idlerpg.game.domain.model.progression.ProgressionState
 import com.idlerpg.game.domain.model.quest.QuestState
@@ -49,7 +50,8 @@ data class RebirthPreview(
  * Owns the separate Rebirth lifecycle.
  *
  * Chronicle remains the destructive whole-run reset. Rebirth deliberately preserves the
- * player's wallet, inventory/equipment, resonances, doctrine, adaptation, and run statistics.
+ * player's wallet, inventory/equipment, resonances, adaptation, and run statistics. Doctrine
+ * rules are run-scoped and are cleared with the new life.
  */
 object RebirthSystem : GameCommandHandler {
     const val MINIMUM_REBIRTH_LEVEL: Long = 1_000L
@@ -130,7 +132,7 @@ object RebirthSystem : GameCommandHandler {
 
     private fun perform(state: GameState): CommandHandlingResult {
         val level = state.run.progression.playerLevel.level
-        if (state.run.combat.status != com.idlerpg.game.domain.model.combat.CombatStatus.IDLE) {
+        if (state.run.combat.status != CombatStatus.IDLE) {
             return rejected(CommandRejectionCode.INVALID_STATE)
         }
         if (level < MINIMUM_REBIRTH_LEVEL) {
@@ -197,6 +199,7 @@ object RebirthSystem : GameCommandHandler {
                 upgrades = UpgradeProgressState()
             ),
             progression = resetProgression,
+            doctrine = state.run.doctrine.copy(rules = emptyList()),
             quests = QuestState()
         )
         val transitioned = state.copy(

@@ -1,6 +1,8 @@
 package com.idlerpg.game.simulation
 
+import com.idlerpg.game.core.id.InstanceId
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.data.local.SaveData
 import com.idlerpg.game.data.content.DefaultGameContent
 import com.idlerpg.game.domain.command.AllocateRebirthPoints
@@ -13,6 +15,11 @@ import com.idlerpg.game.domain.command.PurchaseUpgrade
 import com.idlerpg.game.domain.definition.CurrencyId
 import com.idlerpg.game.domain.event.CurrencyGranted
 import com.idlerpg.game.domain.engine.CommandResult
+import com.idlerpg.game.domain.model.doctrine.DoctrineAction
+import com.idlerpg.game.domain.model.doctrine.DoctrineComparison
+import com.idlerpg.game.domain.model.doctrine.DoctrineCondition
+import com.idlerpg.game.domain.model.doctrine.DoctrinePredicate
+import com.idlerpg.game.domain.model.doctrine.DoctrineRule
 import com.idlerpg.game.domain.model.economy.CurrencyWallet
 import com.idlerpg.game.domain.model.economy.UpgradeProgressState
 import com.idlerpg.game.domain.model.player.BaseStats
@@ -79,6 +86,21 @@ object RebirthScenarioTest {
                     ),
                     equippedSkillIds = listOf(equippedSkill)
                 ),
+                doctrine = before.run.doctrine.copy(
+                    enabled = false,
+                    rules = listOf(
+                        DoctrineRule(
+                            instanceId = InstanceId(1L),
+                            condition = DoctrineCondition.Predicate(
+                                DoctrinePredicate.EnemyHealthPercent(
+                                    comparison = DoctrineComparison.LESS_THAN_OR_EQUAL,
+                                    threshold = Ratio.ONE
+                                )
+                            ),
+                            action = DoctrineAction.UseBasicAttack
+                        )
+                    )
+                ),
                 economy = before.run.economy.copy(
                     wallet = CurrencyWallet(
                         amountsByCurrencyId = mapOf(
@@ -105,8 +127,8 @@ object RebirthScenarioTest {
         runtime.replaceLoadedState(mature)
         val preservedInventory = mature.run.inventory
         val preservedResonance = mature.run.resonance
-        val preservedDoctrine = mature.run.doctrine
         val preservedAdaptation = mature.run.adaptation
+        check(mature.run.doctrine.rules.isNotEmpty())
         val result = runtime.dispatch(PerformRebirth())
         SimulationTestSupport.checkAccepted(result)
         val after = runtime.state()
@@ -133,7 +155,8 @@ object RebirthScenarioTest {
         check(after.run.economy.wallet.amountsByCurrencyId[CurrencyId.GEMS] == GameNumber.of(100L))
         check(after.run.inventory == preservedInventory)
         check(after.run.resonance == preservedResonance)
-        check(after.run.doctrine == preservedDoctrine)
+        check(!after.run.doctrine.enabled)
+        check(after.run.doctrine.rules.isEmpty())
         check(after.run.adaptation == preservedAdaptation)
     }
 

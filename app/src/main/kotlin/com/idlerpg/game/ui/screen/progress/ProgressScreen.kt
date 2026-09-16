@@ -1524,7 +1524,7 @@ private fun RebirthConfirmationDialog(
                         "Deep-push reward: ${rebirth.deepLevelRewardDisplay}"
                     }
                 )
-                Text("Reset now: level and XP, normal stat purchases, skill unlocks/loadout/rank/mastery/evolution/refinement, quests, and stage progress.")
+                Text("Reset now: level and XP, normal stat purchases, skill unlocks/loadout/rank/mastery/evolution/refinement, Doctrine rules, quests, and stage progress.")
                 Text("Keep: gear and enhancement rolls, refinement materials, inventory, Gems, existing Rebirth allocations, Legacy, and lifetime statistics.")
                 Text("Rebirth is optional. You can continue leveling beyond the threshold when you are not ready.")
             }
