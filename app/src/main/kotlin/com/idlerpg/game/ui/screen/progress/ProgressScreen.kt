@@ -1385,7 +1385,7 @@ private fun RebirthPanel(
                 )
             }
             Text(
-                "Soft reset at level ${rebirth.minimumLevel}. Level, skills, mastery, refinements, quests, and stage progress reset; gear, rolls, materials, Gold remaining after the cost, Gems, and Legacy persist.",
+                "Soft reset at level ${rebirth.minimumLevel}. Level, skills, mastery, refinements, quests, stage progress, and Doctrine rules reset; gear, rolls, materials, Gold remaining after the cost, Gems, and Legacy persist.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
