@@ -19,6 +19,7 @@ import com.idlerpg.game.domain.model.inventory.LootFilterState
 import com.idlerpg.game.domain.system.inventory.GeneratedItemPlacement
 import com.idlerpg.game.domain.system.inventory.InventorySystem
 import com.idlerpg.game.domain.system.economy.TransactionSystem
+import com.idlerpg.game.domain.system.rebirth.RebirthStatSystem
 
 data class LootGrantResult(
     val state: GameState,
@@ -54,7 +55,10 @@ object LootSystem {
         val selections = LootTableSystem.roll(
             definition = table,
             contentRegistry = context.contentRegistry,
-            random = context.random
+            random = context.random,
+            legendaryBonusWeight = RebirthStatSystem.legendaryLootBonusWeight(
+                state.meta.rebirth
+            )
         )
         var inventory = state.run.inventory
         var economy = state.run.economy
