@@ -93,6 +93,7 @@ object EnemyCombatVarietyScenarioTest {
                             highestClearedEncounterTier = 2L,
                             normalClears = GameNumber.of(2L)
                         )),
+                    // Encounter IDs are the authoritative unlock state.
                     clearedEncounterIds = initial.run.world.clearedEncounterIds + setOf(
                         DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
                         DefaultGameContent.RIFTFANG_ENCOUNTER_ID
