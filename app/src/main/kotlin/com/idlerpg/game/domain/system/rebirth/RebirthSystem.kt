@@ -29,6 +29,7 @@ import com.idlerpg.game.domain.model.rebirth.RebirthState
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.domain.model.world.WorldState
 import com.idlerpg.game.domain.system.economy.TransactionSystem
+import com.idlerpg.game.domain.system.stats.PlayerScalingSystem
 
 /** Read-only values presented before a player chooses to Rebirth. */
 data class RebirthPreview(
@@ -141,8 +142,12 @@ object RebirthSystem : GameCommandHandler {
                 legacyPoints
             )
         )
+        val resetProgression = ProgressionState()
         val nextBaseStats = RebirthStatSystem.apply(
-            state.run.player.baseStats,
+            PlayerScalingSystem.baseStatsForLevel(
+                state.run.player.baseStats,
+                resetProgression.playerLevel.level
+            ),
             nextRebirth
         )
         val resetRun = state.run.copy(
@@ -157,7 +162,7 @@ object RebirthSystem : GameCommandHandler {
                 wallet = economyAfterSpend.wallet,
                 upgrades = UpgradeProgressState()
             ),
-            progression = ProgressionState(),
+            progression = resetProgression,
             quests = QuestState()
         )
         val transitioned = state.copy(
