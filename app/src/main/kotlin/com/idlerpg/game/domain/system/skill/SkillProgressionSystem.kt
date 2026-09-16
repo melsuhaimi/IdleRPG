@@ -25,9 +25,9 @@ import com.idlerpg.game.domain.model.GameState
 /**
  * Owns the three deliberate skill-investment tracks.
  *
- * Player level provides a baseline rank, while these upgrades are optional Gold sinks with
- * authored caps. Each transition is atomic and therefore safe to invoke from menus or save
- * boundaries without partially charging the player.
+ * Rank, mastery, and refinement are independent optional Gold sinks with authored caps. Each
+ * transition is atomic and therefore safe to invoke from menus or save boundaries without
+ * partially charging the player.
  */
 object SkillProgressionSystem : GameCommandHandler {
     const val MAX_MASTERY: Long = 50L
