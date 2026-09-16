@@ -2,6 +2,7 @@ package com.idlerpg.game.presentation.projection
 
 import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.domain.definition.CurrencyId
@@ -12,6 +13,7 @@ import com.idlerpg.game.domain.model.inventory.InventoryState
 import com.idlerpg.game.domain.model.inventory.EnhancementLevel
 import com.idlerpg.game.domain.model.inventory.ItemInstance
 import com.idlerpg.game.domain.model.inventory.EquipmentLoadoutState
+import com.idlerpg.game.domain.system.inventory.GearEnhancementSystem
 import com.idlerpg.game.domain.system.stats.DerivedStatSystem
 import com.idlerpg.game.presentation.content.PresentationContentRegistry
 import com.idlerpg.game.presentation.format.GameNumberFormatter
@@ -126,6 +128,26 @@ class GearProjector(
         val equipmentDefinition = definition.equipmentDefinitionId?.let(contentRegistry::equipment)
         val equippedSlot = if (overflow) null else inventory.equipment.slotOf(item.instanceId)
         val locked = !overflow && inventory.locks.isLocked(item.instanceId)
+        val enhancementPreview = if (overflow) {
+            null
+        } else {
+            GearEnhancementSystem.preview(item)
+        }
+        val protectedEnhancementPreview = if (overflow) {
+            null
+        } else {
+            GearEnhancementSystem.preview(item, useProtection = true)
+        }
+        val enhancementMaterialBalance =
+            state.run.economy.wallet.amountsByCurrencyId[CurrencyId.ENHANCEMENT_MATERIAL]
+                ?: GameNumber.ZERO
+        val gemBalance =
+            state.run.economy.wallet.amountsByCurrencyId[CurrencyId.GEMS]
+                ?: GameNumber.ZERO
+        val refinementMaterialBalance =
+            state.run.economy.wallet.amountsByCurrencyId[CurrencyId.REFINEMENT_MATERIAL]
+                ?: GameNumber.ZERO
+        val hasRefinableAffix = item.mainStat != null || item.affixes.isNotEmpty()
 
         return GearItemUiState(
             instanceId = item.instanceId,
@@ -170,6 +192,32 @@ class GearProjector(
             },
             enhancementLevel = item.enhancementLevel,
             enhancementLabel = EnhancementLevel.displayName(item.enhancementLevel),
+            enhancementFailstack = item.enhancementFailstack,
+            enhancementSuccessChanceDisplay = enhancementPreview?.let {
+                formatRatioPercent(it.successChance)
+            } ?: "0%",
+            enhancementMaterialCostDisplay = enhancementPreview?.let {
+                GameNumberFormatter.full(it.materialCost)
+            } ?: "0",
+            enhancementProtectionGemCostDisplay = protectedEnhancementPreview?.let {
+                GameNumberFormatter.full(it.protectionGemCost)
+            } ?: "0",
+            enhancementFailureLevelDisplay = enhancementPreview?.let {
+                EnhancementLevel.displayName(it.failureLevelWithoutProtection)
+            } ?: EnhancementLevel.displayName(item.enhancementLevel),
+            enhancementFailureFailstackDisplay = enhancementPreview?.failureFailstack?.toString() ?: "0",
+            refinementMaterialCostDisplay = if (hasRefinableAffix) {
+                GameNumberFormatter.full(GameNumber.ONE)
+            } else {
+                "0"
+            },
+            canEnhance = enhancementPreview?.targetLevel != null &&
+                enhancementMaterialBalance >= enhancementPreview.materialCost,
+            canEnhanceWithProtection = protectedEnhancementPreview?.targetLevel != null &&
+                enhancementMaterialBalance >= protectedEnhancementPreview.materialCost &&
+                gemBalance >= protectedEnhancementPreview.protectionGemCost,
+            canRefine = !overflow && hasRefinableAffix &&
+                refinementMaterialBalance >= GameNumber.ONE,
             comparison = comparisonFor(
                 item = item,
                 state = state,
@@ -218,6 +266,16 @@ class GearProjector(
             resultingArmorDisplay = GameNumberFormatter.compact(resultingArmor),
             armorDeltaDisplay = signedDelta(currentArmor, resultingArmor)
         )
+    }
+
+    private fun formatRatioPercent(ratio: Ratio): String {
+        val whole = ratio.units / 100L
+        val fraction = ratio.units % 100L
+        return if (fraction == 0L) {
+            "${whole}%"
+        } else {
+            "${whole}.${fraction.toString().padStart(2, '0').trimEnd('0')}%"
+        }
     }
 
     private fun signedDelta(before: GameNumber, after: GameNumber): String {
