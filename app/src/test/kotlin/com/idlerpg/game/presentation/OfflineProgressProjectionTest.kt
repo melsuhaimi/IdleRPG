@@ -1,6 +1,8 @@
 package com.idlerpg.game.presentation
 
 import com.idlerpg.game.application.OfflineProgressSummary
+import com.idlerpg.game.application.OfflineStoppingReason
+import com.idlerpg.game.presentation.model.OfflineStoppingReasonUi
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.presentation.projection.OfflineProgressProjector
@@ -70,7 +72,7 @@ object OfflineProgressProjectionTest {
                     clockRollbackDetected = false,
                     startingLevel = 12L,
                     endingLevel = 27L,
-                    stoppingReason = com.idlerpg.game.application.OfflineStoppingReason.CLAIM_WINDOW_CAPPED,
+                    stoppingReason = OfflineStoppingReason.CLAIM_WINDOW_CAPPED,
                     enemiesDefeated = GameNumber.of(8_640L),
                     encountersCleared = GameNumber.of(2_880L),
                     goldGranted = GameNumber.of(86_400L),
@@ -102,7 +104,7 @@ object OfflineProgressProjectionTest {
         check(projected.durationClamped)
         check(!projected.clockRollbackDetected)
         check(projected.levelJourney == "12 → 27")
-        check(projected.stoppingReason.name == "CLAIM_WINDOW_CAPPED")
+        check(projected.stoppingReason == OfflineStoppingReasonUi.CLAIM_WINDOW_CAPPED)
         check(projected.enemiesDefeated == "0")
         check(projected.encountersCleared == "0")
         check(projected.goldGranted == "86400")
@@ -129,7 +131,7 @@ object OfflineProgressProjectionTest {
                     clockRollbackDetected = true,
                     startingLevel = 4L,
                     endingLevel = 4L,
-                    stoppingReason = com.idlerpg.game.application.OfflineStoppingReason.CLOCK_ROLLBACK,
+                    stoppingReason = OfflineStoppingReason.CLOCK_ROLLBACK,
                     enemiesDefeated = GameNumber.ZERO,
                     encountersCleared = GameNumber.ZERO,
                     goldGranted = GameNumber.ZERO,
@@ -156,7 +158,7 @@ object OfflineProgressProjectionTest {
             )
         )
         check(rollback.clockRollbackDetected)
-        check(rollback.stoppingReason.name == "CLOCK_ROLLBACK")
+        check(rollback.stoppingReason == OfflineStoppingReasonUi.CLOCK_ROLLBACK)
         check(rollback.simulatedDurationDisplay == "0s")
 
         println("FUI10_OFFLINE_PROGRESS_PROJECTION_PASS")
