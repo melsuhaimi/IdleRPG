@@ -1,13 +1,7 @@
 name: Android build
 
 on:
-  push:
-    branches:
-      - main
-      - "feat/**"
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
