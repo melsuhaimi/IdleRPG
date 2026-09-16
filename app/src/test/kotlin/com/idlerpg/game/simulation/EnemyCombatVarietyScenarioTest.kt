@@ -194,7 +194,16 @@ object EnemyCombatVarietyScenarioTest {
         )
 
         val defeat = runtime.advance(GameDuration.ofMillis(2_200L))
-        check(runtime.state().run.player.currentHealth == GameNumber.ZERO)
+        check(runtime.state().run.player.currentHealth == GameNumber.ZERO) {
+            "Expected defeat, got playerHealth=${runtime.state().run.player.currentHealth}, " +
+                "combatHealth=${runtime.state().run.combat.playerCombatant?.currentHealth}, " +
+                "combatStatus=${runtime.state().run.combat.status}, " +
+                "encounter=${runtime.state().run.world.currentEncounter?.status}, " +
+                "time=${runtime.state().engine.simulationTime.millis}, " +
+                "enemyDeadlines=${runtime.state().run.combat.nextEnemyDecisionAt}, " +
+                "actions=${defeat.diagnostics.processedScheduledActions}, " +
+                "events=${defeat.events.map { it.event::class.simpleName }}"
+        )
         check(runtime.state().run.combat.status == CombatStatus.DEFEAT)
         check(runtime.state().run.world.currentEncounter?.status == EncounterStatus.FAILED)
         check(defeat.events.any { it.event is PlayerDefeated })
