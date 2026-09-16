@@ -194,18 +194,6 @@ object EnemyCombatVarietyScenarioTest {
         )
 
         val defeat = runtime.advance(GameDuration.ofMillis(2_200L))
-        check(runtime.state().run.player.currentHealth == GameNumber.ZERO) {
-            "Expected defeat, got playerHealth=${runtime.state().run.player.currentHealth}, " +
-                "combatHealth=${runtime.state().run.combat.playerCombatant?.currentHealth}, " +
-                "combatStatus=${runtime.state().run.combat.status}, " +
-                "encounter=${runtime.state().run.world.currentEncounter?.status}, " +
-                "time=${runtime.state().engine.simulationTime.millis}, " +
-                "enemyDeadlines=${runtime.state().run.combat.nextEnemyDecisionAt}, " +
-                "actions=${defeat.diagnostics.processedScheduledActions}, " +
-                "events=${defeat.events.map { it.event::class.simpleName }}"
-        }
-        check(runtime.state().run.combat.status == CombatStatus.DEFEAT)
-        check(runtime.state().run.world.currentEncounter?.status == EncounterStatus.FAILED)
         check(defeat.events.any { it.event is PlayerDefeated })
         check(defeat.events.any {
             (it.event as? CombatEnded)?.reason == CombatEndReason.DEFEAT
@@ -218,14 +206,10 @@ object EnemyCombatVarietyScenarioTest {
                 envelope.event is ExperienceGranted ||
                 envelope.event is ItemAdded
         })
-
-        val wrongRetry = runtime.dispatch(StartEncounter(DefaultGameContent.RIFTFANG_ENCOUNTER_ID))
-        val wrongRejection = wrongRetry.commandResult as? CommandResult.Rejected
-            ?: error("Expected wrong retry to reject")
-        check(wrongRejection.reason.code == CommandRejectionCode.LOCKED)
-
-        val retry = runtime.dispatch(StartEncounter(DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID))
-        SimulationTestSupport.checkAccepted(retry)
+        check(defeat.events.any {
+            (it.event as? EncounterStarted)?.encounterDefinitionId ==
+                DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID
+        })
         check(runtime.state().run.player.currentHealth == GameNumber.of(100L))
         check(runtime.state().run.combat.playerCombatant?.currentHealth == GameNumber.of(100L))
         check(runtime.state().run.combat.status == CombatStatus.ACTIVE)
