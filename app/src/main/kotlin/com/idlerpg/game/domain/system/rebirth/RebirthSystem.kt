@@ -14,6 +14,7 @@ import com.idlerpg.game.domain.definition.CurrencyId
 import com.idlerpg.game.domain.engine.CommandHandlingResult
 import com.idlerpg.game.domain.engine.EngineContext
 import com.idlerpg.game.domain.engine.GameCommandHandler
+import com.idlerpg.game.domain.event.CurrencyGranted
 import com.idlerpg.game.domain.event.CurrencySpent
 import com.idlerpg.game.domain.event.GameEvent
 import com.idlerpg.game.domain.event.RebirthAllocationsReset
@@ -55,9 +56,12 @@ object RebirthSystem : GameCommandHandler {
     const val NORMAL_POINTS_FIRST_REBIRTH: Long = 100L
     const val NORMAL_POINTS_PER_REBIRTH: Long = 25L
     const val GEM_RESPEC_COST: Long = 100L
+    const val DEEP_REBIRTH_LEVEL: Long = 15_000L
+    const val DEEP_REBIRTH_ENHANCEMENT_MATERIAL_REWARD: Long = 25L
 
     private val REBIRTH_COST_GROWTH = com.idlerpg.game.core.number.Ratio.ofUnits(12_500L)
     private val REBIRTH_PURPOSE_ID = ContentId("system.rebirth")
+    private val DEEP_REBIRTH_REWARD_PURPOSE_ID = ContentId("system.rebirth.deep")
     private val RESPEC_PURPOSE_ID = ContentId("system.rebirth.respec")
 
     override fun handle(
@@ -74,11 +78,17 @@ object RebirthSystem : GameCommandHandler {
 
     fun preview(state: GameState): RebirthPreview {
         val nextNumber = Math.addExact(state.meta.rebirth.completedRebirths, 1L)
-        val normal = normalPointsForRebirth(nextNumber)
+        val currentLevel = state.run.progression.playerLevel.level
+        val deepLevelReward = deepLevelRewardForLevel(currentLevel)
+        val normal = if (deepLevelReward > GameNumber.ZERO) {
+            0L
+        } else {
+            normalPointsForRebirth(nextNumber)
+        }
         return RebirthPreview(
-            currentLevel = state.run.progression.playerLevel.level,
+            currentLevel = currentLevel,
             minimumLevel = MINIMUM_REBIRTH_LEVEL,
-            eligible = state.run.progression.playerLevel.level >= MINIMUM_REBIRTH_LEVEL &&
+            eligible = currentLevel >= MINIMUM_REBIRTH_LEVEL &&
                 TransactionSystem.canAfford(
                     state.run.economy,
                     CurrencyId.GOLD,
@@ -87,7 +97,12 @@ object RebirthSystem : GameCommandHandler {
             nextRebirthNumber = nextNumber,
             goldCost = goldCostForRebirth(nextNumber),
             normalPointsGranted = normal,
-            legacyPointsGranted = legacyPointsForRebirth(nextNumber),
+            legacyPointsGranted = if (deepLevelReward > GameNumber.ZERO) {
+                0L
+            } else {
+                legacyPointsForRebirth(nextNumber)
+            },
+            deepLevelReward = deepLevelReward,
             goldAvailable = TransactionSystem.balance(state.run.economy, CurrencyId.GOLD)
         )
     }
@@ -129,8 +144,17 @@ object RebirthSystem : GameCommandHandler {
             cost
         ) ?: return rejected(CommandRejectionCode.INSUFFICIENT_RESOURCE)
 
-        val normalPoints = normalPointsForRebirth(nextNumber)
-        val legacyPoints = legacyPointsForRebirth(nextNumber)
+        val deepLevelReward = deepLevelRewardForLevel(level)
+        val normalPoints = if (deepLevelReward > GameNumber.ZERO) {
+            0L
+        } else {
+            normalPointsForRebirth(nextNumber)
+        }
+        val legacyPoints = if (deepLevelReward > GameNumber.ZERO) {
+            0L
+        } else {
+            legacyPointsForRebirth(nextNumber)
+        }
         val nextRebirth = state.meta.rebirth.copy(
             completedRebirths = nextNumber,
             normalPointsEarned = Math.addExact(
@@ -142,6 +166,15 @@ object RebirthSystem : GameCommandHandler {
                 legacyPoints
             )
         )
+        val economyAfterReward = if (deepLevelReward > GameNumber.ZERO) {
+            TransactionSystem.grant(
+                economyAfterSpend,
+                CurrencyId.ENHANCEMENT_MATERIAL,
+                deepLevelReward
+            )
+        } else {
+            economyAfterSpend
+        }
         val resetProgression = ProgressionState()
         val nextBaseStats = RebirthStatSystem.apply(
             PlayerScalingSystem.baseStatsForLevel(
@@ -159,7 +192,7 @@ object RebirthSystem : GameCommandHandler {
             combat = CombatState(),
             world = WorldState(),
             economy = state.run.economy.copy(
-                wallet = economyAfterSpend.wallet,
+                wallet = economyAfterReward.wallet,
                 upgrades = UpgradeProgressState()
             ),
             progression = resetProgression,
@@ -177,15 +210,36 @@ object RebirthSystem : GameCommandHandler {
                     amount = cost,
                     purposeId = REBIRTH_PURPOSE_ID
                 ),
+                *if (deepLevelReward > GameNumber.ZERO) {
+                    listOf(
+                        CurrencyGranted(
+                            currencyId = CurrencyId.ENHANCEMENT_MATERIAL,
+                            amount = deepLevelReward,
+                            sourceId = DEEP_REBIRTH_REWARD_PURPOSE_ID
+                        )
+                    )
+                } else {
+                    emptyList()
+                }.toTypedArray(),
                 RebirthPerformed(
                     rebirthNumber = nextNumber,
                     previousLevel = level,
                     goldCost = cost,
                     normalPointsGranted = normalPoints,
-                    legacyPointsGranted = legacyPoints
+                    legacyPointsGranted = legacyPoints,
+                    deepLevelReward = deepLevelReward
                 )
             )
         )
+    }
+
+    fun deepLevelRewardForLevel(level: Long): GameNumber {
+        require(level > 0L) { "level must be positive: $level" }
+        return if (level >= DEEP_REBIRTH_LEVEL) {
+            GameNumber.of(DEEP_REBIRTH_ENHANCEMENT_MATERIAL_REWARD)
+        } else {
+            GameNumber.ZERO
+        }
     }
 
     private fun allocate(
