@@ -47,6 +47,7 @@ class OfflineClockRollbackException(
         "savedAtEpochMs=" + savedAtEpochMs + ", currentEpochMs=" + currentEpochMs
 )
 
+/** Why offline advancement ended. */
 enum class OfflineStoppingReason {
     ELAPSED,
     CLAIM_WINDOW_CAPPED,
