@@ -1,6 +1,6 @@
 # IdleRPG Source-of-Truth Gameplay Contract
 
-Status: PR #3 design baseline. This document defines the target gameplay contract that later runtime changes must implement. It does not claim that every rule is already implemented in the current branch.
+Status: PR #3 implementation contract. This document is the authoritative gameplay boundary for the implemented progression, Rebirth, skills, equipment, loot, offline, persistence, and Power Score slices. Constants remain balance targets and can be tuned through the central configuration.
 
 ## Purpose
 
@@ -327,17 +327,19 @@ It must provide:
 
 Expected DPS, Effective HP, and other build projections should be shown separately because different skill rotations and defensive builds cannot be represented honestly by one number.
 
-## Implementation order for PR #3 and later slices
+## PR #3 implementation coverage
 
-1. Preserve the current branch and establish this contract.
-2. Separate Rebirth from Chronicle in domain state and commands.
-3. Add progression configuration and tests for level 1–15,000, soft-cap behavior, hard-cap behavior, and large XP grants.
-4. Add rebirth preview, atomic commit, reset/retain tests, and point allocation.
-5. Replace the current flat skill-rank assumption with bounded skill progression.
-6. Separate gear base enhancement from rolled substat/refinement state.
-7. Add loot, Legendary, failstack, protection, and duplicate handling tests.
-8. Align offline simulation with the Gold/XP-only contract.
-9. Add player-facing projections and technical detail surfaces.
-10. Run full Android build, deterministic scenario tests, persistence tests, and device playtests after each vertical slice.
+The current branch implements the core contract in vertical slices:
+
+- [x] Exact level progression through the 15,000 hard cap with the level-800 soft transition.
+- [x] Atomic Rebirth preview, cost, reset/retain boundary, incremental normal points, Legacy points, and allocation/respec commands.
+- [x] Independent bounded skill rank, mastery, evolution, and refinement progression with technical explanations.
+- [x] Separate gear enhancement and rolled-affix refinement, including +1 through +15, PRI through PEN, failstacks, protection, downgrade behavior, and persistence migration.
+- [x] Deterministic three- or four-line affix rolls, boss-weighted Legendary loot, and a capped additive Legendary Find bonus without pity.
+- [x] Offline simulation constrained to Gold and XP from the latest eligible non-boss stage.
+- [x] Explanatory Power Score projections and player-facing Progress, Gear, and Skill detail surfaces.
+- [x] Deterministic scenario, presentation, persistence, and active/offline regression coverage.
+
+Further authored content and balance tuning can extend this contract without changing its reset, retention, randomness, or offline boundaries.
 
 Any implementation that conflicts with this document must either update the contract first or be treated as a defect.
