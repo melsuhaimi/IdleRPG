@@ -1,8 +1,8 @@
 # Incremental progression and combat math
 
-Status: PR #3 migration index.
+Status: PR #3 implementation index.
 
-The authoritative target contract is [IdleRPG Source of Truth](design/idle-rpg-source-of-truth.md). This file must not be used as the final gameplay specification until the PR #3 migration is complete.
+The authoritative contract is [IdleRPG Source of Truth](design/idle-rpg-source-of-truth.md). This file summarizes the formulas and migration boundaries; runtime systems and projections consume the same domain-owned definitions.
 
 ## PR #2 baseline
 
