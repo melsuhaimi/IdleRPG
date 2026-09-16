@@ -47,7 +47,9 @@ object GearProjectionTest {
             instanceId = bladeId,
             definitionId = DefaultGameContent.TRAINING_BLADE_ITEM_ID,
             rarity = Rarity.UNCOMMON,
-            affixes = listOf(RolledAffix(DefaultGameContent.KEEN_AFFIX_ID, 3L))
+            affixes = listOf(RolledAffix(DefaultGameContent.KEEN_AFFIX_ID, 3L)),
+            enhancementLevel = 16,
+            enhancementFailstack = 3
         )
         val catalyst = ItemInstance(
             instanceId = catalystId,
@@ -82,7 +84,12 @@ object GearProjectionTest {
                 ),
                 economy = GameState.newGame(707L).run.economy.copy(
                     wallet = CurrencyWallet(
-                        mapOf(CurrencyId.GOLD to GameNumber.of(50L))
+                        mapOf(
+                            CurrencyId.GOLD to GameNumber.of(50L),
+                            CurrencyId.ENHANCEMENT_MATERIAL to GameNumber.of(50L),
+                            CurrencyId.REFINEMENT_MATERIAL to GameNumber.of(2L),
+                            CurrencyId.GEMS to GameNumber.ONE
+                        )
                     )
                 )
             )
@@ -108,6 +115,16 @@ object GearProjectionTest {
         check(projectedBlade.affixes.single().rolledValue == 3L) { "blade affix roll changed" }
         check(projectedBlade.affixes.single().iconAssetKey ==
             com.idlerpg.game.presentation.content.PresentationAssetKey.KEEN)
+        check(projectedBlade.enhancementLabel == "PRI") { "enhancement label changed" }
+        check(projectedBlade.enhancementTargetLabel == "DUO") { "enhancement target missing" }
+        check(projectedBlade.enhancementFailstack == 3) { "failstack projection changed" }
+        check(projectedBlade.enhancementSuccessChanceDisplay == "1.75%") { "enhancement chance is not exact" }
+        check(projectedBlade.enhancementFailureLevelDisplay == "+15") { "failure level preview changed" }
+        check(projectedBlade.enhancementFailureFailstackDisplay == "4") { "failure failstack preview changed" }
+        check(projectedBlade.canEnhance) { "enhancement affordability missing" }
+        check(projectedBlade.canEnhanceWithProtection) { "protected enhancement affordability missing" }
+        check(projectedBlade.canRefine) { "refinement affordability missing" }
+        check(projectedBlade.refinementMaterialCostDisplay == "1") { "refinement cost missing" }
         check(projectedBlade.effects.any { it.kind == GearEffectKind.FLAT_ATTACK_POWER }) { "blade lost its baseline attack effect" }
 
         val projectedCatalyst = ui.ownedItems.single { it.instanceId == catalystId }
