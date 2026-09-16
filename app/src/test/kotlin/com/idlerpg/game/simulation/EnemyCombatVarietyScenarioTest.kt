@@ -185,9 +185,9 @@ object EnemyCombatVarietyScenarioTest {
         runtime.replaceLoadedState(
             started.copy(
                 run = started.run.copy(
-                    player = started.run.player.copy(currentHealth = GameNumber.of(4L)),
+                    player = started.run.player.copy(currentHealth = GameNumber.ONE),
                     combat = started.run.combat.copy(
-                        playerCombatant = playerCombatant.copy(currentHealth = GameNumber.of(4L))
+                        playerCombatant = playerCombatant.copy(currentHealth = GameNumber.ONE)
                     )
                 )
             )
