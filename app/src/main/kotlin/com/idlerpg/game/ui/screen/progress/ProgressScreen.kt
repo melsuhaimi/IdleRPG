@@ -78,6 +78,8 @@ import com.idlerpg.game.ui.component.premium.GameStatusPill
 import com.idlerpg.game.ui.component.premium.PremiumPanel
 import com.idlerpg.game.ui.navigation.ProgressDestination
 import com.idlerpg.game.ui.motion.eventFeedbackPulse
+import com.idlerpg.game.ui.theme.ResourceGold
+import com.idlerpg.game.ui.theme.ResonanceTeal
 
 /** Growth surface. Every mutation remains an explicit player intent. */
 @Composable
