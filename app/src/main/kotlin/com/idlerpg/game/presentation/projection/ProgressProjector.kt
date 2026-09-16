@@ -142,6 +142,11 @@ class ProgressProjector(
             goldAvailableDisplay = GameNumberFormatter.full(preview.goldAvailable),
             normalPointsGranted = preview.normalPointsGranted,
             legacyPointsGranted = preview.legacyPointsGranted,
+            deepLevelRewardDisplay = if (preview.deepLevelReward > GameNumber.ZERO) {
+                GameNumberFormatter.full(preview.deepLevelReward) + " enhancement material"
+            } else {
+                "—"
+            },
             normalPointsEarned = rebirth.normalPointsEarned,
             normalUnspent = rebirth.unspentPoints(RebirthPointPool.NORMAL),
             legacyPointsEarned = rebirth.legacyPointsEarned,
