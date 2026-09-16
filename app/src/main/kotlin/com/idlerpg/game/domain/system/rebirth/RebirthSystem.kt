@@ -204,32 +204,34 @@ object RebirthSystem : GameCommandHandler {
         )
         return CommandHandlingResult.Accepted(
             transitioned,
-            listOf(
-                CurrencySpent(
-                    currencyId = CurrencyId.GOLD,
-                    amount = cost,
-                    purposeId = REBIRTH_PURPOSE_ID
-                ),
-                *if (deepLevelReward > GameNumber.ZERO) {
-                    listOf(
+            buildList {
+                add(
+                    CurrencySpent(
+                        currencyId = CurrencyId.GOLD,
+                        amount = cost,
+                        purposeId = REBIRTH_PURPOSE_ID
+                    )
+                )
+                if (deepLevelReward > GameNumber.ZERO) {
+                    add(
                         CurrencyGranted(
                             currencyId = CurrencyId.ENHANCEMENT_MATERIAL,
                             amount = deepLevelReward,
                             sourceId = DEEP_REBIRTH_REWARD_PURPOSE_ID
                         )
                     )
-                } else {
-                    emptyList()
-                }.toTypedArray(),
-                RebirthPerformed(
-                    rebirthNumber = nextNumber,
-                    previousLevel = level,
-                    goldCost = cost,
-                    normalPointsGranted = normalPoints,
-                    legacyPointsGranted = legacyPoints,
-                    deepLevelReward = deepLevelReward
+                }
+                add(
+                    RebirthPerformed(
+                        rebirthNumber = nextNumber,
+                        previousLevel = level,
+                        goldCost = cost,
+                        normalPointsGranted = normalPoints,
+                        legacyPointsGranted = legacyPoints,
+                        deepLevelReward = deepLevelReward
+                    )
                 )
-            )
+            }
         )
     }
 
