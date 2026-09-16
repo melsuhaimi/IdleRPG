@@ -171,6 +171,7 @@ object PrototypeParityTest {
         check(SimulationTestSupport.normalClears(runtime.state()) == GameNumber.ONE)
         val nextEnemy = runtime.state().run.combat.enemies.single()
         check(nextEnemy.definitionId == DefaultGameContent.RIFTFANG_ID)
-        check(SimulationTestSupport.primaryEnemyHealth(runtime.state()) == GameNumber.of(80L))
+        // Tier one applies Riftfang's role and regional health growth.
+        check(SimulationTestSupport.primaryEnemyHealth(runtime.state()) == GameNumber.of(89L))
     }
 }
