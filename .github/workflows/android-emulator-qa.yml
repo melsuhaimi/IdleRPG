@@ -25,7 +25,7 @@ jobs:
     env:
       PACKAGE: com.idlerpg.game
       ACTIVITY: .MainActivity
-      SCENARIO: \${{ inputs.scenario || 'launch_crash' }}
+      SCENARIO: ${{ inputs.scenario || 'launch_crash' }}
 
     steps:
       - name: Check out source
@@ -69,7 +69,7 @@ jobs:
           script: |
             set +e
 
-            OUT="$GITHUB_WORKSPACE/artifacts/emulator"
+            OUT="$PWD/artifacts/emulator"
             COMPONENT="$PACKAGE/$ACTIVITY"
             TRACE_DEVICE="/data/local/tmp/idlerpg-launch.pftrace"
             PERF_DATA_DEVICE="/data/local/tmp/idlerpg.perf.data"
