@@ -69,6 +69,7 @@ object RebirthScenarioTest {
         val equippedSkill = DefaultGameContent.QUICK_SLASH_ID
         val mature = before.copy(
             run = before.run.copy(
+                combat = com.idlerpg.game.domain.model.combat.CombatState(),
                 player = before.run.player.copy(
                     baseStats = BaseStats(
                         attackPower = GameNumber.of(15L),
