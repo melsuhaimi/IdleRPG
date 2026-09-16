@@ -2,10 +2,12 @@ package com.idlerpg.game.presentation
 
 import com.idlerpg.game.core.id.InstanceId
 import com.idlerpg.game.domain.command.ClaimOverflowItem
+import com.idlerpg.game.domain.command.EnhanceItem
 import com.idlerpg.game.domain.command.CommandCorrelationId
 import com.idlerpg.game.domain.command.EquipItem
 import com.idlerpg.game.domain.command.ExpandInventoryCapacity
 import com.idlerpg.game.domain.command.LockItem
+import com.idlerpg.game.domain.command.RefineItem
 import com.idlerpg.game.domain.command.SalvageItem
 import com.idlerpg.game.domain.command.SalvageOverflowItem
 import com.idlerpg.game.domain.command.UnequipItem
@@ -38,6 +40,19 @@ object GearIntentMappingTest {
         check(
             GearUiIntent.Salvage(itemId).toGameCommand(correlationId) ==
                 SalvageItem(itemId, correlationId)
+        )
+        check(
+            GearUiIntent.Enhance(itemId, useProtection = true).toGameCommand(correlationId) ==
+                EnhanceItem(itemId, useProtection = true, correlationId = correlationId)
+        )
+        check(
+            GearUiIntent.Refine(itemId, com.idlerpg.game.core.id.ContentId("affix.brutal"))
+                .toGameCommand(correlationId) ==
+                RefineItem(
+                    itemInstanceId = itemId,
+                    affixId = com.idlerpg.game.core.id.ContentId("affix.brutal"),
+                    correlationId = correlationId
+                )
         )
         check(
             GearUiIntent.ExpandCapacity.toGameCommand(correlationId) ==
