@@ -9,7 +9,8 @@ enum class RebirthStat {
     CRITICAL_CHANCE,
     CRITICAL_MULTIPLIER,
     EFFECT_POWER,
-    HEALING_POWER
+    HEALING_POWER,
+    LEGENDARY_FIND
 }
 
 /** Permanent point pools earned by the Rebirth system. */
