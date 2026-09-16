@@ -211,6 +211,9 @@ fun main() {
     ChronicleResetTest.run()
     EchoTrainingScenarioTest.run()
     FrontendEnablementIntegrationScenarioTest.run()
+    com.idlerpg.game.presentation.ProgressIntentMappingTest.main(emptyArray())
+    com.idlerpg.game.presentation.ProgressProjectionTest.main(emptyArray())
+    com.idlerpg.game.presentation.GearIntentMappingTest.run()
     val longRun = LongRunSimulationTest.run()
 
     println("FBE05_INTEGRATION_PASS")
