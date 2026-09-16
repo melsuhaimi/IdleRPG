@@ -115,10 +115,10 @@ object EnemyCombatVarietyScenarioTest {
             .filterIsInstance<DamageDealt>()
             .single { it.sourceInstanceId == enemyId && it.targetInstanceId == playerId }
 
-        // Cinder Bolt: 9 damage, 2 penetration, 5 armor -> 3 effective armor.
-        // Diminishing mitigation with armorScale 100 floors 900 / 103 to 8.
-        check(incoming.amount == GameNumber.of(8L))
-        check(runtime.state().run.player.currentHealth == GameNumber.of(92L))
+        // Tier two scales Cinder Bolt to 10 damage; 2 penetration leaves 3 armor.
+        // Diminishing mitigation with armorScale 100 floors 1000 / 103 to 9.
+        check(incoming.amount == GameNumber.of(9L))
+        check(runtime.state().run.player.currentHealth == GameNumber.of(91L))
     }
 
     private fun encounterOrderIsLockedAndCycles() {
