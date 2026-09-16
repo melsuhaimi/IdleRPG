@@ -16,6 +16,8 @@ import com.idlerpg.game.domain.event.DamageDealt
 import com.idlerpg.game.domain.event.EnemyKilled
 import com.idlerpg.game.domain.event.HealingApplied
 import com.idlerpg.game.domain.event.ItemDropped
+import com.idlerpg.game.domain.event.GearEnhancementAttempted
+import com.idlerpg.game.domain.event.GearRefined
 import com.idlerpg.game.domain.event.ItemAutoSalvaged
 import com.idlerpg.game.domain.event.InventoryCapacityExpanded
 import com.idlerpg.game.domain.event.ItemEquipped
@@ -566,6 +568,19 @@ class GameEventPresenter(
                     itemInstanceId = event.itemInstanceId,
                     itemDefinitionId = event.itemDefinitionId,
                     amountDisplay = GameNumberFormatter.compact(event.goldGranted)
+                )
+                is GearEnhancementAttempted -> GearFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = GearFeedbackKind.ENHANCED,
+                    itemInstanceId = event.itemInstanceId,
+                    amountDisplay = event.resultingEnhancementLevel.toString(),
+                    enhancementSucceeded = event.success
+                )
+                is GearRefined -> GearFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = GearFeedbackKind.REFINED,
+                    itemInstanceId = event.itemInstanceId,
+                    amountDisplay = event.resultingValue.toString()
                 )
                 is ItemSentToOverflow -> GearFeedbackUiState(
                     sequenceNumber = envelope.sequenceNumber,
