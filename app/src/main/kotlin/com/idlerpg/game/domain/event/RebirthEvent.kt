@@ -12,14 +12,21 @@ data class RebirthPerformed(
     val previousLevel: Long,
     val goldCost: GameNumber,
     val normalPointsGranted: Long,
-    val legacyPointsGranted: Long
+    val legacyPointsGranted: Long,
+    val deepLevelReward: GameNumber = GameNumber.ZERO
 ) : RebirthEvent {
     init {
         require(rebirthNumber > 0L) { "rebirthNumber must be positive" }
         require(previousLevel >= 1L) { "previousLevel must be positive" }
         require(goldCost > GameNumber.ZERO) { "goldCost must be positive" }
-        require(normalPointsGranted > 0L) { "normalPointsGranted must be positive" }
+        require(normalPointsGranted >= 0L) { "normalPointsGranted cannot be negative" }
         require(legacyPointsGranted >= 0L) { "legacyPointsGranted cannot be negative" }
+        require(deepLevelReward >= GameNumber.ZERO) { "deepLevelReward cannot be negative" }
+        require(
+            normalPointsGranted > 0L || deepLevelReward > GameNumber.ZERO
+        ) {
+            "Rebirth must grant points or a deep-level reward"
+        }
     }
 }
 
