@@ -42,6 +42,9 @@ import com.idlerpg.game.domain.event.DiscoveryUnlocked
 import com.idlerpg.game.domain.event.EchoGranted
 import com.idlerpg.game.domain.event.EchoOfferPurchased
 import com.idlerpg.game.domain.event.NewChronicleStarted
+import com.idlerpg.game.domain.event.RebirthAllocationsReset
+import com.idlerpg.game.domain.event.RebirthPerformed
+import com.idlerpg.game.domain.event.RebirthPointsAllocated
 import com.idlerpg.game.domain.event.RegionSelected
 import com.idlerpg.game.domain.event.EncounterStarted
 import com.idlerpg.game.domain.event.EncounterCleared
@@ -699,6 +702,21 @@ class GameEventPresenter(
                     kind = ProgressFeedbackKind.MASTERY_INCREASED,
                     affinityId = event.affinityId,
                     amountDisplay = GameNumberFormatter.compact(event.amount)
+                )
+                is RebirthPerformed -> ProgressFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = ProgressFeedbackKind.REBIRTH_PERFORMED,
+                    amountDisplay = event.rebirthNumber.toString()
+                )
+                is RebirthPointsAllocated -> ProgressFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = ProgressFeedbackKind.REBIRTH_POINTS_ALLOCATED,
+                    amountDisplay = event.amount.toString()
+                )
+                is RebirthAllocationsReset -> ProgressFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = ProgressFeedbackKind.REBIRTH_RESPEC,
+                    amountDisplay = GameNumberFormatter.compact(event.gemCost)
                 )
                 is UpgradePurchased -> ProgressFeedbackUiState(
                     sequenceNumber = envelope.sequenceNumber,
