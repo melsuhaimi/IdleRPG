@@ -27,6 +27,33 @@ object CombatMath {
         return if (mitigated < GameNumber.ONE) GameNumber.ONE else mitigated
     }
 
+    /**
+     * Expected damage of a hit when critical chance and critical multiplier are included.
+     *
+     * [criticalMultiplier] is the total critical-hit multiplier (2.0 means double damage),
+     * while [criticalChance] is capped at 100%. The expectation is a readout formula only;
+     * actual combat still consumes one canonical RNG roll per eligible hit.
+     */
+    fun expectedCriticalDamage(
+        baseDamage: GameNumber,
+        criticalChance: Ratio,
+        criticalMultiplier: Ratio
+    ): GameNumber {
+        if (baseDamage == GameNumber.ZERO) return GameNumber.ZERO
+        val chanceUnits = criticalChance.units.coerceAtMost(Ratio.UNITS_PER_ONE)
+        val bonusUnits = (criticalMultiplier.units - Ratio.UNITS_PER_ONE).coerceAtLeast(0L)
+        val one = BigInteger.valueOf(Ratio.UNITS_PER_ONE)
+        val denominator = one.multiply(one)
+        val expectedMultiplierNumerator = denominator.add(
+            BigInteger.valueOf(chanceUnits).multiply(BigInteger.valueOf(bonusUnits))
+        )
+        return GameNumber.fromBigInteger(
+            baseDamage.toBigInteger()
+                .multiply(expectedMultiplierNumerator)
+                .divide(denominator)
+        )
+    }
+
     fun actionInterval(
         base: GameDuration,
         actionSpeed: Ratio,

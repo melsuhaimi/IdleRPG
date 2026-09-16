@@ -27,6 +27,7 @@ import com.idlerpg.game.domain.model.resonance.ResonanceState
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.WorldState
 import com.idlerpg.game.presentation.content.PresentationContentRegistry
+import com.idlerpg.game.presentation.format.GameNumberFormatter
 import com.idlerpg.game.presentation.model.BattleSkillReadinessUi
 import com.idlerpg.game.presentation.projection.BattleProjector
 import com.idlerpg.game.presentation.query.GameReadQueries
@@ -71,7 +72,16 @@ object BattleProjectionTest {
         ))
         check(activeUi.player.nextDecisionRemainingMillis == 1_000L)
         check(activeUi.player.basicAttackDpsDisplay == "10") {
-            "GameRate DPS must be formatted through GameRate, not GameNumberFormatter"
+            "GameRate DPS must use the compact rate formatter"
+        }
+        check(GameNumberFormatter.compact(GameRate.parse("1398.190045")) == "1.39K") {
+            "Fractional DPS must use a compact, readable display"
+        }
+        check(GameNumberFormatter.compact(GameRate.parse("0.001")) == "0.001") {
+            "Small nonzero rates must remain visible"
+        }
+        check(GameNumberFormatter.compact(GameRate.parse("0.000001")) == "<0.001") {
+            "Tiny nonzero rates must not be displayed as zero"
         }
         check(activeUi.equippedSkills.all { it.queueAllowed })
         check(activeUi.equippedSkills.all { it.resourceCosts.isEmpty() })

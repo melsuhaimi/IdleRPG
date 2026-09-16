@@ -29,6 +29,16 @@ object TrainingHollowLootContent {
     val HELM_EQUIPMENT_ID = ContentId("equipment.seer_helm")
     val BOOTS_EQUIPMENT_ID = ContentId("equipment.rift_boots")
     val ACCESSORY_EQUIPMENT_ID = ContentId("equipment.echo_sigil")
+    val VOIDGLASS_EDGE_ITEM_ID = ContentId("item.voidglass_edge")
+    val WARDEN_PLATE_ITEM_ID = ContentId("item.warden_plate")
+    val STARFALL_VISOR_ITEM_ID = ContentId("item.starfall_visor")
+    val RESONANT_CORE_ITEM_ID = ContentId("item.resonant_core")
+    val DUSK_SIGIL_ITEM_ID = ContentId("item.dusk_sigil")
+    val VOIDGLASS_EDGE_EQUIPMENT_ID = ContentId("equipment.voidglass_edge")
+    val WARDEN_PLATE_EQUIPMENT_ID = ContentId("equipment.warden_plate")
+    val STARFALL_VISOR_EQUIPMENT_ID = ContentId("equipment.starfall_visor")
+    val RESONANT_CORE_EQUIPMENT_ID = ContentId("equipment.resonant_core")
+    val DUSK_SIGIL_EQUIPMENT_ID = ContentId("equipment.dusk_sigil")
 
     private val allSlots = EquipmentSlot.values().toSet()
     private val affinityAffixes = Affinity.values().map { affinity ->
@@ -102,7 +112,64 @@ object TrainingHollowLootContent {
                     Ratio.ofUnits(3_500L),
                     Ratio.ofUnits(16_000L)
                 )
-            ))
+            )),
+        EquipmentDefinition(
+            VOIDGLASS_EDGE_EQUIPMENT_ID,
+            EquipmentSlot.WEAPON,
+            listOf(
+                EquipmentEffectDefinition.FlatAttackPower(GameNumber.of(4L)),
+                EquipmentEffectDefinition.SkillCleave(
+                    TrainingHollowStrategyContent.VOID_LANCE_ID,
+                    Ratio.ofUnits(5_000L)
+                )
+            )
+        ),
+        EquipmentDefinition(
+            WARDEN_PLATE_EQUIPMENT_ID,
+            EquipmentSlot.ARMOR,
+            listOf(
+                EquipmentEffectDefinition.FlatArmor(GameNumber.of(8L)),
+                EquipmentEffectDefinition.SkillHealingMultiplier(
+                    TrainingHollowStrategyContent.IRON_VOW_ID,
+                    Ratio.ofUnits(12_500L)
+                )
+            )
+        ),
+        EquipmentDefinition(
+            STARFALL_VISOR_EQUIPMENT_ID,
+            EquipmentSlot.HELM,
+            listOf(
+                EquipmentEffectDefinition.FlatArmor(GameNumber.of(6L)),
+                EquipmentEffectDefinition.SkillDamageAgainstStatus(
+                    TrainingHollowStrategyContent.STARFALL_ID,
+                    DefaultGameContent.BURNING_STATUS_ID,
+                    Ratio.ofUnits(11_500L)
+                )
+            )
+        ),
+        EquipmentDefinition(
+            RESONANT_CORE_EQUIPMENT_ID,
+            EquipmentSlot.CATALYST,
+            listOf(
+                EquipmentEffectDefinition.ResonanceChargeBonus(Affinity.ARCANE, GameNumber.ONE),
+                EquipmentEffectDefinition.SkillSequencePreservation(
+                    TrainingHollowStrategyContent.STARFALL_ID,
+                    entryCount = 1
+                )
+            )
+        ),
+        EquipmentDefinition(
+            DUSK_SIGIL_EQUIPMENT_ID,
+            EquipmentSlot.ACCESSORY,
+            listOf(
+                EquipmentEffectDefinition.ResonanceChargeBonus(Affinity.SHADOW, GameNumber.ONE),
+                EquipmentEffectDefinition.SkillExecute(
+                    TrainingHollowStrategyContent.VOID_LANCE_ID,
+                    Ratio.ofUnits(3_000L),
+                    Ratio.ofUnits(12_500L)
+                )
+            )
+        )
     )
 
     private val salvage = SalvageProfile(
@@ -112,7 +179,12 @@ object TrainingHollowLootContent {
         item(ARMOR_ITEM_ID, "Fracture Mail", ARMOR_EQUIPMENT_ID, EquipmentSlot.ARMOR),
         item(HELM_ITEM_ID, "Seer's Helm", HELM_EQUIPMENT_ID, EquipmentSlot.HELM),
         item(BOOTS_ITEM_ID, "Riftstep Boots", BOOTS_EQUIPMENT_ID, EquipmentSlot.BOOTS),
-        item(ACCESSORY_ITEM_ID, "Legacy Sigil", ACCESSORY_EQUIPMENT_ID, EquipmentSlot.ACCESSORY)
+        item(ACCESSORY_ITEM_ID, "Legacy Sigil", ACCESSORY_EQUIPMENT_ID, EquipmentSlot.ACCESSORY),
+        item(VOIDGLASS_EDGE_ITEM_ID, "Voidglass Edge", VOIDGLASS_EDGE_EQUIPMENT_ID, EquipmentSlot.WEAPON),
+        item(WARDEN_PLATE_ITEM_ID, "Warden Plate", WARDEN_PLATE_EQUIPMENT_ID, EquipmentSlot.ARMOR),
+        item(STARFALL_VISOR_ITEM_ID, "Starfall Visor", STARFALL_VISOR_EQUIPMENT_ID, EquipmentSlot.HELM),
+        item(RESONANT_CORE_ITEM_ID, "Resonant Core", RESONANT_CORE_EQUIPMENT_ID, EquipmentSlot.CATALYST),
+        item(DUSK_SIGIL_ITEM_ID, "Dusk Sigil", DUSK_SIGIL_EQUIPMENT_ID, EquipmentSlot.ACCESSORY)
     )
 
     val lootTable = LootTableDefinition(

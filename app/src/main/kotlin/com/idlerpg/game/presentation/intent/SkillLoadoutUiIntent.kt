@@ -7,6 +7,9 @@ import com.idlerpg.game.domain.command.GameCommand
 import com.idlerpg.game.domain.command.MoveEquippedSkill
 import com.idlerpg.game.domain.command.UnequipSkill
 import com.idlerpg.game.domain.command.SelectSkillEvolution
+import com.idlerpg.game.domain.command.UpgradeSkillRank
+import com.idlerpg.game.domain.command.UpgradeSkillMastery
+import com.idlerpg.game.domain.command.RefineSkill
 
 /**
  * FUI-04 skill-loadout presentation intents.
@@ -32,6 +35,18 @@ sealed interface SkillLoadoutUiIntent {
         val skillId: ContentId,
         val evolutionId: ContentId
     ) : SkillLoadoutUiIntent
+
+    data class UpgradeRank(
+        val skillId: ContentId
+    ) : SkillLoadoutUiIntent
+
+    data class UpgradeMastery(
+        val skillId: ContentId
+    ) : SkillLoadoutUiIntent
+
+    data class Refine(
+        val skillId: ContentId
+    ) : SkillLoadoutUiIntent
 }
 
 fun SkillLoadoutUiIntent.toGameCommand(
@@ -53,6 +68,18 @@ fun SkillLoadoutUiIntent.toGameCommand(
     is SkillLoadoutUiIntent.SelectEvolution -> SelectSkillEvolution(
         skillId = skillId,
         evolutionId = evolutionId,
+        correlationId = correlationId
+    )
+    is SkillLoadoutUiIntent.UpgradeRank -> UpgradeSkillRank(
+        skillId = skillId,
+        correlationId = correlationId
+    )
+    is SkillLoadoutUiIntent.UpgradeMastery -> UpgradeSkillMastery(
+        skillId = skillId,
+        correlationId = correlationId
+    )
+    is SkillLoadoutUiIntent.Refine -> RefineSkill(
+        skillId = skillId,
         correlationId = correlationId
     )
 }

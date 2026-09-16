@@ -16,6 +16,8 @@ import com.idlerpg.game.domain.event.DamageDealt
 import com.idlerpg.game.domain.event.EnemyKilled
 import com.idlerpg.game.domain.event.HealingApplied
 import com.idlerpg.game.domain.event.ItemDropped
+import com.idlerpg.game.domain.event.GearEnhancementAttempted
+import com.idlerpg.game.domain.event.GearRefined
 import com.idlerpg.game.domain.event.ItemAutoSalvaged
 import com.idlerpg.game.domain.event.InventoryCapacityExpanded
 import com.idlerpg.game.domain.event.ItemEquipped
@@ -42,6 +44,9 @@ import com.idlerpg.game.domain.event.DiscoveryUnlocked
 import com.idlerpg.game.domain.event.EchoGranted
 import com.idlerpg.game.domain.event.EchoOfferPurchased
 import com.idlerpg.game.domain.event.NewChronicleStarted
+import com.idlerpg.game.domain.event.RebirthAllocationsReset
+import com.idlerpg.game.domain.event.RebirthPerformed
+import com.idlerpg.game.domain.event.RebirthPointsAllocated
 import com.idlerpg.game.domain.event.RegionSelected
 import com.idlerpg.game.domain.event.EncounterStarted
 import com.idlerpg.game.domain.event.EncounterCleared
@@ -564,6 +569,19 @@ class GameEventPresenter(
                     itemDefinitionId = event.itemDefinitionId,
                     amountDisplay = GameNumberFormatter.compact(event.goldGranted)
                 )
+                is GearEnhancementAttempted -> GearFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = GearFeedbackKind.ENHANCED,
+                    itemInstanceId = event.itemInstanceId,
+                    amountDisplay = event.resultingEnhancementLevel.toString(),
+                    enhancementSucceeded = event.success
+                )
+                is GearRefined -> GearFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = GearFeedbackKind.REFINED,
+                    itemInstanceId = event.itemInstanceId,
+                    amountDisplay = event.resultingValue.toString()
+                )
                 is ItemSentToOverflow -> GearFeedbackUiState(
                     sequenceNumber = envelope.sequenceNumber,
                     kind = GearFeedbackKind.ITEM_TO_OVERFLOW,
@@ -699,6 +717,21 @@ class GameEventPresenter(
                     kind = ProgressFeedbackKind.MASTERY_INCREASED,
                     affinityId = event.affinityId,
                     amountDisplay = GameNumberFormatter.compact(event.amount)
+                )
+                is RebirthPerformed -> ProgressFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = ProgressFeedbackKind.REBIRTH_PERFORMED,
+                    amountDisplay = event.rebirthNumber.toString()
+                )
+                is RebirthPointsAllocated -> ProgressFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = ProgressFeedbackKind.REBIRTH_POINTS_ALLOCATED,
+                    amountDisplay = event.amount.toString()
+                )
+                is RebirthAllocationsReset -> ProgressFeedbackUiState(
+                    sequenceNumber = envelope.sequenceNumber,
+                    kind = ProgressFeedbackKind.REBIRTH_RESPEC,
+                    amountDisplay = GameNumberFormatter.compact(event.gemCost)
                 )
                 is UpgradePurchased -> ProgressFeedbackUiState(
                     sequenceNumber = envelope.sequenceNumber,

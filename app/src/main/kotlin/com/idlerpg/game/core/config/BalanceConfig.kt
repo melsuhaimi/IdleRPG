@@ -91,12 +91,12 @@ data class BalanceConfig(
         /**
          * Foundation 16 baseline offline cap.
          *
-         * The architecture requires a bounded maximum offline duration but does not
-         * prescribe its final balance value. Twenty-four hours is the initial exact-
-         * simulation verification cap and may be tuned later through this one config.
+         * Offline progression is deliberately bounded to twelve hours per resume.
+         * The offline contract grants only Gold and XP; this cap limits bursty catch-up while
+         * keeping the result deterministic and easy to explain in the return screen.
          */
         val DEFAULT_MAXIMUM_OFFLINE_DURATION: GameDuration =
-            GameDuration.ofHours(24L)
+            GameDuration.ofHours(12L)
 
         /**
          * FBE-00 persistence defaults for the inventory-capacity state contract.

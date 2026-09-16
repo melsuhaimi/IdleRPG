@@ -266,6 +266,15 @@ class PresentationContentRegistry private constructor(
                 PresentationStringKey.BLOOD_ECLIPSE_SKILL,
                 PresentationStringKey.DESC_BLOOD_ECLIPSE_SKILL,
                 PresentationAssetKey.BLOOD_ECLIPSE_SKILL)
+            add("skill.void_lance", PresentationContentKind.SKILL,
+                PresentationStringKey.VOID_LANCE, PresentationStringKey.DESC_SKILL,
+                PresentationAssetKey.VOID_LANCE)
+            add("skill.iron_vow", PresentationContentKind.SKILL,
+                PresentationStringKey.IRON_VOW, PresentationStringKey.DESC_SKILL,
+                PresentationAssetKey.IRON_VOW)
+            add("skill.starfall", PresentationContentKind.SKILL,
+                PresentationStringKey.STARFALL, PresentationStringKey.DESC_SKILL,
+                PresentationAssetKey.STARFALL)
 
             add("status.burning", PresentationContentKind.STATUS,
                 PresentationStringKey.BURNING, PresentationStringKey.DESC_STATUS,
@@ -380,6 +389,10 @@ class PresentationContentRegistry private constructor(
             add("boss.training_hollow.stage_45", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
             add("boss.training_hollow.stage_60", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
             add("boss.training_hollow.stage_72", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
+            add("boss.training_hollow.stage_84", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
+            add("boss.training_hollow.stage_96", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
+            add("boss.training_hollow.stage_108", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
+            add("boss.training_hollow.stage_120", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
             add("item.training_blade", PresentationContentKind.ITEM,
                 PresentationStringKey.TRAINING_BLADE, PresentationStringKey.DESC_ITEM,
                 PresentationAssetKey.TRAINING_BLADE)
@@ -398,6 +411,21 @@ class PresentationContentRegistry private constructor(
             add("item.echo_sigil", PresentationContentKind.ITEM,
                 PresentationStringKey.ECHO_SIGIL, PresentationStringKey.DESC_ITEM,
                 PresentationAssetKey.ECHO_SIGIL)
+            add("item.voidglass_edge", PresentationContentKind.ITEM,
+                PresentationStringKey.VOIDGLASS_EDGE, PresentationStringKey.DESC_ITEM,
+                PresentationAssetKey.VOIDGLASS_EDGE)
+            add("item.warden_plate", PresentationContentKind.ITEM,
+                PresentationStringKey.WARDEN_PLATE, PresentationStringKey.DESC_ITEM,
+                PresentationAssetKey.WARDEN_PLATE)
+            add("item.starfall_visor", PresentationContentKind.ITEM,
+                PresentationStringKey.STARFALL_VISOR, PresentationStringKey.DESC_ITEM,
+                PresentationAssetKey.STARFALL_VISOR)
+            add("item.resonant_core", PresentationContentKind.ITEM,
+                PresentationStringKey.RESONANT_CORE, PresentationStringKey.DESC_ITEM,
+                PresentationAssetKey.RESONANT_CORE)
+            add("item.dusk_sigil", PresentationContentKind.ITEM,
+                PresentationStringKey.DUSK_SIGIL, PresentationStringKey.DESC_ITEM,
+                PresentationAssetKey.DUSK_SIGIL)
             add("affix.keen", PresentationContentKind.AFFIX,
                 PresentationStringKey.KEEN, PresentationStringKey.DESC_AFFIX,
                 PresentationAssetKey.KEEN)
@@ -452,6 +480,15 @@ class PresentationContentRegistry private constructor(
                 PresentationStringKey.BLOOD_ECLIPSE_SKILL,
                 PresentationStringKey.DESC_FEATURE_UNLOCK,
                 PresentationAssetKey.BLOOD_ECLIPSE_SKILL)
+            add("feature.skill.void_lance", PresentationContentKind.FEATURE_UNLOCK,
+                PresentationStringKey.VOID_LANCE, PresentationStringKey.DESC_FEATURE_UNLOCK,
+                PresentationAssetKey.VOID_LANCE)
+            add("feature.skill.iron_vow", PresentationContentKind.FEATURE_UNLOCK,
+                PresentationStringKey.IRON_VOW, PresentationStringKey.DESC_FEATURE_UNLOCK,
+                PresentationAssetKey.IRON_VOW)
+            add("feature.skill.starfall", PresentationContentKind.FEATURE_UNLOCK,
+                PresentationStringKey.STARFALL, PresentationStringKey.DESC_FEATURE_UNLOCK,
+                PresentationAssetKey.STARFALL)
 
             add("quest.training.first_resonance", PresentationContentKind.QUEST,
                 PresentationStringKey.QUEST_FIRST_RESONANCE, PresentationStringKey.DESC_QUEST,

@@ -53,6 +53,7 @@ import com.idlerpg.game.presentation.intent.ProgressUiIntent
 import com.idlerpg.game.presentation.intent.SkillLoadoutUiIntent
 import com.idlerpg.game.presentation.intent.WorldUiIntent
 import com.idlerpg.game.presentation.model.OfflineProgressUiState
+import com.idlerpg.game.presentation.model.OfflineStoppingReasonUi
 import com.idlerpg.game.ui.accessibility.PresentationPreferencesState
 import com.idlerpg.game.ui.accessibility.rememberPresentationPreferences
 import com.idlerpg.game.presentation.doctrine.DoctrineDraftAction
@@ -1094,6 +1095,13 @@ private fun OfflineProgressDialog(
                     )
                 }
 
+                summary.levelJourney?.let {
+                    OfflineMetricLine(stringResource(R.string.offline_level_change), it)
+                }
+                OfflineMetricLine(
+                    label = stringResource(R.string.offline_stopping_reason),
+                    value = offlineStoppingReasonLabel(summary.stoppingReason)
+                )
                 summary.stageJourney?.let {
                     OfflineMetricLine(stringResource(R.string.offline_stage_journey), it)
                 }
@@ -1162,6 +1170,14 @@ private fun OfflineProgressDialog(
             }
         }
     )
+}
+
+@Composable
+private fun offlineStoppingReasonLabel(reason: OfflineStoppingReasonUi): String = when (reason) {
+    OfflineStoppingReasonUi.ELAPSED -> stringResource(R.string.offline_stop_elapsed)
+    OfflineStoppingReasonUi.CLAIM_WINDOW_CAPPED -> stringResource(R.string.offline_stop_claim_window)
+    OfflineStoppingReasonUi.CLOCK_ROLLBACK -> stringResource(R.string.offline_stop_clock_rollback)
+    OfflineStoppingReasonUi.NO_ELIGIBLE_FARM_STAGE -> stringResource(R.string.offline_stop_no_farm_stage)
 }
 
 @Composable

@@ -105,6 +105,10 @@ object ProgressProjectionTest {
 
         val ui = projector.project(state)
         check(ui.overview.playerLevel == 3L)
+        check(ui.rebirth.currentLevel == 3L)
+        check(!ui.rebirth.eligible)
+        check(ui.rebirth.stats.size == 9)
+        check(ui.rebirth.stats.any { it.stat.name == "LEGENDARY_FIND" })
         check(ui.overview.nextGoal.targetId != null)
         check(ui.overview.nextGoal.remainingLevels >= 0L)
         check(ui.overview.currentExperienceDisplay == "15")

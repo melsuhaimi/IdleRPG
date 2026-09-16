@@ -36,12 +36,15 @@ object StrategyEcosystemScenarioTest {
     fun run() {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
-        check(registry.allSkills().size == 12)
+        check(registry.allSkills().size == 15)
         check(registry.allEnemies().size == 8)
         check(registry.allConvergences().size == 8)
         check(registry.allEncounters().size == TrainingHollowWorldContent.MAX_STAGE)
         check(registry.enemy(DefaultGameContent.HOLLOW_BULWARK_ID).role == EnemyRole.PROTECTOR)
         check(registry.enemy(TrainingHollowStrategyContent.ECHO_LEECH_ID).role == EnemyRole.PARASITE)
+        check(registry.skill(TrainingHollowStrategyContent.VOID_LANCE_ID).requiredFeatureId == TrainingHollowStrategyContent.VOID_LANCE_FEATURE_ID)
+        check(registry.skill(TrainingHollowStrategyContent.IRON_VOW_ID).targetingRule == com.idlerpg.game.domain.definition.combat.SkillTargetingRule.SELF)
+        check(registry.skill(TrainingHollowStrategyContent.STARFALL_ID).effects.any { effect -> effect is EffectSpec.DealDamage && effect.targetPattern == EffectSpec.TargetPattern.ALL_ENEMIES })
 
         val runtime = SimulationTestSupport.runtime(seed = 3_401L)
         SimulationTestSupport.startTraining(runtime)

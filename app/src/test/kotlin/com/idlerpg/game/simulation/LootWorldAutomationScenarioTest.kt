@@ -23,6 +23,7 @@ import com.idlerpg.game.domain.system.world.RegionSystem
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.data.content.TrainingHollowLootContent
+import com.idlerpg.game.data.content.TrainingHollowStrategyContent
 import com.idlerpg.game.data.content.TrainingHollowWorldContent
 import com.idlerpg.game.domain.model.world.WorldAutomationMode
 import com.idlerpg.game.domain.model.world.EncounterState
@@ -37,7 +38,7 @@ object LootWorldAutomationScenarioTest {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
         check(EquipmentSlot.values().size == 6)
-        check(registry.allItems().size == 6)
+        check(registry.allItems().size == 11)
         check(registry.allAffixes().size == 16)
         val region = registry.region(DefaultGameContent.TRAINING_HOLLOW_REGION_ID)
         check(region.encounterIds.size == TrainingHollowWorldContent.MAX_STAGE)
@@ -56,6 +57,19 @@ object LootWorldAutomationScenarioTest {
             LootTableSystem.roll(registry.lootTable(TrainingHollowLootContent.ELITE_LOOT_TABLE_ID), registry, random).size
         }
         check(eliteDrops > drops * 2)
+
+        val selectableKeepTiers = Rarity.ordered()
+        selectableKeepTiers.forEach { keepTier ->
+            val filter = LootFilterState(
+                autoSalvageEnabled = true,
+                minimumKeepRarity = keepTier
+            )
+            Rarity.ordered().forEach { rarity ->
+                check(filter.shouldKeep(rarity) == (rarity.rank >= keepTier.rank)) {
+                    "Auto-salvage threshold $keepTier must keep only $keepTier and above; got $rarity"
+                }
+            }
+        }
 
         val strictFilter = LootFilterState(autoSalvageEnabled = true, minimumKeepRarity = Rarity.RARE)
         check(
@@ -113,7 +127,12 @@ object LootWorldAutomationScenarioTest {
             TrainingHollowLootContent.ARMOR_ITEM_ID,
             TrainingHollowLootContent.HELM_ITEM_ID,
             TrainingHollowLootContent.BOOTS_ITEM_ID,
-            TrainingHollowLootContent.ACCESSORY_ITEM_ID
+            TrainingHollowLootContent.ACCESSORY_ITEM_ID,
+            TrainingHollowLootContent.VOIDGLASS_EDGE_ITEM_ID,
+            TrainingHollowLootContent.WARDEN_PLATE_ITEM_ID,
+            TrainingHollowLootContent.STARFALL_VISOR_ITEM_ID,
+            TrainingHollowLootContent.RESONANT_CORE_ITEM_ID,
+            TrainingHollowLootContent.DUSK_SIGIL_ITEM_ID
         )
         val traitItemIds = traitDefinitions.indices.map { index -> InstanceId(52_000L + index) }
         val traitItems = traitDefinitions.mapIndexed { index, definitionId ->
@@ -140,6 +159,41 @@ object LootWorldAutomationScenarioTest {
         check(ModifierSystem.preservedSequenceEntries(traitState, DefaultGameContent.ARCANE_PULSE_ID, registry) == 1)
         check(ModifierSystem.skillHealingMultiplier(traitState, DefaultGameContent.GUARD_MEND_ID, registry).units > 10_000L)
         check(ModifierSystem.skillResonanceBonuses(traitState, DefaultGameContent.QUICK_SLASH_ID, registry)[Affinity.TEMPO] == GameNumber.ONE)
+        val buildDefiningEquipped = equipped + mapOf(
+            EquipmentSlot.WEAPON to traitItemIds[6],
+            EquipmentSlot.ARMOR to traitItemIds[7],
+            EquipmentSlot.HELM to traitItemIds[8],
+            EquipmentSlot.CATALYST to traitItemIds[9],
+            EquipmentSlot.ACCESSORY to traitItemIds[10]
+        )
+        val buildDefiningState = traitState.copy(
+            run = traitState.run.copy(
+                inventory = traitState.run.inventory.copy(
+                    equipment = EquipmentLoadoutState(buildDefiningEquipped)
+                )
+            )
+        )
+        check(
+            ModifierSystem.skillCleaveRatio(
+                buildDefiningState,
+                TrainingHollowStrategyContent.VOID_LANCE_ID,
+                registry
+            ) != null
+        )
+        check(
+            ModifierSystem.skillHealingMultiplier(
+                buildDefiningState,
+                TrainingHollowStrategyContent.IRON_VOW_ID,
+                registry
+            ).units > 10_000L
+        )
+        check(
+            ModifierSystem.preservedSequenceEntries(
+                buildDefiningState,
+                TrainingHollowStrategyContent.STARFALL_ID,
+                registry
+            ) == 1
+        )
 
         val worldRuntime = SimulationTestSupport.runtime(seed = 5_602L)
         SimulationTestSupport.checkAccepted(

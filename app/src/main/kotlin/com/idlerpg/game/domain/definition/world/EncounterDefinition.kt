@@ -22,8 +22,10 @@ enum class EncounterType {
 /**
  * Static encounter composition and continuation rule.
  *
- * One authored wave may contain one to five active enemies. Repeated definition IDs are
- * intentional for swarm compositions; runtime InstanceIds preserve actor identity and order.
+ * Normal and anomaly waves contain one to three active enemies. Elite and boss encounters are
+ * single-target encounters so their artwork, targeting, and combat readout stay legible on phones.
+ * Repeated definition IDs remain valid for normal swarm compositions; runtime InstanceIds preserve
+ * actor identity and order.
  */
 data class EncounterDefinition(
     val id: ContentId,
@@ -43,11 +45,8 @@ data class EncounterDefinition(
     val rewardMultiplier: Ratio = Ratio.ONE
 ) {
     init {
-        require(enemyDefinitionIds.isNotEmpty()) {
-            "EncounterDefinition.enemyDefinitionIds cannot be empty for $id"
-        }
-        require(enemyDefinitionIds.size <= 5) {
-            "EncounterDefinition supports at most five active enemies for $id"
+        require(enemyDefinitionIds.size in 1..MAX_ACTIVE_ENEMIES) {
+            "EncounterDefinition must contain one to three active enemies for $id"
         }
         require(waves in 1..10) {
             "EncounterDefinition.waves must be between one and ten for $id"
@@ -55,8 +54,16 @@ data class EncounterDefinition(
         require(waveEnemyDefinitionIds.isEmpty() || waveEnemyDefinitionIds.size == waves) {
             "EncounterDefinition.waveEnemyDefinitionIds must be empty or define all $waves waves for $id"
         }
-        require(waveEnemyDefinitionIds.all { it.size in 1..5 }) {
-            "EncounterDefinition wave formations must contain one to five active enemies for $id"
+        require(waveEnemyDefinitionIds.all { it.size in 1..MAX_ACTIVE_ENEMIES }) {
+            "EncounterDefinition wave formations must contain one to three active enemies for $id"
+        }
+        if (type == EncounterType.ELITE || type == EncounterType.BOSS) {
+            require(enemyDefinitionIds.size == 1) {
+                "${type.name.lowercase().replaceFirstChar { it.uppercase() }} encounter $id must contain exactly one active enemy"
+            }
+            require(waveEnemyDefinitionIds.all { it.size == 1 }) {
+                "${type.name.lowercase().replaceFirstChar { it.uppercase() }} encounter $id must contain exactly one active enemy in every wave"
+            }
         }
         require(displayName == null || displayName.isNotBlank()) {
             "EncounterDefinition.displayName cannot be blank for $id"
@@ -76,6 +83,10 @@ data class EncounterDefinition(
                 "Non-boss encounter $id cannot reference bossId"
             }
         }
+    }
+
+    companion object {
+        const val MAX_ACTIVE_ENEMIES: Int = 3
     }
 
     fun enemyDefinitionIdsForWave(wave: Int): List<ContentId> {

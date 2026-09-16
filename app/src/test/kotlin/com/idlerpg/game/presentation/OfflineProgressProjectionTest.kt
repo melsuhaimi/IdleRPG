@@ -1,6 +1,8 @@
 package com.idlerpg.game.presentation
 
 import com.idlerpg.game.application.OfflineProgressSummary
+import com.idlerpg.game.application.OfflineStoppingReason
+import com.idlerpg.game.presentation.model.OfflineStoppingReasonUi
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.presentation.projection.OfflineProgressProjector
@@ -68,32 +70,30 @@ object OfflineProgressProjectionTest {
                     simulatedElapsed = GameDuration.ofMillis(86_400_000L),
                     durationClamped = true,
                     clockRollbackDetected = false,
-                    enemiesDefeated = GameNumber.of(8_640L),
-                    encountersCleared = GameNumber.of(2_880L),
+                    startingLevel = 12L,
+                    endingLevel = 27L,
+                    stoppingReason = OfflineStoppingReason.CLAIM_WINDOW_CAPPED,
+                    enemiesDefeated = GameNumber.ZERO,
+                    encountersCleared = GameNumber.ZERO,
                     goldGranted = GameNumber.of(86_400L),
                     experienceGranted = GameNumber.of(86_400L),
-                    masteryGranted = GameNumber.of(2_400L),
-                    itemsFound = GameNumber.of(60L),
-                    itemsKept = GameNumber.of(8L),
-                    itemsOverflowed = GameNumber.of(1L),
-                    itemsAutoSalvaged = GameNumber.of(51L),
-                    autoSalvageGold = GameNumber.of(510L),
-                    eliteEncountersCleared = GameNumber.of(4L),
-                    anomalyEncountersCleared = GameNumber.of(2L),
-                    bossesDefeated = GameNumber.ONE,
-                    convergencesTriggered = GameNumber.of(12L),
-                    adaptationTierChanges = GameNumber.of(3L),
+                    masteryGranted = GameNumber.ZERO,
+                    itemsFound = GameNumber.ZERO,
+                    itemsKept = GameNumber.ZERO,
+                    itemsOverflowed = GameNumber.ZERO,
+                    itemsAutoSalvaged = GameNumber.ZERO,
+                    autoSalvageGold = GameNumber.ZERO,
+                    eliteEncountersCleared = GameNumber.ZERO,
+                    anomalyEncountersCleared = GameNumber.ZERO,
+                    bossesDefeated = GameNumber.ZERO,
+                    convergencesTriggered = GameNumber.ZERO,
+                    adaptationTierChanges = GameNumber.ZERO,
                     startingStage = 8,
-                    endingStage = 18,
-                    deepestStage = 19,
-                    currentWallStage = 19,
-                    notableDrops = listOf(
-                        com.idlerpg.game.application.OfflineNotableDrop(
-                            "Legacy Sigil",
-                            com.idlerpg.game.domain.definition.Rarity.EPIC
-                        )
-                    ),
-                    tacticalInsight = com.idlerpg.game.application.OfflineTacticalInsight.PROTECTOR_BLOCKING,
+                    endingStage = 8,
+                    deepestStage = 8,
+                    currentWallStage = null,
+                    notableDrops = emptyList(),
+                    tacticalInsight = null,
                     eventCount = 12345
                 )
             )
@@ -103,22 +103,24 @@ object OfflineProgressProjectionTest {
         check(projected.simulatedDurationDisplay == "1d")
         check(projected.durationClamped)
         check(!projected.clockRollbackDetected)
-        check(projected.enemiesDefeated == "8640")
-        check(projected.encountersCleared == "2880")
+        check(projected.levelJourney == "12 → 27")
+        check(projected.stoppingReason == OfflineStoppingReasonUi.CLAIM_WINDOW_CAPPED)
+        check(projected.enemiesDefeated == "0")
+        check(projected.encountersCleared == "0")
         check(projected.goldGranted == "86400")
         check(projected.experienceGranted == "86400")
-        check(projected.masteryGranted == "2400")
-        check(projected.itemsFound == "60")
-        check(projected.itemsKept == "8")
-        check(projected.itemsOverflowed == "1")
-        check(projected.itemsAutoSalvaged == "51")
-        check(projected.autoSalvageGold == "510")
-        check(projected.stageJourney == "8 → 18")
-        check(projected.deepestStage == "19")
-        check(projected.currentWallStage == "19")
-        check(projected.notableDrops == listOf("Epic · Legacy Sigil"))
-        check(projected.convergencesTriggered == "12")
-        check(projected.adaptationTierChanges == "3")
+        check(projected.masteryGranted == "0")
+        check(projected.itemsFound == "0")
+        check(projected.itemsKept == "0")
+        check(projected.itemsOverflowed == "0")
+        check(projected.itemsAutoSalvaged == "0")
+        check(projected.autoSalvageGold == "0")
+        check(projected.stageJourney == "8 → 8")
+        check(projected.deepestStage == "8")
+        check(projected.currentWallStage == null)
+        check(projected.notableDrops.isEmpty())
+        check(projected.convergencesTriggered == "0")
+        check(projected.adaptationTierChanges == "0")
 
         val rollback = checkNotNull(
             projector.project(
@@ -127,6 +129,9 @@ object OfflineProgressProjectionTest {
                     simulatedElapsed = GameDuration.ZERO,
                     durationClamped = false,
                     clockRollbackDetected = true,
+                    startingLevel = 4L,
+                    endingLevel = 4L,
+                    stoppingReason = OfflineStoppingReason.CLOCK_ROLLBACK,
                     enemiesDefeated = GameNumber.ZERO,
                     encountersCleared = GameNumber.ZERO,
                     goldGranted = GameNumber.ZERO,
@@ -153,6 +158,7 @@ object OfflineProgressProjectionTest {
             )
         )
         check(rollback.clockRollbackDetected)
+        check(rollback.stoppingReason == OfflineStoppingReasonUi.CLOCK_ROLLBACK)
         check(rollback.simulatedDurationDisplay == "0s")
 
         println("FUI10_OFFLINE_PROGRESS_PROJECTION_PASS")

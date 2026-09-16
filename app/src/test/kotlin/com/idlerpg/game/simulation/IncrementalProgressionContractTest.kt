@@ -16,12 +16,16 @@ object IncrementalProgressionContractTest {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
 
-        check(TrainingHollowWorldContent.MAX_STAGE >= 72)
+        check(TrainingHollowWorldContent.MAX_STAGE >= 120)
         check(registry.allEncounters().size == TrainingHollowWorldContent.MAX_STAGE)
-        check(TrainingHollowWorldContent.additionalBosses.size == 3)
+        check(TrainingHollowWorldContent.additionalBosses.size == 7)
+        check(TrainingHollowWorldContent.encounters.count {
+            it.type == com.idlerpg.game.domain.definition.world.EncounterType.BOSS
+        } == 8)
+        check(TrainingHollowWorldContent.encounters.last().nextEncounterId == null)
 
         val checkpoints = listOf(1L, 10L, 25L, 50L, 100L)
-        val levelBase = factory.newGame(18_001L)
+        val levelBase = factory.newGame(18_001L).state()
         val xpCosts = checkpoints.map { level ->
             val state = levelBase.copy(
                 run = levelBase.run.copy(
@@ -32,7 +36,32 @@ object IncrementalProgressionContractTest {
             )
             PlayerProgressionSystem.experienceToNextLevel(state, registry)
         }
-        check(xpCosts == listOf(20L, 110L, 365L, 1_290L, 5_015L).map(GameNumber::of))
+        check(xpCosts == listOf(100L, 108L, 122L, 148L, 221L).map(GameNumber::of))
+
+        fun stateAtLevel(level: Long) = levelBase.copy(
+            run = levelBase.run.copy(
+                progression = levelBase.run.progression.copy(
+                    playerLevel = levelBase.run.progression.playerLevel.copy(level = level)
+                )
+            )
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(800L), registry) ==
+                GameNumber.of(58_206L)
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(801L), registry) ==
+                GameNumber.of(58_905L)
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(1_000L), registry) ==
+                GameNumber.of(632_511L)
+        )
+        check(
+            PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(14_999L), registry).toPlainString() ==
+                "210407975003795522087166622010876514590959839631751922183083395623780256829360715000"
+        )
+        check(PlayerProgressionSystem.experienceToNextLevel(stateAtLevel(15_000L), registry) == GameNumber.ZERO)
         val baselines = checkpoints.map { level ->
             PlayerScalingSystem.baseStatsForLevel(BaseStats(), level)
         }

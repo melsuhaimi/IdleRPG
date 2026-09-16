@@ -14,6 +14,7 @@ import com.idlerpg.game.domain.definition.item.AffixEffectDefinition
 import com.idlerpg.game.domain.definition.item.EquipmentEffectDefinition
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.system.inventory.EquipmentScalingSystem
+import com.idlerpg.game.domain.system.rebirth.RebirthStatSystem
 
 /**
  * Deterministic modifier aggregation.
@@ -42,9 +43,9 @@ object ModifierSystem {
             }
         }
 
-        forEachEquippedEffectWithRarity(state, contentRegistry) { rarity, effect ->
+        forEachEquippedEffectWithRarity(state, contentRegistry) { rarity, enhancementLevel, effect ->
             if (effect is EquipmentEffectDefinition.FlatAttackPower) {
-                result += EquipmentScalingSystem.scaleFlat(effect.amount, rarity)
+                result += EquipmentScalingSystem.scaleFlat(effect.amount, rarity, enhancementLevel)
             }
         }
         forEachEquippedAffix(state, contentRegistry) { rolledValue, effect ->
@@ -83,9 +84,9 @@ object ModifierSystem {
                 result += upgrade.effect.amountPerLevel * level
             }
         }
-        forEachEquippedEffectWithRarity(state, contentRegistry) { rarity, effect ->
+        forEachEquippedEffectWithRarity(state, contentRegistry) { rarity, enhancementLevel, effect ->
             if (effect is EquipmentEffectDefinition.FlatArmor) {
-                result += EquipmentScalingSystem.scaleFlat(effect.amount, rarity)
+                result += EquipmentScalingSystem.scaleFlat(effect.amount, rarity, enhancementLevel)
             }
         }
         forEachEquippedAffix(state, contentRegistry) { rolledValue, effect ->
@@ -246,9 +247,12 @@ object ModifierSystem {
         val result = linkedMapOf<Affinity, GameNumber>()
         val maximumHealth = maximumHealth(
             state,
-            PlayerScalingSystem.baseStatsForLevel(
-                state.run.player.baseStats,
-                state.run.progression.playerLevel.level
+            RebirthStatSystem.apply(
+                PlayerScalingSystem.baseStatsForLevel(
+                    state.run.player.baseStats,
+                    state.run.progression.playerLevel.level
+                ),
+                state.meta.rebirth
             ).maxHealth,
             contentRegistry
         )
@@ -280,7 +284,11 @@ object ModifierSystem {
     private inline fun forEachEquippedEffectWithRarity(
         state: GameState,
         contentRegistry: ContentRegistry,
-        block: (com.idlerpg.game.domain.definition.Rarity, EquipmentEffectDefinition) -> Unit
+        block: (
+            com.idlerpg.game.domain.definition.Rarity,
+            Int,
+            EquipmentEffectDefinition
+        ) -> Unit
     ) {
         for (slot in EquipmentSlot.values().sortedBy { it.id }) {
             val itemId = state.run.inventory.equipment.itemIn(slot) ?: continue
@@ -292,7 +300,7 @@ object ModifierSystem {
                     ?: error("Equipped item ${item.definitionId} has no equipment definition")
             )
             equipmentDefinition.activeEffects(item.rarity).forEach { effect ->
-                block(item.rarity, effect)
+                block(item.rarity, item.enhancementLevel, effect)
             }
         }
     }
@@ -324,7 +332,8 @@ object ModifierSystem {
             val itemId = state.run.inventory.equipment.itemIn(slot) ?: continue
             val item = state.run.inventory.itemsById[itemId]
                 ?: error("Equipped item $itemId is not owned")
-            for (rolled in item.affixes.sortedBy { it.affixId }) {
+            val rolledStats = listOfNotNull(item.mainStat) + item.affixes
+            for (rolled in rolledStats.sortedBy { it.affixId }) {
                 val effect = contentRegistry.affix(rolled.affixId).effect ?: continue
                 block(rolled.value, effect)
             }

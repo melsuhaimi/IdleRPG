@@ -1,5 +1,6 @@
 package com.idlerpg.game.application
 
+import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.time.GameClock
 import com.idlerpg.game.core.time.GameDuration
@@ -7,30 +8,24 @@ import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.data.local.SaveVersion
 import com.idlerpg.game.data.repository.GameRepository
 import com.idlerpg.game.domain.definition.CurrencyId
+import com.idlerpg.game.domain.definition.Rarity
+import com.idlerpg.game.domain.definition.progression.FeatureUnlockScope
+import com.idlerpg.game.domain.definition.world.EncounterType
 import com.idlerpg.game.domain.engine.EngineContext
 import com.idlerpg.game.domain.engine.EngineDiagnostics
 import com.idlerpg.game.domain.engine.EngineResult
 import com.idlerpg.game.domain.engine.SimulationActionLimitExceededException
 import com.idlerpg.game.domain.engine.SimulationEngine
-import com.idlerpg.game.domain.event.AdaptationTierChanged
-import com.idlerpg.game.domain.event.BossPhaseChanged
-import com.idlerpg.game.domain.event.ConvergenceTriggered
 import com.idlerpg.game.domain.event.CurrencyGranted
-import com.idlerpg.game.domain.event.EncounterCleared
-import com.idlerpg.game.domain.event.EnemyKilled
 import com.idlerpg.game.domain.event.ExperienceGranted
+import com.idlerpg.game.domain.event.FeatureUnlocked
 import com.idlerpg.game.domain.event.GameEventEnvelope
-import com.idlerpg.game.domain.event.ItemAdded
-import com.idlerpg.game.domain.event.ItemAutoSalvaged
-import com.idlerpg.game.domain.event.ItemDropped
-import com.idlerpg.game.domain.event.ItemSentToOverflow
-import com.idlerpg.game.domain.event.MasteryIncreased
-import com.idlerpg.game.domain.event.EncounterFailed
-import com.idlerpg.game.domain.event.EncounterStarted
-import com.idlerpg.game.domain.definition.Rarity
-import com.idlerpg.game.domain.definition.enemy.EnemyRole
-import com.idlerpg.game.domain.definition.world.EncounterType
+import com.idlerpg.game.domain.event.PlayerLeveledUp
 import com.idlerpg.game.domain.model.GameState
+import com.idlerpg.game.domain.model.combat.CombatState
+import com.idlerpg.game.domain.model.world.EncounterState
+import com.idlerpg.game.domain.model.world.EncounterStatus
+import com.idlerpg.game.domain.model.world.WorldAutomationMode
 
 /**
  * Policy for a device wall clock that is earlier than the save timestamp.
@@ -49,14 +44,21 @@ class OfflineClockRollbackException(
     currentEpochMs: Long
 ) : IllegalStateException(
     "Current wall clock precedes save timestamp: " +
-        "savedAtEpochMs=$savedAtEpochMs, currentEpochMs=$currentEpochMs"
+        "savedAtEpochMs=" + savedAtEpochMs + ", currentEpochMs=" + currentEpochMs
 )
 
+/** Why offline advancement ended. */
+enum class OfflineStoppingReason {
+    ELAPSED,
+    CLAIM_WINDOW_CAPPED,
+    CLOCK_ROLLBACK,
+    NO_ELIGIBLE_FARM_STAGE
+}
+
 /**
- * Derived summary of one offline advancement.
- *
- * This object is informational only. No value in this summary grants gameplay rewards;
- * all rewards have already been produced by the canonical SimulationEngine event stream.
+ * Retained for compatibility with the return-screen vocabulary. The offline contract does
+ * not currently expose tactical advice because offline simulation cannot change encounter
+ * progress or award combat-side systems.
  */
 enum class OfflineTacticalInsight {
     ADAPTATION_PRESSURE,
@@ -72,11 +74,21 @@ data class OfflineNotableDrop(
     val rarity: Rarity
 )
 
+/**
+ * Summary of one offline advancement.
+ *
+ * The only offline gameplay rewards are Gold and XP. The remaining fields are retained as
+ * zero-valued compatibility fields for existing presentation clients; they never imply that
+ * loot, mastery, quests, achievements, or stage progress were granted offline.
+ */
 data class OfflineProgressSummary(
     val requestedElapsed: GameDuration,
     val simulatedElapsed: GameDuration,
     val durationClamped: Boolean,
     val clockRollbackDetected: Boolean,
+    val startingLevel: Long = 1L,
+    val endingLevel: Long = 1L,
+    val stoppingReason: OfflineStoppingReason = OfflineStoppingReason.ELAPSED,
     val enemiesDefeated: GameNumber,
     val encountersCleared: GameNumber,
     val goldGranted: GameNumber,
@@ -105,18 +117,24 @@ data class OfflineProgressSummary(
             "simulatedElapsed cannot exceed requestedElapsed"
         }
         require(eventCount >= 0) {
-            "eventCount cannot be negative: $eventCount"
+            "eventCount cannot be negative: " + eventCount
         }
-        require(notableDrops.size <= 3) { "At most three notable drops may be presented" }
+        require(notableDrops.isEmpty()) {
+            "Offline summaries cannot contain item drops"
+        }
+        require(startingLevel > 0L && endingLevel > 0L) {
+            "Offline levels must be positive"
+        }
+        require(endingLevel >= startingLevel) {
+            "Offline level cannot decrease"
+        }
         require(listOfNotNull(startingStage, endingStage, deepestStage, currentWallStage).all { it > 0 }) {
             "Offline stage numbers must be positive"
         }
     }
 }
 
-/**
- * Result accepted by the future GameSession after a save has been resumed and checkpointed.
- */
+/** Result accepted by the future GameSession after a save has been resumed and checkpointed. */
 data class OfflineResumeResult(
     val engineResult: EngineResult,
     val summary: OfflineProgressSummary,
@@ -131,19 +149,16 @@ data class OfflineResumeResult(
 }
 
 /**
- * Foundation 16 wall-time -> deterministic simulation bridge.
+ * Wall-time -> deterministic offline simulation bridge.
  *
- * Canonical flow:
+ * Offline progression deliberately reuses the canonical simulation engine for combat timing,
+ * RNG, and Gold/XP formulas, but projects its result through the offline contract before
+ * returning or saving it:
  *
- * load SaveEnvelope
- * -> read injected GameClock
- * -> derive non-negative elapsed wall duration
- * -> clamp through BalanceConfig.maximumOfflineDuration
- * -> advance the existing SimulationEngine exactly once
- * -> derive an informational summary from resulting domain events
- * -> checkpoint the advanced state before returning it to a future foreground session
- *
- * No combat, Gold, XP, loot, Resonance, Adaptation, or quest formula is duplicated here.
+ * - farm the latest cleared non-boss encounter in the active region;
+ * - retain only Gold and XP changes;
+ * - preserve gear, materials, quests, mastery, achievements, and stage progress;
+ * - cap the simulated duration through BalanceConfig.
  */
 class OfflineSessionCoordinator(
     private val repository: GameRepository,
@@ -166,24 +181,25 @@ class OfflineSessionCoordinator(
         val nowEpochMs = clock.nowEpochMs()
 
         require(nowEpochMs >= 0L) {
-            "GameClock returned negative epoch milliseconds: $nowEpochMs"
+            "GameClock returned negative epoch milliseconds: " + nowEpochMs
         }
 
         val elapsed = calculateElapsed(
             savedAtEpochMs = sourceEnvelope.writtenAtEpochMs,
             currentEpochMs = nowEpochMs
         )
-
         val maximum = engineContext.balanceConfig.maximumOfflineDuration
-        val simulatedElapsed = if (elapsed.requested > maximum) {
-            maximum
-        } else {
-            elapsed.requested
-        }
+        val durationClamped = elapsed.requested > maximum
+        val simulatedElapsed = if (durationClamped) maximum else elapsed.requested
+        val farmTarget = latestEligibleFarmEncounter(before)
 
-        val engineResult = advanceExact(
-            state = before,
+        val canonicalResult = advanceExact(
+            state = offlineSimulationState(before, farmTarget),
             duration = simulatedElapsed
+        )
+        val engineResult = projectOfflineResult(
+            before = before,
+            canonicalResult = canonicalResult
         )
 
         val expectedTime = before.engine.simulationTime + simulatedElapsed
@@ -194,16 +210,20 @@ class OfflineSessionCoordinator(
         val summary = summarize(
             requestedElapsed = elapsed.requested,
             simulatedElapsed = simulatedElapsed,
-            durationClamped = elapsed.requested > simulatedElapsed,
+            durationClamped = durationClamped,
             clockRollbackDetected = elapsed.clockRollbackDetected,
+            stoppingReason = stoppingReasonFor(
+                clockRollbackDetected = elapsed.clockRollbackDetected,
+                durationClamped = durationClamped,
+                farmTarget = farmTarget
+            ),
             events = engineResult.events,
             before = before,
             after = engineResult.state
         )
 
         // When the clock moved backwards and policy clamps to zero, retain the original
-        // anchor instead of moving the save timestamp backwards. Otherwise a successful
-        // resume consumes the elapsed interval, including any time discarded by the cap.
+        // anchor instead of moving the save timestamp backwards.
         val checkpointWrittenAtEpochMs = if (elapsed.clockRollbackDetected) {
             sourceEnvelope.writtenAtEpochMs
         } else {
@@ -231,14 +251,117 @@ class OfflineSessionCoordinator(
         )
     }
 
+    /** Selects the latest cleared non-boss encounter in the active region. */
+    private fun latestEligibleFarmEncounter(state: GameState): ContentId? {
+        val world = state.run.world
+        val activeRegion = world.activeRegionId?.let(engineContext.contentRegistry::regionOrNull)
+        return activeRegion
+            ?.encounterIds
+            ?.asReversed()
+            ?.firstOrNull { candidate ->
+                candidate in world.clearedEncounterIds &&
+                    engineContext.contentRegistry.encounterOrNull(candidate)?.type != EncounterType.BOSS
+            }
+    }
+
     /**
-     * Runs only the canonical SimulationEngine. If one very long exact advancement hits
-     * the engine's per-call safety ceiling, split the duration deterministically and
-     * continue with the resulting canonical state. No gameplay formula is approximated.
-     *
-     * A duration of 0 or 1 ms that still exceeds the action ceiling cannot be split
-     * meaningfully and the original exception is propagated as a genuine pathological
-     * scheduler/content condition.
+     * Builds the canonical input for offline farming. A synthetic terminal encounter lets
+     * EncounterSystem start the selected farm target without changing the saved world. The
+     * projected result below discards every world/combat mutation from this temporary run.
+     */
+    private fun offlineSimulationState(state: GameState, target: ContentId?): GameState {
+        val world = state.run.world
+        val activeRegion = world.activeRegionId?.let(engineContext.contentRegistry::regionOrNull)
+
+        val farmingWorld = if (target == null || activeRegion == null) {
+            world.copy(
+                currentEncounter = null,
+                automationMode = WorldAutomationMode.FARM,
+                selectedFarmEncounterId = null
+            )
+        } else {
+            val encounterIndex = activeRegion.encounterIds.indexOf(target)
+                .takeIf { it >= 0 }
+                ?.plus(1)
+                ?.toLong()
+                ?: 0L
+            world.copy(
+                currentEncounter = EncounterState(
+                    definitionId = target,
+                    encounterIndex = encounterIndex,
+                    encounterSeed = 0L,
+                    status = EncounterStatus.CLEARED
+                ),
+                automationMode = WorldAutomationMode.FARM,
+                selectedFarmEncounterId = target
+            )
+        }
+
+        return state.copy(
+            run = state.run.copy(
+                world = farmingWorld,
+                combat = CombatState()
+            )
+        )
+    }
+
+    /**
+     * Keeps only the deterministic engine cursor, Gold balance, and player XP/level from the
+     * canonical result. All other run and meta partitions remain byte-for-byte equivalent to
+     * the saved state.
+     */
+    private fun projectOfflineResult(
+        before: GameState,
+        canonicalResult: EngineResult
+    ): EngineResult {
+        val simulatedGold =
+            canonicalResult.state.run.economy.wallet.amountsByCurrencyId[CurrencyId.GOLD]
+                ?: GameNumber.ZERO
+        val walletAmounts = before.run.economy.wallet.amountsByCurrencyId.toMutableMap()
+        if (simulatedGold == GameNumber.ZERO) {
+            walletAmounts.remove(CurrencyId.GOLD)
+        } else {
+            walletAmounts[CurrencyId.GOLD] = simulatedGold
+        }
+
+        val projectedRun = before.run.copy(
+            economy = before.run.economy.copy(
+                wallet = before.run.economy.wallet.copy(
+                    amountsByCurrencyId = walletAmounts
+                )
+            ),
+            progression = before.run.progression.copy(
+                playerLevel = canonicalResult.state.run.progression.playerLevel,
+                featureUnlocks = canonicalResult.state.run.progression.featureUnlocks
+            )
+        )
+        val projectedState = before.copy(
+            engine = canonicalResult.state.engine,
+            run = projectedRun,
+            meta = before.meta
+        )
+
+        return canonicalResult.copy(
+            state = projectedState,
+            events = canonicalResult.events.filter(::isAllowedOfflineEvent)
+        )
+    }
+
+    private fun isAllowedOfflineEvent(envelope: GameEventEnvelope): Boolean =
+        when (val event = envelope.event) {
+            is ExperienceGranted,
+            is PlayerLeveledUp -> true
+            is FeatureUnlocked ->
+                engineContext.contentRegistry.featureUnlockOrNull(event.featureId)?.scope ==
+                    FeatureUnlockScope.RUN
+            is CurrencyGranted -> event.currencyId == CurrencyId.GOLD
+            else -> false
+        }
+
+    /**
+     * Runs the canonical SimulationEngine. If a long exact advancement hits the engine's
+     * safety ceiling, split the duration deterministically and continue with the resulting
+     * canonical state.
      */
     private fun advanceExact(
         state: GameState,
@@ -251,21 +374,12 @@ class OfflineSessionCoordinator(
                 context = engineContext
             )
         } catch (limit: SimulationActionLimitExceededException) {
-            if (duration.millis <= 1L) {
-                throw limit
-            }
+            if (duration.millis <= 1L) throw limit
 
             val firstMillis = duration.millis / 2L
             val secondMillis = duration.millis - firstMillis
-
-            val first = advanceExact(
-                state = state,
-                duration = GameDuration.ofMillis(firstMillis)
-            )
-            val second = advanceExact(
-                state = first.state,
-                duration = GameDuration.ofMillis(secondMillis)
-            )
+            val first = advanceExact(state, GameDuration.ofMillis(firstMillis))
+            val second = advanceExact(first.state, GameDuration.ofMillis(secondMillis))
 
             EngineResult(
                 state = second.state,
@@ -297,7 +411,6 @@ class OfflineSessionCoordinator(
                     requested = GameDuration.ZERO,
                     clockRollbackDetected = true
                 )
-
             OfflineClockRollbackPolicy.REJECT ->
                 throw OfflineClockRollbackException(
                     savedAtEpochMs = savedAtEpochMs,
@@ -306,6 +419,10 @@ class OfflineSessionCoordinator(
         }
     }
 
+    /**
+     * Projects the offline result into its return-screen summary. Only CurrencyGranted(GOLD)
+     * and ExperienceGranted are counted; all other compatibility counters stay at zero.
+     */
     internal fun summarize(
         requestedElapsed: GameDuration,
         simulatedElapsed: GameDuration,
@@ -313,166 +430,64 @@ class OfflineSessionCoordinator(
         clockRollbackDetected: Boolean,
         events: List<GameEventEnvelope>,
         before: GameState,
-        after: GameState
+        after: GameState,
+        stoppingReason: OfflineStoppingReason = OfflineStoppingReason.ELAPSED
     ): OfflineProgressSummary {
-        var enemiesDefeated = GameNumber.ZERO
-        var encountersCleared = GameNumber.ZERO
         var goldGranted = GameNumber.ZERO
         var experienceGranted = GameNumber.ZERO
-        var masteryGranted = GameNumber.ZERO
-        var itemsFound = GameNumber.ZERO
-        var itemsKept = GameNumber.ZERO
-        var itemsOverflowed = GameNumber.ZERO
-        var itemsAutoSalvaged = GameNumber.ZERO
-        var autoSalvageGold = GameNumber.ZERO
-        var eliteEncountersCleared = GameNumber.ZERO
-        var anomalyEncountersCleared = GameNumber.ZERO
-        var bossesDefeated = GameNumber.ZERO
-        var convergencesTriggered = GameNumber.ZERO
-        var adaptationTierChanges = GameNumber.ZERO
-        var currentWallStage: Int? = null
-        val visitedStages = listOfNotNull(stageForState(before)).toMutableList()
-        val notableCandidates = mutableListOf<OfflineNotableDrop>()
-
         for (envelope in events) {
             when (val event = envelope.event) {
-                is EnemyKilled ->
-                    enemiesDefeated += GameNumber.ONE
-
-                is EncounterCleared -> {
-                    encountersCleared += GameNumber.ONE
-                    stageForEncounter(event.encounterDefinitionId)?.let(visitedStages::add)
-                    when (engineContext.contentRegistry.encounter(event.encounterDefinitionId).type) {
-                        EncounterType.ELITE -> eliteEncountersCleared += GameNumber.ONE
-                        EncounterType.ANOMALY -> anomalyEncountersCleared += GameNumber.ONE
-                        EncounterType.BOSS -> bossesDefeated += GameNumber.ONE
-                        EncounterType.NORMAL -> Unit
-                    }
+                is CurrencyGranted -> if (event.currencyId == CurrencyId.GOLD) {
+                    goldGranted += event.amount
                 }
-
-                is EncounterStarted ->
-                    stageForEncounter(event.encounterDefinitionId)?.let(visitedStages::add)
-
-                is EncounterFailed -> {
-                    currentWallStage = stageForEncounter(event.encounterDefinitionId)
-                    currentWallStage?.let(visitedStages::add)
-                }
-
-                is CurrencyGranted ->
-                    if (event.currencyId == CurrencyId.GOLD) {
-                        goldGranted += event.amount
-                    }
-
-                is ExperienceGranted ->
-                    experienceGranted += event.amount
-
-                is MasteryIncreased ->
-                    masteryGranted += event.amount
-
-                is ItemDropped -> {
-                    itemsFound += GameNumber.ONE
-                    if (event.rarity.rank >= Rarity.RARE.rank) {
-                        notableCandidates += OfflineNotableDrop(
-                            displayName = engineContext.contentRegistry.item(event.itemDefinitionId).displayName,
-                            rarity = event.rarity
-                        )
-                    }
-                }
-
-                is ItemAdded ->
-                    itemsKept += GameNumber.ONE
-
-                is ItemSentToOverflow ->
-                    itemsOverflowed += GameNumber.ONE
-
-                is ItemAutoSalvaged -> {
-                    itemsAutoSalvaged += GameNumber.ONE
-                    autoSalvageGold += event.goldGranted
-                }
-
-                is ConvergenceTriggered ->
-                    convergencesTriggered += GameNumber.ONE
-
-                is AdaptationTierChanged ->
-                    adaptationTierChanges += GameNumber.ONE
-
+                is ExperienceGranted -> experienceGranted += event.amount
                 else -> Unit
             }
         }
 
-        stageForState(after)?.let(visitedStages::add)
-        val failedEventIndex = events.indexOfLast { it.event is EncounterFailed }
-        val failedEncounterId = (events.getOrNull(failedEventIndex)?.event as? EncounterFailed)
-            ?.encounterDefinitionId
-        val failedEncounter = failedEncounterId?.let(engineContext.contentRegistry::encounter)
-        val failedBossPhase = failedEncounter?.bossId?.let { bossId ->
-            events.take((failedEventIndex + 1).coerceAtLeast(0)).asReversed()
-                .firstNotNullOfOrNull { envelope ->
-                    (envelope.event as? BossPhaseChanged)
-                        ?.takeIf { it.bossId == bossId }
-                        ?.phase
-                }
-        }
-        val failedWave = failedBossPhase
-            ?.coerceIn(1, failedEncounter?.waves ?: 1)
-            ?: before.run.world.currentEncounter
-                ?.takeIf { it.definitionId == failedEncounterId }
-                ?.currentWave
-                ?.coerceIn(1, failedEncounter?.waves ?: 1)
-            ?: after.run.world.currentEncounter
-                ?.takeIf { it.definitionId == failedEncounterId }
-                ?.currentWave
-                ?.coerceIn(1, failedEncounter?.waves ?: 1)
-            ?: 1
-        val failedRoles = failedEncounter?.enemyDefinitionIdsForWave(failedWave)
-            ?.map { engineContext.contentRegistry.enemy(it).role }
-            .orEmpty()
-        val tacticalInsight = when {
-            currentWallStage == null -> null
-            EnemyRole.PROTECTOR in failedRoles -> OfflineTacticalInsight.PROTECTOR_BLOCKING
-            EnemyRole.ADAPTIVE in failedRoles -> OfflineTacticalInsight.ADAPTIVE_RESISTANCE
-            failedRoles.any { it in setOf(EnemyRole.CASTER, EnemyRole.DISRUPTOR, EnemyRole.CONTROLLER) } ->
-                OfflineTacticalInsight.CASTER_DISRUPTION
-            failedRoles.size >= 3 -> OfflineTacticalInsight.SWARM_PRESSURE
-            adaptationTierChanges > GameNumber.ZERO -> OfflineTacticalInsight.ADAPTATION_PRESSURE
-            else -> OfflineTacticalInsight.SURVIVAL_PRESSURE
-        }
-        val notableDrops = notableCandidates.withIndex()
-            .sortedWith(
-                compareByDescending<IndexedValue<OfflineNotableDrop>> { it.value.rarity.rank }
-                    .thenBy { it.index }
-            )
-            .take(3)
-            .map { it.value }
-
+        val stage = stageForState(before) ?: stageForState(after)
         return OfflineProgressSummary(
             requestedElapsed = requestedElapsed,
             simulatedElapsed = simulatedElapsed,
             durationClamped = durationClamped,
             clockRollbackDetected = clockRollbackDetected,
-            enemiesDefeated = enemiesDefeated,
-            encountersCleared = encountersCleared,
+            startingLevel = before.run.progression.playerLevel.level,
+            endingLevel = after.run.progression.playerLevel.level,
+            stoppingReason = stoppingReason,
+            enemiesDefeated = GameNumber.ZERO,
+            encountersCleared = GameNumber.ZERO,
             goldGranted = goldGranted,
             experienceGranted = experienceGranted,
-            masteryGranted = masteryGranted,
-            itemsFound = itemsFound,
-            itemsKept = itemsKept,
-            itemsOverflowed = itemsOverflowed,
-            itemsAutoSalvaged = itemsAutoSalvaged,
-            autoSalvageGold = autoSalvageGold,
-            eliteEncountersCleared = eliteEncountersCleared,
-            anomalyEncountersCleared = anomalyEncountersCleared,
-            bossesDefeated = bossesDefeated,
-            convergencesTriggered = convergencesTriggered,
-            adaptationTierChanges = adaptationTierChanges,
-            startingStage = stageForState(before),
-            endingStage = stageForState(after),
-            deepestStage = visitedStages.filter { it > 0 }.maxOrNull(),
-            currentWallStage = currentWallStage,
-            notableDrops = notableDrops,
-            tacticalInsight = tacticalInsight,
+            masteryGranted = GameNumber.ZERO,
+            itemsFound = GameNumber.ZERO,
+            itemsKept = GameNumber.ZERO,
+            itemsOverflowed = GameNumber.ZERO,
+            itemsAutoSalvaged = GameNumber.ZERO,
+            autoSalvageGold = GameNumber.ZERO,
+            eliteEncountersCleared = GameNumber.ZERO,
+            anomalyEncountersCleared = GameNumber.ZERO,
+            bossesDefeated = GameNumber.ZERO,
+            convergencesTriggered = GameNumber.ZERO,
+            adaptationTierChanges = GameNumber.ZERO,
+            startingStage = stage,
+            endingStage = stage,
+            deepestStage = stage,
+            currentWallStage = null,
+            notableDrops = emptyList(),
+            tacticalInsight = null,
             eventCount = events.size
         )
+    }
+
+    private fun stoppingReasonFor(
+        clockRollbackDetected: Boolean,
+        durationClamped: Boolean,
+        farmTarget: ContentId?
+    ): OfflineStoppingReason = when {
+        clockRollbackDetected -> OfflineStoppingReason.CLOCK_ROLLBACK
+        farmTarget == null -> OfflineStoppingReason.NO_ELIGIBLE_FARM_STAGE
+        durationClamped -> OfflineStoppingReason.CLAIM_WINDOW_CAPPED
+        else -> OfflineStoppingReason.ELAPSED
     }
 
     private fun stageForState(state: GameState): Int? {
@@ -480,7 +495,7 @@ class OfflineSessionCoordinator(
         return state.run.world.clearedEncounterIds.mapNotNull(::stageForEncounter).maxOrNull()
     }
 
-    private fun stageForEncounter(encounterId: com.idlerpg.game.core.id.ContentId): Int? {
+    private fun stageForEncounter(encounterId: ContentId): Int? {
         val encounter = engineContext.contentRegistry.encounterOrNull(encounterId) ?: return null
         val index = engineContext.contentRegistry.region(encounter.regionId).encounterIds.indexOf(encounterId)
         return index.takeIf { it >= 0 }?.plus(1)

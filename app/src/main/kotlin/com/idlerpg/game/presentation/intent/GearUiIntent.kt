@@ -1,12 +1,15 @@
 package com.idlerpg.game.presentation.intent
 
+import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.id.InstanceId
 import com.idlerpg.game.domain.command.ClaimOverflowItem
+import com.idlerpg.game.domain.command.EnhanceItem
 import com.idlerpg.game.domain.command.CommandCorrelationId
 import com.idlerpg.game.domain.command.EquipItem
 import com.idlerpg.game.domain.command.ExpandInventoryCapacity
 import com.idlerpg.game.domain.command.GameCommand
 import com.idlerpg.game.domain.command.LockItem
+import com.idlerpg.game.domain.command.RefineItem
 import com.idlerpg.game.domain.command.SalvageItem
 import com.idlerpg.game.domain.command.SalvageItems
 import com.idlerpg.game.domain.command.SalvageAllBelow
@@ -32,6 +35,16 @@ sealed interface GearUiIntent {
     data class SetLocked(
         val itemInstanceId: InstanceId,
         val locked: Boolean
+    ) : GearUiIntent
+
+    data class Enhance(
+        val itemInstanceId: InstanceId,
+        val useProtection: Boolean = false
+    ) : GearUiIntent
+
+    data class Refine(
+        val itemInstanceId: InstanceId,
+        val affixId: ContentId
     ) : GearUiIntent
 
     data class Salvage(
@@ -62,6 +75,16 @@ sealed interface GearUiIntent {
 fun GearUiIntent.toGameCommand(
     correlationId: CommandCorrelationId
 ): GameCommand = when (this) {
+    is GearUiIntent.Enhance -> EnhanceItem(
+        itemInstanceId = itemInstanceId,
+        useProtection = useProtection,
+        correlationId = correlationId
+    )
+    is GearUiIntent.Refine -> RefineItem(
+        itemInstanceId = itemInstanceId,
+        affixId = affixId,
+        correlationId = correlationId
+    )
     is GearUiIntent.Equip -> EquipItem(
         itemInstanceId = itemInstanceId,
         slot = slot,

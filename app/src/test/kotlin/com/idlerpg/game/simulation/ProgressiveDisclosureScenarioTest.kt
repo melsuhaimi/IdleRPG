@@ -96,7 +96,7 @@ object ProgressiveDisclosureScenarioTest {
         ).destination == GameDestination.GEAR)
 
         val item = ItemInstance(
-            instanceId = InstanceId("item.progressive_disclosure"),
+            instanceId = InstanceId(99_001L),
             definitionId = DefaultGameContent.TRAINING_BLADE_ITEM_ID,
             rarity = Rarity.RARE
         )

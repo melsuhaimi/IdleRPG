@@ -348,18 +348,20 @@ class SimulationHarnessViewModel : ViewModel() {
     )
 
     fun runNormalCapacityBlockScenario() {
-        launchOperation("Filling normal-capacity inventory and overflow") {
+        launchOperation("Filling normal inventory and safe overflow") {
             resetRuntime(SimulatorProfile.NORMAL_CAPACITY)
             val balance = factory.gameConfig.balance
             var simulatedMillis = 0L
 
-            while (!InventoryCapacitySystem.isProgressionBlocked(
-                    runtime.state().run.inventory,
-                    balance
-                )
+            while (
+                runtime.state().run.inventory.itemsById.size.toLong() <
+                    balance.baseInventoryCapacity ||
+                runtime.state().run.inventory.overflowItemsById.size.toLong() <
+                    balance.inventoryOverflowCapacity
             ) {
                 check(simulatedMillis < MAX_CAPACITY_SCENARIO_MILLIS) {
-                    "Capacity scenario did not block within ${formatDuration(MAX_CAPACITY_SCENARIO_MILLIS)}"
+                    "Capacity scenario did not fill normal inventory and safe overflow within " +
+                        formatDuration(MAX_CAPACITY_SCENARIO_MILLIS)
                 }
                 val result = runtime.advance(CAPACITY_SCENARIO_STEP)
                 observe(result.events)
@@ -368,7 +370,7 @@ class SimulationHarnessViewModel : ViewModel() {
                     CAPACITY_SCENARIO_STEP.millis
                 )
                 publish(
-                    status = "Filling normal inventory + overflow",
+                    status = "Filling normal inventory + safe overflow",
                     running = true,
                     progressText = "${formatDuration(simulatedMillis)} simulated"
                 )
@@ -381,7 +383,7 @@ class SimulationHarnessViewModel : ViewModel() {
                     balance.inventoryOverflowCapacity
             )
             publish(
-                status = "Normal inventory and overflow are full; progression is blocked.",
+                status = "Normal inventory and safe overflow are full; retained loot is safe.",
                 running = false,
                 progressText = null
             )

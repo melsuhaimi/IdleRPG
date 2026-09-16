@@ -1,11 +1,13 @@
 package com.idlerpg.game.presentation.projection
 
 import com.idlerpg.game.application.OfflineProgressSummary
+import com.idlerpg.game.application.OfflineStoppingReason
 import com.idlerpg.game.application.OfflineTacticalInsight
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.presentation.format.GameNumberFormatter
 import com.idlerpg.game.presentation.model.OfflineProgressUiState
+import com.idlerpg.game.presentation.model.OfflineStoppingReasonUi
 import com.idlerpg.game.presentation.model.OfflineTacticalInsightUi
 
 /**
@@ -25,6 +27,10 @@ class OfflineProgressProjector {
             simulatedDurationDisplay = formatDuration(summary.simulatedElapsed),
             durationClamped = summary.durationClamped,
             clockRollbackDetected = summary.clockRollbackDetected,
+            levelJourney = if (summary.startingLevel != summary.endingLevel) {
+                "${summary.startingLevel} → ${summary.endingLevel}"
+            } else null,
+            stoppingReason = projectStoppingReason(summary.stoppingReason),
             enemiesDefeated = GameNumberFormatter.full(summary.enemiesDefeated),
             encountersCleared = GameNumberFormatter.full(summary.encountersCleared),
             goldGranted = GameNumberFormatter.full(summary.goldGranted),
@@ -55,6 +61,8 @@ class OfflineProgressProjector {
             summary.simulatedElapsed.millis >= MIN_MEANINGFUL_OFFLINE_MILLIS ||
             summary.durationClamped ||
             summary.clockRollbackDetected ||
+            summary.startingLevel != summary.endingLevel ||
+            summary.stoppingReason != OfflineStoppingReason.ELAPSED ||
             summary.enemiesDefeated != GameNumber.ZERO ||
             summary.encountersCleared != GameNumber.ZERO ||
             summary.goldGranted != GameNumber.ZERO ||
@@ -67,6 +75,14 @@ class OfflineProgressProjector {
             summary.bossesDefeated != GameNumber.ZERO ||
             summary.convergencesTriggered != GameNumber.ZERO ||
             summary.adaptationTierChanges != GameNumber.ZERO
+
+    private fun projectStoppingReason(reason: OfflineStoppingReason): OfflineStoppingReasonUi =
+        when (reason) {
+            OfflineStoppingReason.ELAPSED -> OfflineStoppingReasonUi.ELAPSED
+            OfflineStoppingReason.CLAIM_WINDOW_CAPPED -> OfflineStoppingReasonUi.CLAIM_WINDOW_CAPPED
+            OfflineStoppingReason.CLOCK_ROLLBACK -> OfflineStoppingReasonUi.CLOCK_ROLLBACK
+            OfflineStoppingReason.NO_ELIGIBLE_FARM_STAGE -> OfflineStoppingReasonUi.NO_ELIGIBLE_FARM_STAGE
+        }
 
     private fun projectInsight(insight: OfflineTacticalInsight): OfflineTacticalInsightUi =
         when (insight) {

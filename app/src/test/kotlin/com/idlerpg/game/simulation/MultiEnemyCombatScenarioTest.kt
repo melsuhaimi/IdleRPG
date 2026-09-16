@@ -13,6 +13,7 @@ import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.domain.command.StartEncounter
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.domain.definition.DamageKind
+import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.definition.combat.EffectSpec
 import com.idlerpg.game.domain.definition.combat.SkillDefinition
 import com.idlerpg.game.domain.engine.EngineContext
@@ -28,14 +29,36 @@ import com.idlerpg.game.domain.event.SkillUsed
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
 import com.idlerpg.game.domain.system.combat.ActionResolutionSystem
+import com.idlerpg.game.domain.system.combat.CombatSystem
 import com.idlerpg.game.domain.system.combat.TargetingSystem
 
 /** Production lifecycle plus stable targeting and bounded multi-hit/AoE regressions. */
 object MultiEnemyCombatScenarioTest {
     fun run() {
         authoredMultiEnemyEncounterClearsWithoutSingleEnemyCrash()
+        directCombatRejectsUnsupportedFormation()
         activeAndOfflineWaveTransitionsAreEquivalent()
         primitiveTargetsAndEventsAreStable()
+    }
+
+    private fun directCombatRejectsUnsupportedFormation() {
+        val runtime = SimulationTestSupport.runtime(seed = 1_305L)
+        val factory = SimulationTestSupport.factory()
+        val failure = runCatching {
+            CombatSystem.startCombat(
+                state = runtime.state(),
+                enemyDefinitionIds = List(EncounterDefinition.MAX_ACTIVE_ENEMIES + 1) {
+                    DefaultGameContent.SLIME_ID
+                },
+                encounterDefinitionId = DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
+                regionDefinitionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+                scalingTier = 0L,
+                context = factory.createEngineContext()
+            )
+        }.exceptionOrNull()
+        check(failure is IllegalArgumentException) {
+            "Direct combat must reject formations above the shared active-enemy limit"
+        }
     }
 
     private fun authoredMultiEnemyEncounterClearsWithoutSingleEnemyCrash() {
@@ -43,14 +66,17 @@ object MultiEnemyCombatScenarioTest {
         val initialWave = startResult.events.map { it.event }
             .filterIsInstance<EncounterWaveStarted>().single()
         check(initialWave.wave == 1 && initialWave.totalWaves == 2)
-        check(runtime.state().run.combat.enemies.size == 2)
+        check(runtime.state().run.combat.enemies.size == 1)
         val firstWaveIds = runtime.state().run.combat.enemies.map { it.instanceId }.toSet()
         val sequenceId = runtime.state().run.combat.combatSequenceId
 
         val partial = runtime.advance(GameDuration.ofSeconds(1L))
         check(partial.events.count { it.event is EnemyKilled } == 1)
-        check(partial.events.none { it.event is EncounterWaveStarted })
-        check(runtime.state().run.world.currentEncounter?.currentWave == 1)
+        val waveEvent = partial.events.map { it.event }
+            .filterIsInstance<EncounterWaveStarted>().single()
+        check(waveEvent.wave == 2 && waveEvent.totalWaves == 2)
+        check(waveEvent.enemyInstanceIds.none { it in firstWaveIds })
+        check(runtime.state().run.world.currentEncounter?.currentWave == 2)
         check(runtime.state().run.combat.enemies.size == 1)
         check(emberExposure(runtime).currentEncounterContribution == GameNumber.of(77L))
         check(emberExposure(runtime).pressure == GameNumber.ZERO)
@@ -58,22 +84,16 @@ object MultiEnemyCombatScenarioTest {
             DefaultGameContent.TRAINING_HOLLOW_REGION_ID
         ]?.highestClearedEncounterTier == 3L)
 
-        val transition = runtime.advance(GameDuration.ofSeconds(1L))
-        val waveEvent = transition.events.map { it.event }
-            .filterIsInstance<EncounterWaveStarted>().single()
-        check(waveEvent.wave == 2 && waveEvent.totalWaves == 2)
-        check(waveEvent.enemyInstanceIds.none { it in firstWaveIds })
-        check(runtime.state().run.world.currentEncounter?.currentWave == 2)
         check(runtime.state().run.combat.combatSequenceId == sequenceId)
         check(emberExposure(runtime).currentEncounterContribution == GameNumber.of(77L))
         check(emberExposure(runtime).pressure == GameNumber.ZERO)
         check(SaveData.fromGameState(runtime.state()).toGameState() == runtime.state())
 
         val final = runtime.advance(GameDuration.ofSeconds(2L))
-        val allEvents = partial.events + transition.events + final.events
-        check(allEvents.count { it.event is EnemyKilled } == 4)
-        check(allEvents.count { it.event is CurrencyGranted } == 4)
-        check(allEvents.count { it.event is ExperienceGranted } == 4)
+        val allEvents = partial.events + final.events
+        check(allEvents.count { it.event is EnemyKilled } == 2)
+        check(allEvents.count { it.event is CurrencyGranted } == 2)
+        check(allEvents.count { it.event is ExperienceGranted } == 2)
         check(allEvents.count {
             (it.event as? CombatEnded)?.combatSequenceId == sequenceId
         } == 1)

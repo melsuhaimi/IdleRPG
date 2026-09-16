@@ -366,6 +366,7 @@ class ContentRegistry(
         id == basicAttack.id ||
             id == world.id ||
             id in skillsById ||
+            id in statusesById ||
             id in skillEvolutionsById ||
             id in enemyAttacksById ||
             id in enemiesById ||

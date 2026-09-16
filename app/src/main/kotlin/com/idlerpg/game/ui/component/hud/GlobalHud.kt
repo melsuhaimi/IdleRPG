@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,7 +52,6 @@ import com.idlerpg.game.ui.theme.ObsidianSurface3
 import com.idlerpg.game.ui.theme.PanelHighlight
 import com.idlerpg.game.ui.theme.ResourceGold
 import com.idlerpg.game.ui.theme.ResonanceTeal
-import com.idlerpg.game.ui.theme.WarningAmber
 import com.idlerpg.game.ui.theme.GameDimensions
 
 @Composable
@@ -69,7 +69,9 @@ fun GlobalHud(
     }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = GameDimensions.HudMinHeight),
         shape = RoundedCornerShape(GameDimensions.LargePanelRadius),
         color = ObsidianSurface1.copy(alpha = 0.93f),
         border = BorderStroke(1.dp, ObsidianOutline.copy(alpha = 0.82f)),
@@ -85,9 +87,8 @@ fun GlobalHud(
                 painter = painterResource(R.drawable.hud_header_castle_generated),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.HudBannerHeight)
-                    .alpha(0.52f),
+                    .matchParentSize()
+                    .alpha(0.38f),
                 contentScale = ContentScale.Crop
             )
             Box(
@@ -108,7 +109,7 @@ fun GlobalHud(
                 contentDescription = null,
                 modifier = Modifier
                     .matchParentSize()
-                    .alpha(0.58f),
+                    .alpha(0.38f),
                 contentScale = ContentScale.FillBounds
             )
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -131,12 +132,12 @@ fun GlobalHud(
                 BoxWithConstraints(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 11.dp)
+                        .padding(horizontal = 10.dp, vertical = 8.dp)
                 ) {
-                    val compact = maxWidth < 360.dp
+                    val compact = maxWidth < 380.dp
                     Column(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(if (compact) 7.dp else 9.dp)
+                        verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 7.dp)
                     ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -149,44 +150,44 @@ fun GlobalHud(
                         Text(
                             text = stringResource(R.string.hud_expedition_label).uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = if (compact) 10.sp else 11.sp,
-                                letterSpacing = 1.25.sp
+                                fontSize = if (compact) 8.sp else 9.sp,
+                                letterSpacing = 0.9.sp
                             ),
                             color = ResourceGold,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip
                         )
                         Text(
                             text = state.currentRegionTitleKey?.let {
                                 stringResource(it.stringResId())
                             } ?: stringResource(R.string.hud_no_region),
                             style = MaterialTheme.typography.headlineSmall.copy(
-                                fontSize = if (compact) 20.sp else 24.sp,
-                                lineHeight = if (compact) 24.sp else 28.sp
+                                fontSize = if (compact) 15.sp else 17.sp,
+                                lineHeight = if (compact) 18.sp else 20.sp
                             ),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip
                         )
                         Text(
                             text = stringResource(R.string.hud_adventure_tagline),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = if (compact) 8.sp else 9.sp,
-                                letterSpacing = 1.05.sp
+                                fontSize = if (compact) 7.sp else 8.sp,
+                                letterSpacing = 0.7.sp
                             ),
                             color = ResonanceTeal.copy(alpha = 0.86f),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip
                         )
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(14.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = ObsidianSurface2.copy(alpha = 0.88f),
                         border = BorderStroke(1.dp, ResourceGold.copy(alpha = 0.62f))
                     ) {
                         Text(
                             text = stringResource(R.string.hud_level_format, state.playerLevel),
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                             style = MaterialTheme.typography.titleSmall,
                             color = ResourceGold,
                             maxLines = 1
@@ -218,7 +219,7 @@ fun GlobalHud(
                         Text(
                             text = saveStateDescription,
                             style = MaterialTheme.typography.labelMedium.copy(
-                                fontSize = if (compact) 11.sp else 12.sp
+                                fontSize = if (compact) 9.sp else 10.sp
                             ),
                             maxLines = 1
                         )
@@ -228,13 +229,14 @@ fun GlobalHud(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 9.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 7.dp)
                 ) {
                     HudResourceValue(
                         label = stringResource(R.string.hud_gold),
                         value = state.goldDisplay,
                         accent = ResourceGold,
                         iconResId = R.drawable.gold_coin_stack_generated,
+                        compact = compact,
                         contentDescriptionText = stringResource(
                             R.string.hud_gold_value_format,
                             state.goldDisplay
@@ -247,6 +249,7 @@ fun GlobalHud(
                         value = state.echoDisplay,
                         accent = ResonanceTeal,
                         iconResId = R.drawable.lumen_crystal_generated,
+                        compact = compact,
                         contentDescriptionText = stringResource(
                             R.string.hud_legacy_value_format,
                             state.echoDisplay
@@ -266,8 +269,8 @@ fun GlobalHud(
                             Text(
                                 text = stringResource(R.string.hud_xp).uppercase(),
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = if (compact) 10.sp else 11.sp,
-                                    letterSpacing = 0.7.sp
+                                    fontSize = if (compact) 8.sp else 9.sp,
+                                    letterSpacing = 0.45.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1
@@ -280,7 +283,7 @@ fun GlobalHud(
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Clip
                             )
                         }
                         SegmentedExperienceBar(
@@ -295,27 +298,7 @@ fun GlobalHud(
                     }
                 }
 
-                if (state.overflowUsed > 0 || state.inventoryProgressionBlocked) {
-                    Text(
-                        text = if (state.inventoryProgressionBlocked) {
-                            stringResource(
-                                R.string.hud_inventory_blocked_format,
-                                state.overflowUsed,
-                                state.overflowCapacity
-                            )
-                        } else {
-                            stringResource(
-                                R.string.hud_overflow_format,
-                                state.overflowUsed,
-                                state.overflowCapacity
-                            )
-                        },
-                        style = MaterialTheme.typography.labelSmall,
-                        color = WarningAmber,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+
                     }
                 }
             }
@@ -330,12 +313,13 @@ private fun HudResourceValue(
     accent: Color,
     contentDescriptionText: String,
     iconResId: Int,
+    compact: Boolean,
     modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+             .heightIn(min = if (compact) 38.dp else 40.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = contentDescriptionText
             },
@@ -346,14 +330,17 @@ private fun HudResourceValue(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(
+                    horizontal = if (compact) 5.dp else 6.dp,
+                    vertical = if (compact) 3.dp else 4.dp
+                ),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 5.dp)
         ) {
             Box(
                 modifier = Modifier
                     .width(2.dp)
-                        .height(22.dp)
+                    .height(if (compact) 20.dp else 22.dp)
                     .background(
                         Brush.verticalGradient(
                             listOf(accent.copy(alpha = 0.38f), accent)
@@ -364,28 +351,41 @@ private fun HudResourceValue(
             Image(
                 painter = painterResource(iconResId),
                 contentDescription = null,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(if (compact) 18.dp else 20.dp),
                 contentScale = ContentScale.Fit
             )
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .widthIn(min = 0.dp),
                 verticalArrangement = Arrangement.spacedBy(1.dp)
             ) {
                 Text(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 10.sp,
-                        letterSpacing = 0.7.sp
+                        fontSize = if (compact) 7.sp else 8.sp,
+                        letterSpacing = if (compact) 0.55.sp else 0.7.sp
                     ),
                     color = accent,
+                    modifier = Modifier.fillMaxWidth(),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    softWrap = false,
+                    overflow = TextOverflow.Clip
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontSize = when {
+                            value.length >= 10 -> 8.sp
+                            value.length >= 8 -> 9.sp
+                            value.length >= 6 -> 10.sp
+                            else -> 11.sp
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    softWrap = false,
+                    overflow = TextOverflow.Clip
                 )
             }
         }
@@ -402,7 +402,7 @@ private fun SegmentedExperienceBar(
     val normalized = progressUnits.coerceIn(0, 10_000) / 10_000f * segmentCount
     Row(
         modifier = modifier
-            .heightIn(min = 8.dp)
+            .heightIn(min = 6.dp)
             .semantics { contentDescription = contentDescriptionText },
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -412,7 +412,7 @@ private fun SegmentedExperienceBar(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(8.dp)
+                    .height(6.dp)
                     .clip(RoundedCornerShape(2.dp))
                     .background(ObsidianSurface3.copy(alpha = 0.95f))
             ) {

@@ -2,6 +2,7 @@ package com.idlerpg.game.domain.definition.progression
 
 import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 
 /**
  * Authored player-level progression curve.
@@ -42,6 +43,12 @@ sealed interface LevelCurveDefinition {
         val experienceIncrementPerLevel: GameNumber,
         val accelerationStartLevel: Long = 10L,
         val accelerationPerLevel: GameNumber = GameNumber.ZERO,
+        /** Optional exact compounding multiplier for the early exponential segment. */
+        val compoundingMultiplierPerLevel: Ratio? = null,
+        /** Inclusive level at which the early exponential segment ends. */
+        val softCapLevel: Long? = null,
+        /** Optional exact compounding multiplier for the post-soft-cap segment. */
+        val postSoftCapCompoundingMultiplierPerLevel: Ratio? = null,
         override val maxLevel: Long? = null
     ) : LevelCurveDefinition {
         init {
@@ -59,6 +66,28 @@ sealed interface LevelCurveDefinition {
             }
             require(maxLevel == null || maxLevel >= 1L) {
                 "Level curve maxLevel must be >= 1 when present for $id"
+            }
+
+            if (compoundingMultiplierPerLevel == null) {
+                require(softCapLevel == null) {
+                    "Level curve softCapLevel requires compounding progression for $id"
+                }
+                require(postSoftCapCompoundingMultiplierPerLevel == null) {
+                    "Level curve post-soft-cap multiplier requires compounding progression for $id"
+                }
+            } else {
+                require(compoundingMultiplierPerLevel >= Ratio.ONE) {
+                    "Level curve compounding multiplier must be >= 1 for $id"
+                }
+                require(softCapLevel != null && softCapLevel >= 1L) {
+                    "Level curve softCapLevel must be >= 1 for $id"
+                }
+                require(postSoftCapCompoundingMultiplierPerLevel != null) {
+                    "Level curve post-soft-cap multiplier is required for $id"
+                }
+                require(postSoftCapCompoundingMultiplierPerLevel >= Ratio.ONE) {
+                    "Level curve post-soft-cap multiplier must be >= 1 for $id"
+                }
             }
         }
     }

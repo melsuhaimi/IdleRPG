@@ -5,6 +5,7 @@ import com.idlerpg.game.domain.model.chronicle.DiscoveryState
 import com.idlerpg.game.domain.model.achievement.AchievementState
 import com.idlerpg.game.domain.model.chronicle.EchoState
 import com.idlerpg.game.domain.model.progression.FeatureUnlockState
+import com.idlerpg.game.domain.model.rebirth.RebirthState
 import com.idlerpg.game.domain.model.statistics.StatisticsState
 
 /**
@@ -20,6 +21,8 @@ data class MetaState(
     val persistentFeatureUnlocks: FeatureUnlockState = FeatureUnlockState(),
     val achievements: AchievementState = AchievementState(),
     val lifetimeStatistics: StatisticsState = StatisticsState(),
+    /** Permanent Rebirth/Legacy progression that survives every Chronicle collapse. */
+    val rebirth: RebirthState = RebirthState(),
     /** Player-facing identity that survives Chronicle/Prestige resets. */
     val heroName: String? = null
 )

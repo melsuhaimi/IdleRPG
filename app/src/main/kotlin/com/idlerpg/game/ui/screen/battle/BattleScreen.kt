@@ -43,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -141,7 +142,8 @@ fun BattleScreen(
     onConsumePresentationReward: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val compact = LocalConfiguration.current.screenHeightDp < 780
+    val compact = LocalConfiguration.current.screenHeightDp < 760 ||
+        LocalConfiguration.current.screenWidthDp < 360
     var consumedRewardTokens by remember(state.combatSequenceId) {
         mutableStateOf<Set<Long>>(emptySet())
     }
@@ -178,16 +180,20 @@ fun BattleScreen(
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = if (compact) 8.dp else 12.dp, vertical = 8.dp)
+                .padding(horizontal = if (compact) 6.dp else 10.dp, vertical = 6.dp)
         ) {
-            val lowerContentMinimumHeight = if (compact) 96.dp else 120.dp
-            val battleHeaderMinimumHeight = if (compact) 106.dp else 114.dp
+            val lowerContentMinimumHeight = if (compact) 72.dp else 88.dp
+            val battleHeaderMinimumHeight = if (compact) {
+                GameDimensions.BattleHeaderMinHeight
+            } else {
+                GameDimensions.BattleHeaderMinHeight + 8.dp
+            }
             val battleBudget = (
                 maxHeight - battleHeaderMinimumHeight - lowerContentMinimumHeight
                 ).coerceAtLeast(0.dp)
-            val minimumBattleHeight = (if (compact) 300.dp else 360.dp)
+            val minimumBattleHeight = (if (compact) 260.dp else 300.dp)
                 .coerceAtMost(battleBudget)
-            val preferredBattleHeight = maxHeight * if (compact) 0.58f else 0.64f
+            val preferredBattleHeight = maxHeight * if (compact) 0.54f else 0.58f
             val battlefieldHeight = preferredBattleHeight.coerceIn(
                 minimumBattleHeight,
                 battleBudget
@@ -197,7 +203,7 @@ fun BattleScreen(
             }
             Column(
                 modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
             ) {
                 BattleHeader(
                     state = state,
@@ -235,7 +241,7 @@ fun BattleScreen(
                         .fillMaxWidth()
                         .weight(1f)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+                    verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
                 ) {
                     BattleCombatStatsRail(
                         player = state.player,
@@ -288,7 +294,9 @@ private fun BattleHeader(
         else GameDimensions.LargePanelRadius
     )
     Surface(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = if (compact) 64.dp else GameDimensions.BattleHeaderMinHeight),
         shape = shape,
         color = ObsidianSurface1.copy(alpha = 0.90f),
         border = BorderStroke(1.dp, StageBorder.copy(alpha = 0.76f)),
@@ -304,15 +312,13 @@ private fun BattleHeader(
                 painter = painterResource(R.drawable.hud_header_castle_generated),
                 contentDescription = null,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.HudBannerHeight)
+                    .matchParentSize()
                     .alpha(0.38f),
                 contentScale = ContentScale.Crop
             )
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(GameDimensions.HudBannerHeight)
+                    .matchParentSize()
                     .background(
                         Brush.horizontalGradient(
                             listOf(
@@ -334,10 +340,10 @@ private fun BattleHeader(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = if (compact) 106.dp else GameDimensions.BattleHeaderHeight)
-                    .padding(horizontal = if (compact) 10.dp else 14.dp, vertical = 10.dp),
+                    .heightIn(min = if (compact) 64.dp else GameDimensions.BattleHeaderMinHeight + 8.dp)
+                    .padding(horizontal = if (compact) 8.dp else 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 9.dp)
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 7.dp)
             ) {
                 Row(
                     modifier = Modifier.weight(1f),
@@ -345,8 +351,8 @@ private fun BattleHeader(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        modifier = Modifier.size(if (compact) 42.dp else 50.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(if (compact) 36.dp else 42.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = ResourceGold.copy(alpha = 0.13f),
                         border = BorderStroke(1.dp, ResourceGold.copy(alpha = 0.58f))
                     ) {
@@ -354,7 +360,7 @@ private fun BattleHeader(
                             painter = painterResource(R.drawable.ic_nav_battle),
                             contentDescription = null,
                             tint = ResourceGold,
-                            modifier = Modifier.padding(if (compact) 9.dp else 10.dp)
+                            modifier = Modifier.padding(if (compact) 8.dp else 9.dp)
                         )
                     }
                     Column(
@@ -364,10 +370,10 @@ private fun BattleHeader(
                         Text(
                             text = stringResource(R.string.battle_training_hall),
                             style = if (compact) MaterialTheme.typography.titleMedium
-                            else MaterialTheme.typography.headlineSmall,
+                            else MaterialTheme.typography.titleLarge,
                             color = TextPrimary,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip
                         )
                         Text(
                             text = regionTitle.uppercase(),
@@ -376,11 +382,11 @@ private fun BattleHeader(
                             ),
                             color = ResonanceTeal,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             Text(
                                 text = stringResource(
@@ -429,20 +435,20 @@ private fun BattleHeader(
                         Text(
                             text = stringResource(R.string.battle_stage_tagline),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 8.sp,
+                                fontSize = 7.sp,
                                 letterSpacing = 0.8.sp
                             ),
                             color = TextSecondary.copy(alpha = 0.82f),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Clip
                         )
                     }
                 }
 
                 Surface(
                     modifier = Modifier
-                        .heightIn(min = if (compact) 56.dp else 62.dp)
-                        .widthIn(min = if (compact) 104.dp else 124.dp)
+                        .heightIn(min = if (compact) 44.dp else 48.dp)
+                        .widthIn(min = if (compact) 80.dp else 96.dp)
                         .clickable(
                             role = Role.Button,
                             onClick = { onSetDoctrineEnabled(!state.doctrine.enabled) }
@@ -451,7 +457,7 @@ private fun BattleHeader(
                             contentDescription = automationDescription
                             stateDescription = automationStateDescription
                         },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(10.dp),
                     color = if (state.doctrine.enabled) ResonanceTeal.copy(alpha = 0.16f)
                     else ObsidianSurface1.copy(alpha = 0.86f),
                     border = BorderStroke(
@@ -461,9 +467,9 @@ private fun BattleHeader(
                     )
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 7.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 5.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(7.dp)
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
                         Icon(
                             painter = painterResource(
@@ -475,7 +481,7 @@ private fun BattleHeader(
                             ),
                             contentDescription = null,
                             tint = if (state.doctrine.enabled) ResonanceTeal else TextSecondary,
-                            modifier = Modifier.size(if (compact) 21.dp else 24.dp)
+                            modifier = Modifier.size(if (compact) 18.dp else 20.dp)
                         )
                         Column(
                             verticalArrangement = Arrangement.spacedBy(1.dp),
@@ -505,16 +511,16 @@ private fun BattleHeader(
                     val retreatDescription = stringResource(R.string.battle_retreat_description)
                     Surface(
                         modifier = Modifier
-                            .heightIn(min = if (compact) 56.dp else 62.dp)
-                            .widthIn(min = if (compact) 50.dp else 84.dp)
+                            .heightIn(min = 44.dp)
+                            .widthIn(min = if (compact) 44.dp else 60.dp)
                             .clickable(role = Role.Button, onClick = retreat)
                             .semantics { contentDescription = retreatDescription },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = ObsidianSurface1.copy(alpha = 0.86f),
                         border = BorderStroke(1.dp, ArcaneViolet.copy(alpha = 0.66f))
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = if (compact) 13.dp else 10.dp),
+                            modifier = Modifier.padding(horizontal = if (compact) 10.dp else 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
@@ -522,7 +528,7 @@ private fun BattleHeader(
                                 painter = painterResource(R.drawable.ic_retreat),
                                 contentDescription = null,
                                 tint = ArcaneViolet,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(18.dp)
                             )
                             if (!compact) {
                                 Text(
@@ -698,8 +704,8 @@ private fun BattleStage(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = if (compact) 9.dp else 14.dp, vertical = 10.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+                .padding(horizontal = if (compact) 7.dp else 10.dp, vertical = 7.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -724,7 +730,7 @@ private fun BattleStage(
                         when {
                             showEvent && compact -> 38.dp
                             showEvent -> 42.dp
-                            else -> 8.dp
+                            else -> 4.dp
                         }
                     ),
                 contentAlignment = Alignment.Center
@@ -748,12 +754,12 @@ private fun BattleStage(
                         .weight(1f)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(if (compact) 3.dp else 6.dp)
                 ) {
                     HeroStageActor(
                         player = state.player,
                         compact = compact,
-                        modifier = Modifier.weight(0.92f)
+                        modifier = Modifier.weight(0.96f)
                     )
                     BattleFocusDivider(compact = compact)
                     EnemyFormationStage(
@@ -761,7 +767,7 @@ private fun BattleStage(
                         defeatedEnemies = defeatedSnapshots,
                         impacts = feedback?.impacts.orEmpty(),
                         compact = compact,
-                        modifier = Modifier.weight(1.62f)
+                        modifier = Modifier.weight(2.04f)
                     )
                 }
             }
@@ -941,7 +947,7 @@ private fun BattleRewardFloatLine(
             style = MaterialTheme.typography.labelMedium.battleTerminal(),
             color = color,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Clip
         )
     }
 }
@@ -951,7 +957,7 @@ private fun BattleFocusDivider(compact: Boolean) {
     Canvas(
         modifier = Modifier
             .width(if (compact) 12.dp else 22.dp)
-            .height(if (compact) 96.dp else 128.dp)
+            .height(if (compact) 72.dp else 96.dp)
             .alpha(0.75f)
     ) {
         val x = size.width / 2f
@@ -1015,11 +1021,13 @@ private fun HeroStageActor(
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxHeight()) {
-        val baseImageSize = if (compact) 176.dp else 216.dp
-        val reservedHeight = if (compact) 80.dp else 96.dp
-        val imageSize = baseImageSize.coerceAtMost(
-            (maxHeight - reservedHeight).coerceAtLeast(if (compact) 76.dp else 96.dp)
-        )
+        val baseImageSize = if (compact) 152.dp else 190.dp
+        val reservedHeight = if (compact) 72.dp else 84.dp
+        val imageSize = baseImageSize
+            .coerceAtMost(
+                (maxHeight - reservedHeight).coerceAtLeast(if (compact) 76.dp else 96.dp)
+            )
+            .coerceAtMost(maxWidth)
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1100,32 +1108,43 @@ private fun EnemyFormationStage(
         val formation = (enemies + defeatedEnemies).distinctBy { it.instanceId }
         if (formation.isEmpty()) return@BoxWithConstraints
 
+        // New content is capped at three actors. The two-column fallback keeps legacy saves
+        // readable without silently dropping an actor from an older formation.
         val columns = when {
+            formation.size == 1 -> 1
             formation.size <= 3 -> formation.size
             else -> 2
         }
         val rows = formation.chunked(columns)
-        val horizontalSpacing = if (compact) 3.dp else 6.dp
-        val verticalSpacing = if (compact) 3.dp else 6.dp
-        val maxRowHeight = (maxHeight - verticalSpacing * (rows.size - 1)) / rows.size
-        val reservedHeight = if (compact) 96.dp else 108.dp
+        val horizontalSpacing = if (compact) 3.dp else 5.dp
+        val verticalSpacing = if (compact) 4.dp else 6.dp
+        val maxRowHeight = (
+            maxHeight - verticalSpacing * (rows.size - 1)
+            ).coerceAtLeast(0.dp) / rows.size
+        val reservedHeight = when {
+            formation.size == 1 -> if (compact) 78.dp else 90.dp
+            formation.size <= 3 -> if (compact) 72.dp else 82.dp
+            else -> if (compact) 88.dp else 100.dp
+        }
         val imageHeight = (maxRowHeight - reservedHeight).coerceAtLeast(
-            if (compact) 48.dp else 64.dp
+            if (compact) 42.dp else 54.dp
         )
         val maxActorWidth = (
             (maxWidth - horizontalSpacing * (columns - 1)).coerceAtLeast(0.dp) / columns
-            ).coerceAtLeast(if (compact) 48.dp else 62.dp)
+            ).coerceAtLeast(if (compact) 44.dp else 56.dp)
         val baseSize = when (formation.size) {
-            1 -> if (compact) 176.dp else 216.dp
-            2 -> if (compact) 148.dp else 184.dp
-            3 -> if (compact) 126.dp else 158.dp
-            4 -> if (compact) 112.dp else 138.dp
-            else -> if (compact) 104.dp else 126.dp
+            1 -> if (compact) 172.dp else 204.dp
+            2 -> if (compact) 140.dp else 176.dp
+            3 -> if (compact) 118.dp else 146.dp
+            else -> if (compact) 108.dp else 132.dp
         }
-        val desiredSize = baseSize.coerceAtMost(imageHeight).coerceAtMost(maxActorWidth)
+        val desiredSize = baseSize
+            .coerceAtMost(imageHeight)
+            .coerceAtMost(maxActorWidth)
         val threatId = enemies.minByOrNull {
-                it.nextAttackRemainingMillis ?: Long.MAX_VALUE
-            }?.instanceId
+            it.nextAttackRemainingMillis ?: Long.MAX_VALUE
+        }?.instanceId
+
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing)
@@ -1259,29 +1278,48 @@ private fun ActorNameplate(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.heightIn(min = if (compact) 36.dp else 42.dp),
-        shape = RoundedCornerShape(GameDimensions.ActorNameplateRadius),
+        modifier = modifier
+            .heightIn(min = if (compact) 38.dp else 44.dp)
+            .widthIn(min = 0.dp),
+        shape = RoundedCornerShape(10.dp),
         color = ObsidianSurface1.copy(alpha = 0.82f),
         border = BorderStroke(1.dp, accent.copy(alpha = 0.52f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(min = 0.dp)
+                .padding(horizontal = 7.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
+                    fontSize = if (compact) 8.sp else 9.sp,
+                    lineHeight = if (compact) 10.sp else 11.sp,
+                    letterSpacing = 0.sp
+                ),
                 color = TextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 2,
+                softWrap = true,
+                overflow = TextOverflow.Clip,
+                textAlign = TextAlign.Center
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelSmall.battleTerminal().copy(
+                    fontSize = if (compact) 7.sp else 8.sp,
+                    lineHeight = if (compact) 9.sp else 10.sp,
+                    letterSpacing = 0.sp
+                ),
                 color = accent,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                modifier = Modifier.fillMaxWidth(),
+                maxLines = 2,
+                softWrap = true,
+                overflow = TextOverflow.Clip,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -1339,8 +1377,8 @@ private fun BattleStatusPips(
             Box {
                 Surface(
                     modifier = Modifier
-                        .heightIn(min = 48.dp)
-                        .widthIn(min = 48.dp)
+                        .heightIn(min = 44.dp)
+                        .widthIn(min = 44.dp)
                         .combinedClickable(
                             role = Role.Button,
                             onClick = { inspectedStatusId = status.instanceId },
@@ -1457,19 +1495,19 @@ private fun BattleThreatRail(
         stringResource(R.string.battle_attack_profile_format, it)
     }
     Surface(
-        modifier = modifier.heightIn(min = if (compact) 48.dp else 58.dp),
+        modifier = modifier.heightIn(min = if (compact) 42.dp else 50.dp),
         shape = RoundedCornerShape(14.dp),
         color = Color(0xB9141425),
         border = BorderStroke(1.dp, ErrorRose.copy(alpha = 0.62f))
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = if (compact) 9.dp else 13.dp, vertical = 7.dp),
+            modifier = Modifier.padding(horizontal = if (compact) 7.dp else 9.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(9.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(if (compact) 30.dp else 36.dp)
+                    .size(if (compact) 28.dp else 32.dp)
                     .background(ErrorRose.copy(alpha = 0.16f), RoundedCornerShape(9.dp)),
                 contentAlignment = Alignment.Center
             ) {
@@ -1477,7 +1515,7 @@ private fun BattleThreatRail(
                     painter = painterResource(R.drawable.ic_stat_attack),
                     contentDescription = null,
                     tint = ErrorRose,
-                    modifier = Modifier.size(if (compact) 18.dp else 22.dp)
+                    modifier = Modifier.size(if (compact) 16.dp else 19.dp)
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -1489,14 +1527,14 @@ private fun BattleThreatRail(
                     style = MaterialTheme.typography.labelSmall,
                     color = ErrorRose,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
                 Text(
                     text = listOfNotNull(attack, damage).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall,
                     color = TextPrimary,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
             }
             Text(
@@ -1526,7 +1564,7 @@ private fun BattleCombatStatsRail(
     val widthDp = LocalConfiguration.current.screenWidthDp
     val fontScale = LocalDensity.current.fontScale
     val primaryColumns = when {
-        widthDp < 340 || fontScale >= 1.45f -> 1
+        widthDp < 300 || fontScale >= 1.45f -> 1
         else -> 3
     }
     val stats = listOf(
@@ -1604,8 +1642,8 @@ private fun BattleCombatStatsRail(
         border = BorderStroke(1.dp, ResonanceTeal.copy(alpha = 0.46f))
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = if (compact) 9.dp else 12.dp, vertical = 9.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier.padding(horizontal = if (compact) 7.dp else 9.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -1631,18 +1669,18 @@ private fun BattleCombatStatsRail(
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
                         text = stringResource(R.string.battle_combat_stats),
-                        style = MaterialTheme.typography.titleSmall.battleTerminal(),
+                        style = MaterialTheme.typography.labelMedium.battleTerminal(),
                         color = ResonanceTeal
                     )
                     Text(
                         text = stringResource(R.string.battle_readout_tagline),
                         style = MaterialTheme.typography.labelSmall.battleTerminal().copy(
-                            fontSize = 8.sp,
-                            letterSpacing = 0.5.sp
+                            fontSize = 7.sp,
+                            letterSpacing = 0.35.sp
                         ),
                         color = TextSecondary,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Clip
                     )
                 }
                 Spacer(
@@ -1680,7 +1718,7 @@ private fun BattleCombatStatsRail(
                         BattleStatChip(
                             stat = stat,
                             compact = compact,
-                            modifier = Modifier.widthIn(min = if (compact) 118.dp else 136.dp)
+                            modifier = Modifier.widthIn(min = if (compact) 106.dp else 122.dp)
                         )
                     }
                 }
@@ -1704,74 +1742,74 @@ private fun BattleStatChip(
     modifier: Modifier = Modifier
 ) {
     val valueFontSize = when {
-        stat.value.length >= 16 -> 10.sp
-        stat.value.length >= 12 -> 11.sp
-        compact -> 13.sp
-        else -> 15.sp
+        stat.value.length >= 15 -> 9.sp
+        stat.value.length >= 11 -> 10.sp
+        compact -> 12.sp
+        else -> 14.sp
     }
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = if (compact) 66.dp else 76.dp)
-            .semantics { contentDescription = "${stat.label}: ${stat.value}. ${stat.description}" },
-        shape = RoundedCornerShape(GameDimensions.CombatCardRadius),
+            .heightIn(min = if (compact) 68.dp else 76.dp)
+            .semantics {
+                contentDescription = stat.label + ": " + stat.value + ". " + stat.description
+            },
+        shape = RoundedCornerShape(10.dp),
         color = ObsidianSurface2.copy(alpha = 0.88f),
         border = BorderStroke(1.dp, stat.color.copy(alpha = 0.42f))
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(7.dp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .width(2.dp)
-                    .height(28.dp)
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(stat.color.copy(alpha = 0.38f), stat.color)
-                        ),
-                        RoundedCornerShape(99.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Surface(
+                    modifier = Modifier.size(if (compact) 25.dp else 28.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    color = stat.color.copy(alpha = 0.14f),
+                    border = BorderStroke(1.dp, stat.color.copy(alpha = 0.32f))
+                ) {
+                    Icon(
+                        painter = painterResource(stat.icon),
+                        contentDescription = null,
+                        tint = stat.color,
+                        modifier = Modifier.padding(if (compact) 5.dp else 6.dp)
                     )
-            )
-            Surface(
-                modifier = Modifier.size(if (compact) 30.dp else 36.dp),
-                shape = RoundedCornerShape(9.dp),
-                color = stat.color.copy(alpha = 0.14f),
-                border = BorderStroke(1.dp, stat.color.copy(alpha = 0.32f))
-            ) {
-                Icon(
-                    painter = painterResource(stat.icon),
-                    contentDescription = null,
-                    tint = stat.color,
-                    modifier = Modifier.padding(if (compact) 6.dp else 7.dp)
-                )
-            }
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(1.dp)
-            ) {
+                }
                 Text(
                     text = stat.label.uppercase(),
+                    modifier = Modifier
+                        .weight(1f)
+                        .widthIn(min = 0.dp),
                     style = MaterialTheme.typography.labelSmall.battleTerminal().copy(
                         fontSize = if (compact) 8.sp else 9.sp,
-                        letterSpacing = 0.35.sp
+                        letterSpacing = 0.3.sp
                     ),
                     color = TextSecondary,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = stat.value,
-                    style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
-                        fontSize = valueFontSize
-                    ),
-                    color = TextPrimary,
-                    maxLines = 2,
-                    softWrap = true,
-                    overflow = TextOverflow.Visible
+                    softWrap = false,
+                    overflow = TextOverflow.Clip
                 )
             }
+            Text(
+                text = stat.value,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .widthIn(min = 0.dp),
+                style = MaterialTheme.typography.labelMedium.battleTerminal().copy(
+                    fontSize = valueFontSize
+                ),
+                color = TextPrimary,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip
+            )
         }
     }
 }
@@ -1784,6 +1822,17 @@ private fun BattleCommandDock(
     onOpenSkillLoadout: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var skillsExpanded by rememberSaveable(state.combatSequenceId) {
+        mutableStateOf(true)
+    }
+    val skillsToggleDescription = stringResource(
+        if (skillsExpanded) {
+            R.string.battle_skills_collapse
+        } else {
+            R.string.battle_skills_expand
+        }
+    )
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(if (compact) 16.dp else 20.dp),
@@ -1793,8 +1842,8 @@ private fun BattleCommandDock(
         shadowElevation = 6.dp
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = if (compact) 8.dp else 11.dp, vertical = 7.dp),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 7.dp)
+            modifier = Modifier.padding(horizontal = if (compact) 7.dp else 9.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 5.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -1813,7 +1862,15 @@ private fun BattleCommandDock(
                     )
             )
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClick = { skillsExpanded = !skillsExpanded }
+                    )
+                    .semantics {
+                        contentDescription = skillsToggleDescription
+                    },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -1828,9 +1885,14 @@ private fun BattleCommandDock(
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Clip
                     )
                 }
+                Text(
+                    text = if (skillsExpanded) "−" else "+",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = ResourceGold
+                )
                 if (state.queuedSkillId != null) {
                     GameOutlinedButton(
                         onClick = { onIntent(BattleUiIntent.ClearQueuedSkill) },
@@ -1846,35 +1908,37 @@ private fun BattleCommandDock(
                 )
             }
 
-            if (state.equippedSkills.isEmpty()) {
-                GameButton(
-                    onClick = onOpenSkillLoadout,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_skill_loadout),
-                        contentDescription = null,
-                        tint = ResourceGold,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Text(stringResource(R.string.battle_no_equipped_skills))
-                }
-            } else {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    state.equippedSkills.take(4).forEach { skill ->
-                        BattleSkillTile(
-                            skill = skill,
-                            compact = compact,
-                            onClick = { onIntent(BattleUiIntent.QueueSkill(skill.skillId)) },
-                            modifier = Modifier.width(if (compact) 76.dp else 84.dp)
+            if (skillsExpanded) {
+                if (state.equippedSkills.isEmpty()) {
+                    GameButton(
+                        onClick = onOpenSkillLoadout,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_skill_loadout),
+                            contentDescription = null,
+                            tint = ResourceGold,
+                            modifier = Modifier.size(22.dp)
                         )
+                        Text(stringResource(R.string.battle_no_equipped_skills))
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        state.equippedSkills.take(4).forEach { skill ->
+                            BattleSkillTile(
+                                skill = skill,
+                                compact = compact,
+                                onClick = { onIntent(BattleUiIntent.QueueSkill(skill.skillId)) },
+                                modifier = Modifier.width(if (compact) 68.dp else 74.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -1896,7 +1960,7 @@ private fun SkillLoadoutGlyphButton(
     val description = stringResource(R.string.battle_open_skill_loadout_description)
     Surface(
         modifier = Modifier
-            .size(if (compact) 48.dp else 54.dp)
+            .size(if (compact) 44.dp else 48.dp)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description },
         shape = RoundedCornerShape(12.dp),
@@ -1949,7 +2013,7 @@ private fun BattleSkillTile(
 
     Surface(
         modifier = modifier
-            .heightIn(min = if (compact) 76.dp else 84.dp)
+            .heightIn(min = if (compact) 62.dp else 70.dp)
             .clip(RoundedCornerShape(14.dp))
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = accessibilityText },
@@ -1963,9 +2027,9 @@ private fun BattleSkillTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 5.dp, vertical = 5.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 3.dp)
+            verticalArrangement = Arrangement.spacedBy(1.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -1975,7 +2039,7 @@ private fun BattleSkillTile(
             )
             Box(
                 modifier = Modifier
-                    .size(if (compact) 38.dp else 44.dp)
+                    .size(if (compact) 32.dp else 36.dp)
                     .clip(RoundedCornerShape(10.dp))
             ) {
                 SkillArtwork(skill.skillId, Modifier.fillMaxSize())
@@ -2020,7 +2084,7 @@ private fun BattleSkillTile(
                 style = MaterialTheme.typography.labelSmall,
                 color = if (enabled) TextPrimary else DisabledInk,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Clip
             )
             Row(
                 horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -2032,7 +2096,7 @@ private fun BattleSkillTile(
                     style = MaterialTheme.typography.labelSmall,
                     color = if (enabled) accent else DisabledInk,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
                 token?.let {
                     Icon(
@@ -2097,7 +2161,7 @@ private fun BattleComboRail(
 
     Surface(
         modifier = modifier
-            .heightIn(min = 44.dp)
+            .heightIn(min = 38.dp)
             .semantics { contentDescription = sequenceDescription },
         shape = RoundedCornerShape(11.dp),
         color = ObsidianSurface2.copy(alpha = 0.76f),
@@ -2106,9 +2170,9 @@ private fun BattleComboRail(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 7.dp, vertical = 5.dp),
+                .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Column(
                 modifier = Modifier.widthIn(min = if (compact) 34.dp else 52.dp),
@@ -2194,7 +2258,7 @@ private fun BattleEventBanner(
                 style = MaterialTheme.typography.labelMedium,
                 color = accent,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Clip
             )
         }
     }
@@ -2402,7 +2466,7 @@ private fun BattleRewardFacts(reward: BattleRewardUiState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = TextPrimary,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Clip
             )
         }
     }

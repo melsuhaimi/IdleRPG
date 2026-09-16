@@ -52,6 +52,9 @@ import com.idlerpg.game.domain.model.progression.AffinityMasteryState
 import com.idlerpg.game.domain.model.progression.FeatureUnlockState
 import com.idlerpg.game.domain.model.progression.PlayerLevelState
 import com.idlerpg.game.domain.model.progression.ProgressionState
+import com.idlerpg.game.domain.model.progression.SkillProgressionState
+import com.idlerpg.game.domain.model.rebirth.RebirthState
+import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.domain.model.quest.QuestProgressState
 import com.idlerpg.game.domain.model.quest.QuestState
 import com.idlerpg.game.domain.model.resonance.ConvergenceState
@@ -238,6 +241,7 @@ private object SaveDataMapper {
             "$path.lifetimeStatistics",
             state.lifetimeStatistics
         )
+        writeRebirthState(writer, "$path.rebirth", state.rebirth)
     }
 
     private fun readMetaState(
@@ -260,8 +264,80 @@ private object SaveDataMapper {
             lifetimeStatistics = readStatisticsState(
                 reader,
                 "$path.lifetimeStatistics"
+            ),
+            rebirth = readRebirthState(reader, "$path.rebirth")
+        )
+
+    private fun writeRebirthState(
+        writer: FieldWriter,
+        path: String,
+        state: RebirthState
+    ) {
+        writer.long("$path.completedRebirths", state.completedRebirths)
+        writer.long("$path.normalPointsEarned", state.normalPointsEarned)
+        writer.long("$path.legacyPointsEarned", state.legacyPointsEarned)
+        writeRebirthAllocations(writer, "$path.normalAllocations", state.normalAllocations)
+        writeRebirthAllocations(writer, "$path.legacyAllocations", state.legacyAllocations)
+    }
+
+    private fun readRebirthState(
+        reader: FieldReader,
+        path: String
+    ): RebirthState =
+        RebirthState(
+            completedRebirths = reader.long("$path.completedRebirths"),
+            normalPointsEarned = reader.long("$path.normalPointsEarned"),
+            legacyPointsEarned = reader.long("$path.legacyPointsEarned"),
+            normalAllocations = readRebirthAllocations(
+                reader,
+                "$path.normalAllocations"
+            ),
+            legacyAllocations = readRebirthAllocations(
+                reader,
+                "$path.legacyAllocations"
             )
         )
+
+    private fun writeRebirthAllocations(
+        writer: FieldWriter,
+        path: String,
+        allocations: Map<RebirthStat, Long>
+    ) {
+        val entries = allocations.entries.sortedBy { it.key.name }
+        writer.count(path, entries.size)
+        entries.forEachIndexed { index, entry ->
+            val entryPath = "$path.$index"
+            writer.string("$entryPath.stat", entry.key.name)
+            writer.long("$entryPath.points", entry.value)
+        }
+    }
+
+    private fun readRebirthAllocations(
+        reader: FieldReader,
+        path: String
+    ): Map<RebirthStat, Long> {
+        val result = linkedMapOf<RebirthStat, Long>()
+        repeat(reader.count(path)) { index ->
+            val entryPath = "$path.$index"
+            val stat = try {
+                RebirthStat.valueOf(reader.string("$entryPath.stat"))
+            } catch (error: SaveDataException) {
+                throw error
+            } catch (error: Throwable) {
+                throw SaveDataException(
+                    "Unknown RebirthStat at $entryPath",
+                    error
+                )
+            }
+            val previous = result.put(stat, reader.long("$entryPath.points"))
+            if (previous != null) {
+                throw SaveDataException(
+                    "Duplicate RebirthStat allocation at $entryPath: $stat"
+                )
+            }
+        }
+        return result
+    }
 
     // -------------------------------------------------------------------------
     // Player
@@ -1902,6 +1978,13 @@ private object SaveDataMapper {
             writer.long("$affixPath.value", affix.value)
         }
 
+        writer.boolean("$path.mainStat.present", item.mainStat != null)
+        item.mainStat?.let { mainStat ->
+            writer.contentId("$path.mainStat.affixId", mainStat.affixId)
+            writer.long("$path.mainStat.value", mainStat.value)
+        }
+        writer.long("$path.enhancementLevel", item.enhancementLevel.toLong())
+        writer.int("$path.enhancementFailstack", item.enhancementFailstack)
         writer.optionalContentId(
             "$path.sourceDefinitionId",
             item.sourceDefinitionId
@@ -1929,6 +2012,16 @@ private object SaveDataMapper {
                     )
                 }
             },
+            mainStat = if (reader.boolean("$path.mainStat.present")) {
+                RolledAffix(
+                    affixId = reader.contentId("$path.mainStat.affixId"),
+                    value = reader.long("$path.mainStat.value")
+                )
+            } else {
+                null
+            },
+            enhancementLevel = Math.toIntExact(reader.long("$path.enhancementLevel")),
+            enhancementFailstack = reader.int("$path.enhancementFailstack"),
             sourceDefinitionId = reader.optionalContentId(
                 "$path.sourceDefinitionId"
             )
@@ -1958,6 +2051,11 @@ private object SaveDataMapper {
             "$path.affinityMastery",
             state.affinityMastery
         )
+        writeSkillProgressionState(
+            writer,
+            "$path.skillProgression",
+            state.skillProgression
+        )
     }
 
     private fun readProgressionState(
@@ -1976,6 +2074,10 @@ private object SaveDataMapper {
             affinityMastery = readAffinityMasteryState(
                 reader,
                 "$path.affinityMastery"
+            ),
+            skillProgression = readSkillProgressionState(
+                reader,
+                "$path.skillProgression"
             )
         )
 
@@ -2260,6 +2362,57 @@ private object SaveDataMapper {
             completed = reader.boolean("$path.completed"),
             rewardClaimed = reader.boolean("$path.rewardClaimed")
         )
+    }
+
+
+    private fun writeSkillProgressionState(
+        writer: FieldWriter,
+        path: String,
+        state: SkillProgressionState
+    ) {
+        writeSkillLongMap(writer, "$path.rankBySkillId", state.rankBySkillId)
+        writeSkillLongMap(writer, "$path.masteryBySkillId", state.masteryBySkillId)
+        writeSkillLongMap(writer, "$path.refinementBySkillId", state.refinementBySkillId)
+    }
+
+    private fun readSkillProgressionState(
+        reader: FieldReader,
+        path: String
+    ): SkillProgressionState =
+        SkillProgressionState(
+            rankBySkillId = readSkillLongMap(reader, "$path.rankBySkillId"),
+            masteryBySkillId = readSkillLongMap(reader, "$path.masteryBySkillId"),
+            refinementBySkillId = readSkillLongMap(reader, "$path.refinementBySkillId")
+        )
+
+    private fun writeSkillLongMap(
+        writer: FieldWriter,
+        path: String,
+        values: Map<ContentId, Long>
+    ) {
+        val entries = values.entries.sortedBy { it.key }
+        writer.count(path, entries.size)
+        entries.forEachIndexed { index, entry ->
+            val entryPath = "$path.$index"
+            writer.contentId("$entryPath.skillId", entry.key)
+            writer.long("$entryPath.value", entry.value)
+        }
+    }
+
+    private fun readSkillLongMap(
+        reader: FieldReader,
+        path: String
+    ): Map<ContentId, Long> {
+        val result = linkedMapOf<ContentId, Long>()
+        repeat(reader.count(path)) { index ->
+            val entryPath = "$path.$index"
+            val skillId = reader.contentId("$entryPath.skillId")
+            val previous = result.put(skillId, reader.long("$entryPath.value"))
+            if (previous != null) {
+                throw SaveDataException("Duplicate skill progression ID: $skillId")
+            }
+        }
+        return result
     }
 
     // -------------------------------------------------------------------------

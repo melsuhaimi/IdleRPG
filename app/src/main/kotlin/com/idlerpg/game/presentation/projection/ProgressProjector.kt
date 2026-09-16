@@ -9,6 +9,8 @@ import com.idlerpg.game.domain.definition.chronicle.EchoUnlockEffect
 import com.idlerpg.game.domain.definition.economy.UpgradeEffectDefinition
 import com.idlerpg.game.domain.definition.quest.QuestDefinition
 import com.idlerpg.game.domain.model.GameState
+import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
+import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.presentation.content.PresentationContentRegistry
 import com.idlerpg.game.presentation.format.GameNumberFormatter
 import com.idlerpg.game.presentation.model.AchievementProgressUiState
@@ -26,6 +28,8 @@ import com.idlerpg.game.presentation.model.EchoShopUiState
 import com.idlerpg.game.presentation.model.MasteryProgressUiState
 import com.idlerpg.game.presentation.model.MasteryUnlockUiState
 import com.idlerpg.game.domain.system.quest.QuestClaimSystem
+import com.idlerpg.game.domain.system.rebirth.RebirthSystem
+import com.idlerpg.game.domain.system.stats.PowerScoreSystem
 import com.idlerpg.game.presentation.model.ObjectiveProgressUiState
 import com.idlerpg.game.presentation.model.PersistentDiscoveryKind
 import com.idlerpg.game.presentation.model.PersistentDiscoveryUiState
@@ -33,10 +37,14 @@ import com.idlerpg.game.presentation.model.ProgressClaimStatus
 import com.idlerpg.game.presentation.model.ProgressFeatureUiState
 import com.idlerpg.game.presentation.model.ProgressFeedbackUiState
 import com.idlerpg.game.presentation.model.ProgressGoalRequirementUiState
+import com.idlerpg.game.presentation.model.PowerScoreComponentUiState
+import com.idlerpg.game.presentation.model.PowerScoreUiState
 import com.idlerpg.game.presentation.model.ProgressOverviewUiState
 import com.idlerpg.game.presentation.model.ProgressNextGoalKind
 import com.idlerpg.game.presentation.model.ProgressNextGoalUiState
 import com.idlerpg.game.presentation.model.ProgressRewardUiState
+import com.idlerpg.game.presentation.model.RebirthStatAllocationUiState
+import com.idlerpg.game.presentation.model.RebirthUiState
 import com.idlerpg.game.presentation.model.ProgressUiState
 import com.idlerpg.game.presentation.model.QuestProgressUiState
 import com.idlerpg.game.presentation.model.StatOverviewUiState
@@ -112,11 +120,54 @@ class ProgressProjector(
         discoveries = projectDiscoveries(state),
         echoShop = projectEchoShop(state),
         chronicle = projectChronicle(state),
+        rebirth = projectRebirth(state),
         chroniclePreview = chroniclePreview,
         chroniclePreviewRequestPending = chroniclePreviewRequestPending,
         chronicleCommitPending = chronicleCommitPending,
         feedback = feedback
     )
+
+    private fun projectRebirth(state: GameState): RebirthUiState {
+        val preview = RebirthSystem.preview(state)
+        val rebirth = state.meta.rebirth
+        val gemBalance = state.run.economy.wallet.amountsByCurrencyId[
+            CurrencyId.GEMS
+        ] ?: GameNumber.ZERO
+        return RebirthUiState(
+            currentLevel = preview.currentLevel,
+            minimumLevel = preview.minimumLevel,
+            eligible = preview.eligible,
+            nextRebirthNumber = preview.nextRebirthNumber,
+            goldCostDisplay = GameNumberFormatter.full(preview.goldCost),
+            goldAvailableDisplay = GameNumberFormatter.full(preview.goldAvailable),
+            normalPointsGranted = preview.normalPointsGranted,
+            legacyPointsGranted = preview.legacyPointsGranted,
+            deepLevelRewardDisplay = if (preview.deepLevelReward > GameNumber.ZERO) {
+                GameNumberFormatter.full(preview.deepLevelReward) + " enhancement material"
+            } else {
+                "—"
+            },
+            normalPointsEarned = rebirth.normalPointsEarned,
+            normalUnspent = rebirth.unspentPoints(RebirthPointPool.NORMAL),
+            legacyPointsEarned = rebirth.legacyPointsEarned,
+            legacyUnspent = rebirth.unspentPoints(RebirthPointPool.LEGACY),
+            respecGemCostDisplay = GameNumberFormatter.full(
+                GameNumber.of(RebirthSystem.GEM_RESPEC_COST)
+            ),
+            canRespecNormal = rebirth.allocatedPoints(RebirthPointPool.NORMAL) > 0L &&
+                gemBalance >= GameNumber.of(RebirthSystem.GEM_RESPEC_COST),
+            canRespecLegacy = rebirth.allocatedPoints(RebirthPointPool.LEGACY) > 0L &&
+                gemBalance >= GameNumber.of(RebirthSystem.GEM_RESPEC_COST),
+            stats = RebirthStat.values().map { stat ->
+                RebirthStatAllocationUiState(
+                    stat = stat,
+                    label = stat.name.replace('_', ' '),
+                    normalAllocated = rebirth.allocation(RebirthPointPool.NORMAL, stat),
+                    legacyAllocated = rebirth.allocation(RebirthPointPool.LEGACY, stat)
+                )
+            }
+        )
+    }
 
     private fun projectCoreGrowth(state: GameState): List<CoreGrowthTrackUiState> =
         contentRegistry.allUpgrades().sortedBy { it.id }.map { definition ->
@@ -258,6 +309,7 @@ class ProgressProjector(
             )
         )
 
+        val powerScore = PowerScoreSystem.calculate(state, contentRegistry)
         return ProgressOverviewUiState(
             playerLevel = player.level,
             currentExperienceDisplay = GameNumberFormatter.full(player.currentExperience),
@@ -281,7 +333,45 @@ class ProgressProjector(
             echoSpentDisplay = GameNumberFormatter.full(state.meta.echoes.spent),
             chronicleEligible = readQueries.chronicleEligible(state),
             statCards = statCards,
-            nextGoal = projectNextGoal(state)
+            nextGoal = projectNextGoal(state),
+            powerScore = PowerScoreUiState(
+                totalDisplay = GameNumberFormatter.full(powerScore.total),
+                components = listOf(
+                    PowerScoreComponentUiState(
+                        id = "offense",
+                        label = "OFFENSE",
+                        valueDisplay = GameNumberFormatter.full(powerScore.offense),
+                        formula = "Expected Basic Attack damage with critical chance and multiplier"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "defense",
+                        label = "DEFENSE",
+                        valueDisplay = GameNumberFormatter.full(powerScore.defense),
+                        formula = "Max Health + Armor × 10"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "gear",
+                        label = "GEAR",
+                        valueDisplay = GameNumberFormatter.full(powerScore.gear),
+                        formula = "Equipped rarity + enhancement + rolled affix values"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "skills",
+                        label = "SKILLS",
+                        valueDisplay = GameNumberFormatter.full(powerScore.skills),
+                        formula = "Equipped skill rank + mastery + refinement"
+                    ),
+                    PowerScoreComponentUiState(
+                        id = "rebirth",
+                        label = "REBIRTH",
+                        valueDisplay = GameNumberFormatter.full(powerScore.rebirth),
+                        formula = "Allocated Normal and Legacy points"
+                    )
+                ),
+                expectedBasicAttackDamageDisplay =
+                    GameNumberFormatter.full(powerScore.expectedBasicAttackDamage),
+                effectiveHealthDisplay = GameNumberFormatter.full(powerScore.effectiveHealth)
+            )
         )
     }
 

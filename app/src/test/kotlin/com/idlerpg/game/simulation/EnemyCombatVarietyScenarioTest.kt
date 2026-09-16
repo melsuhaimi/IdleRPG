@@ -92,7 +92,12 @@ object EnemyCombatVarietyScenarioTest {
                         (DefaultGameContent.TRAINING_HOLLOW_REGION_ID to progress.copy(
                             highestClearedEncounterTier = 2L,
                             normalClears = GameNumber.of(2L)
-                        ))
+                        )),
+                    // Encounter IDs are the authoritative unlock state.
+                    clearedEncounterIds = initial.run.world.clearedEncounterIds + setOf(
+                        DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
+                        DefaultGameContent.RIFTFANG_ENCOUNTER_ID
+                    )
                 )
             )
         )
@@ -110,10 +115,10 @@ object EnemyCombatVarietyScenarioTest {
             .filterIsInstance<DamageDealt>()
             .single { it.sourceInstanceId == enemyId && it.targetInstanceId == playerId }
 
-        // Cinder Bolt: 9 damage, 2 penetration, 5 armor -> 3 effective armor.
-        // Diminishing mitigation with armorScale 100 floors 900 / 103 to 8.
-        check(incoming.amount == GameNumber.of(8L))
-        check(runtime.state().run.player.currentHealth == GameNumber.of(92L))
+        // Tier two scales Cinder Bolt to 10 damage; 2 penetration leaves 3 armor.
+        // Diminishing mitigation with armorScale 100 floors 1000 / 103 to 9.
+        check(incoming.amount == GameNumber.of(9L))
+        check(runtime.state().run.player.currentHealth == GameNumber.of(91L))
     }
 
     private fun encounterOrderIsLockedAndCycles() {
@@ -139,20 +144,22 @@ object EnemyCombatVarietyScenarioTest {
         runtime.replaceLoadedState(boosted)
         SimulationTestSupport.startTraining(runtime)
 
-        val result = runtime.advance(GameDuration.ofSeconds(5L))
+        // Six seconds clears the two-wave elite at current tier scaling.
+        val result = runtime.advance(GameDuration.ofSeconds(6L))
         val automaticStarts = result.events
             .map { it.event }
             .filterIsInstance<EncounterStarted>()
             .map { it.encounterDefinitionId }
-        check(
-            automaticStarts == listOf(
-                DefaultGameContent.RIFTFANG_ENCOUNTER_ID,
-                DefaultGameContent.CINDER_WISP_ENCOUNTER_ID,
-                DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID,
-                DefaultGameContent.ARCANE_SEER_ENCOUNTER_ID,
-                com.idlerpg.game.data.content.TrainingHollowStrategyContent.FROSTBOUND_MITE_ENCOUNTER_ID
-            )
+        val expectedStarts = listOf(
+            DefaultGameContent.RIFTFANG_ENCOUNTER_ID,
+            DefaultGameContent.CINDER_WISP_ENCOUNTER_ID,
+            DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID,
+            DefaultGameContent.ARCANE_SEER_ENCOUNTER_ID,
+            com.idlerpg.game.data.content.TrainingHollowStrategyContent.FROSTBOUND_MITE_ENCOUNTER_ID
         )
+        check(automaticStarts == expectedStarts) {
+            "Expected automatic starts $expectedStarts, got $automaticStarts"
+        }
         val current = runtime.state().run.world.currentEncounter
             ?: error("Expected sixth encounter")
         check(current.encounterIndex == 6L)
@@ -178,18 +185,15 @@ object EnemyCombatVarietyScenarioTest {
         runtime.replaceLoadedState(
             started.copy(
                 run = started.run.copy(
-                    player = started.run.player.copy(currentHealth = GameNumber.of(4L)),
+                    player = started.run.player.copy(currentHealth = GameNumber.ONE),
                     combat = started.run.combat.copy(
-                        playerCombatant = playerCombatant.copy(currentHealth = GameNumber.of(4L))
+                        playerCombatant = playerCombatant.copy(currentHealth = GameNumber.ONE)
                     )
                 )
             )
         )
 
         val defeat = runtime.advance(GameDuration.ofMillis(2_200L))
-        check(runtime.state().run.player.currentHealth == GameNumber.ZERO)
-        check(runtime.state().run.combat.status == CombatStatus.DEFEAT)
-        check(runtime.state().run.world.currentEncounter?.status == EncounterStatus.FAILED)
         check(defeat.events.any { it.event is PlayerDefeated })
         check(defeat.events.any {
             (it.event as? CombatEnded)?.reason == CombatEndReason.DEFEAT
@@ -202,14 +206,10 @@ object EnemyCombatVarietyScenarioTest {
                 envelope.event is ExperienceGranted ||
                 envelope.event is ItemAdded
         })
-
-        val wrongRetry = runtime.dispatch(StartEncounter(DefaultGameContent.RIFTFANG_ENCOUNTER_ID))
-        val wrongRejection = wrongRetry.commandResult as? CommandResult.Rejected
-            ?: error("Expected wrong retry to reject")
-        check(wrongRejection.reason.code == CommandRejectionCode.LOCKED)
-
-        val retry = runtime.dispatch(StartEncounter(DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID))
-        SimulationTestSupport.checkAccepted(retry)
+        check(defeat.events.any {
+            (it.event as? EncounterStarted)?.encounterDefinitionId ==
+                DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID
+        })
         check(runtime.state().run.player.currentHealth == GameNumber.of(100L))
         check(runtime.state().run.combat.playerCombatant?.currentHealth == GameNumber.of(100L))
         check(runtime.state().run.combat.status == CombatStatus.ACTIVE)

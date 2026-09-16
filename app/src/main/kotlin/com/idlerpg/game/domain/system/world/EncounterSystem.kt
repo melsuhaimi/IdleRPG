@@ -10,6 +10,7 @@ import com.idlerpg.game.domain.engine.ScheduledAction
 import com.idlerpg.game.domain.engine.ScheduledActionExecution
 import com.idlerpg.game.domain.engine.ScheduledActionHandler
 import com.idlerpg.game.domain.engine.ScheduledActionType
+import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.event.CombatEndReason
 import com.idlerpg.game.domain.event.CombatEnded
 import com.idlerpg.game.domain.event.EncounterCleared
@@ -82,8 +83,8 @@ object EncounterSystem : ScheduledActionHandler {
             "Encounter $encounterDefinitionId does not belong to active region $regionId"
         }
         val firstWaveEnemyIds = encounterDefinition.enemyDefinitionIdsForWave(1)
-        require(firstWaveEnemyIds.size in 1..5) {
-            "An encounter wave must contain between one and five active enemies"
+        require(firstWaveEnemyIds.size in 1..EncounterDefinition.MAX_ACTIVE_ENEMIES) {
+            "An encounter wave must contain between one and three active enemies"
         }
         require(encounterDefinition.waves in 1..10) {
             "An encounter must contain between one and ten waves"

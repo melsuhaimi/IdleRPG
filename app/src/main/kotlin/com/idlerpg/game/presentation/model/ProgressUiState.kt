@@ -4,6 +4,7 @@ import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.domain.command.CommandRejectionCode
 import com.idlerpg.game.domain.event.ChroniclePersistScope
 import com.idlerpg.game.domain.event.ChronicleResetScope
+import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.presentation.content.PresentationAssetKey
 import com.idlerpg.game.presentation.content.PresentationStringKey
 
@@ -28,7 +29,10 @@ enum class ProgressFeedbackKind {
     DISCOVERY_UNLOCKED,
     ECHO_GRANTED,
     CHRONICLE_PREVIEW_READY,
-    CHRONICLE_COLLAPSED
+    CHRONICLE_COLLAPSED,
+    REBIRTH_PERFORMED,
+    REBIRTH_POINTS_ALLOCATED,
+    REBIRTH_RESPEC
 }
 
 enum class CoreGrowthEffectKind {
@@ -116,6 +120,47 @@ data class ProgressNextGoalUiState(
     val requirements: List<ProgressGoalRequirementUiState> = emptyList()
 )
 
+data class PowerScoreComponentUiState(
+    val id: String,
+    val label: String,
+    val valueDisplay: String,
+    val formula: String
+)
+
+data class PowerScoreUiState(
+    val totalDisplay: String = "0",
+    val components: List<PowerScoreComponentUiState> = emptyList(),
+    val expectedBasicAttackDamageDisplay: String = "0",
+    val effectiveHealthDisplay: String = "0"
+)
+
+data class RebirthStatAllocationUiState(
+    val stat: RebirthStat,
+    val label: String,
+    val normalAllocated: Long,
+    val legacyAllocated: Long
+)
+
+data class RebirthUiState(
+    val currentLevel: Long = 1L,
+    val minimumLevel: Long = 1_000L,
+    val eligible: Boolean = false,
+    val nextRebirthNumber: Long = 1L,
+    val goldCostDisplay: String = "0",
+    val goldAvailableDisplay: String = "0",
+    val normalPointsGranted: Long = 0L,
+    val legacyPointsGranted: Long = 0L,
+    val deepLevelRewardDisplay: String = "—",
+    val normalPointsEarned: Long = 0L,
+    val normalUnspent: Long = 0L,
+    val legacyPointsEarned: Long = 0L,
+    val legacyUnspent: Long = 0L,
+    val respecGemCostDisplay: String = "0",
+    val canRespecNormal: Boolean = false,
+    val canRespecLegacy: Boolean = false,
+    val stats: List<RebirthStatAllocationUiState> = emptyList()
+)
+
 data class ProgressOverviewUiState(
     val playerLevel: Long,
     val currentExperienceDisplay: String,
@@ -128,7 +173,8 @@ data class ProgressOverviewUiState(
     val chronicleEligible: Boolean,
     val experienceRemainingDisplay: String = "0",
     val statCards: List<StatOverviewUiState> = emptyList(),
-    val nextGoal: ProgressNextGoalUiState = ProgressNextGoalUiState()
+    val nextGoal: ProgressNextGoalUiState = ProgressNextGoalUiState(),
+    val powerScore: PowerScoreUiState = PowerScoreUiState()
 )
 
 data class MasteryUnlockUiState(
@@ -289,6 +335,7 @@ data class ProgressUiState(
     val discoveries: List<PersistentDiscoveryUiState>,
     val echoShop: EchoShopUiState,
     val chronicle: ChronicleProgressUiState,
+    val rebirth: RebirthUiState = RebirthUiState(),
     val chroniclePreview: ChroniclePreviewUiState? = null,
     val chroniclePreviewRequestPending: Boolean = false,
     val chronicleCommitPending: Boolean = false,

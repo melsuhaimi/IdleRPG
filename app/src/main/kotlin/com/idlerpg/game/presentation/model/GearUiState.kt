@@ -27,7 +27,8 @@ data class GearAffixUiState(
     val affixId: ContentId,
     val titleStringKey: PresentationStringKey,
     val iconAssetKey: PresentationAssetKey,
-    val rolledValue: Long
+    val rolledValue: Long,
+    val isMainStat: Boolean = false
 )
 
 /**
@@ -66,7 +67,21 @@ data class GearItemUiState(
     val canSalvage: Boolean,
     val canClaimOverflow: Boolean,
     val canSalvageOverflow: Boolean,
-    val comparison: GearComparisonUiState? = null
+    val comparison: GearComparisonUiState? = null,
+    val mainStat: GearAffixUiState? = null,
+    val enhancementLevel: Int = 0,
+    val enhancementLabel: String = "+0",
+    val enhancementTargetLabel: String = "MAX",
+    val enhancementFailstack: Int = 0,
+    val enhancementSuccessChanceDisplay: String = "0%",
+    val enhancementMaterialCostDisplay: String = "0",
+    val enhancementProtectionGemCostDisplay: String = "0",
+    val enhancementFailureLevelDisplay: String = "+0",
+    val enhancementFailureFailstackDisplay: String = "0",
+    val refinementMaterialCostDisplay: String = "0",
+    val canEnhance: Boolean = false,
+    val canEnhanceWithProtection: Boolean = false,
+    val canRefine: Boolean = false
 )
 
 data class GearEquipmentSlotUiState(
@@ -101,6 +116,8 @@ enum class GearFeedbackKind {
     OVERFLOW_CLAIMED,
     OVERFLOW_SALVAGED,
     ITEM_TO_OVERFLOW,
+    ENHANCED,
+    REFINED,
     PROGRESSION_BLOCKED,
     PROGRESSION_UNBLOCKED,
     COMMAND_REJECTED
@@ -116,6 +133,7 @@ data class GearFeedbackUiState(
     val previousCapacity: Long? = null,
     val newCapacity: Long? = null,
     val availableStorageSlots: Long? = null,
+    val enhancementSucceeded: Boolean? = null,
     val rejectionCode: CommandRejectionCode? = null
 )
 

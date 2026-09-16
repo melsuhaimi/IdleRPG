@@ -304,7 +304,7 @@ private fun LoadoutSlotTile(
                     text = stringResource(skill.titleStringKey.stringResId()),
                     style = MaterialTheme.typography.labelSmall,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
             }
             Text(
@@ -353,6 +353,8 @@ private fun SkillFocusPane(
             }
 
             SkillFacts(skill)
+            SkillTechnicalDetails(skill)
+            SkillInvestmentActions(skill, onIntent)
             SkillEvolutionChoices(skill, onIntent)
             GameDivider()
             SkillLoadoutActions(
@@ -399,7 +401,7 @@ private fun FocusArtwork(skill: SkillLoadoutSkillUiState, modifier: Modifier = M
                 style = MaterialTheme.typography.labelMedium,
                 color = ResonanceTeal,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Clip
             )
         }
     }
@@ -415,7 +417,7 @@ private fun SkillSummary(skill: SkillLoadoutSkillUiState, modifier: Modifier = M
             text = stringResource(skill.titleStringKey.stringResId()),
             style = MaterialTheme.typography.headlineSmall,
             maxLines = 2,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Clip
         )
         Text(
             text = stringResource(skill.descriptionStringKey.stringResId()),
@@ -457,6 +459,79 @@ private fun SkillFacts(skill: SkillLoadoutSkillUiState) {
                 style = MaterialTheme.typography.bodySmall,
                 color = ResourceGold
             )
+        }
+    }
+}
+
+@Composable
+private fun SkillTechnicalDetails(skill: SkillLoadoutSkillUiState) {
+    var expanded by rememberSaveable(skill.skillId.value) { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        GameOutlinedButton(
+            onClick = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(if (expanded) "Hide technical details" else "Show technical details")
+        }
+        if (expanded) {
+            GameCard(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = ObsidianSurface2)
+            ) {
+                Column(
+                    modifier = Modifier.padding(11.dp),
+                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                ) {
+                    skill.technicalDetails.forEach { detail ->
+                        Text(
+                            text = detail,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SkillInvestmentActions(
+    skill: SkillLoadoutSkillUiState,
+    onIntent: (SkillLoadoutUiIntent) -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Text(
+            text = "Rank " + skill.rank + "/" + (skill.maxRank ?: "∞") +
+                " · Mastery " + skill.mastery + "/" + skill.masteryCap +
+                " · Refinement " + skill.refinement + "/" + skill.refinementCap,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            GameOutlinedButton(
+                onClick = { onIntent(SkillLoadoutUiIntent.UpgradeRank(skill.skillId)) },
+                enabled = skill.canUpgradeRank
+            ) {
+                Text("Rank +1 · " + skill.rankUpgradeCostDisplay, maxLines = 1)
+            }
+            GameOutlinedButton(
+                onClick = { onIntent(SkillLoadoutUiIntent.UpgradeMastery(skill.skillId)) },
+                enabled = skill.canUpgradeMastery
+            ) {
+                Text("Mastery +1 · " + skill.masteryUpgradeCostDisplay, maxLines = 1)
+            }
+            GameOutlinedButton(
+                onClick = { onIntent(SkillLoadoutUiIntent.Refine(skill.skillId)) },
+                enabled = skill.canRefine
+            ) {
+                Text("Refine +1 · " + skill.refinementCostDisplay, maxLines = 1)
+            }
         }
     }
 }
@@ -515,7 +590,7 @@ private fun SkillLoadoutActions(
             enabled = skill.canMoveEarlier,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(R.string.loadout_move_earlier), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.loadout_move_earlier), maxLines = 1, overflow = TextOverflow.Clip)
         }
         GameOutlinedButton(
             onClick = {
@@ -529,7 +604,7 @@ private fun SkillLoadoutActions(
             enabled = skill.canMoveLater,
             modifier = Modifier.weight(1f)
         ) {
-            Text(stringResource(R.string.loadout_move_later), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(R.string.loadout_move_later), maxLines = 1, overflow = TextOverflow.Clip)
         }
     }
     GameButton(
@@ -614,14 +689,14 @@ private fun AvailableSkillRow(
                     text = stringResource(skill.titleStringKey.stringResId()),
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
                 Text(
                     text = stringResource(skill.descriptionStringKey.stringResId()),
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Clip
                 )
                 Text(
                     text = stringResource(

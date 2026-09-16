@@ -20,9 +20,13 @@ object LootTableSystem {
     fun roll(
         definition: LootTableDefinition,
         contentRegistry: ContentRegistry,
-        random: GameRandom
-    ): List<LootSelection> =
-        buildList {
+        random: GameRandom,
+        legendaryBonusWeight: Long = 0L
+    ): List<LootSelection> {
+        require(legendaryBonusWeight in 0L..500L) {
+            "legendaryBonusWeight must be bounded: " + legendaryBonusWeight
+        }
+        return buildList {
             repeat(definition.rolls) {
                 if (random.nextLong(com.idlerpg.game.core.number.Ratio.UNITS_PER_ONE) >=
                     definition.dropChancePerRoll.units
@@ -37,7 +41,8 @@ object LootTableSystem {
                 val rarity = chooseRarity(
                     entry = entry,
                     itemDefinitionAllows = itemDefinition::allowsRarity,
-                    random = random
+                    random = random,
+                    legendaryBonusWeight = legendaryBonusWeight
                 )
                 add(
                     LootSelection(
@@ -47,6 +52,7 @@ object LootTableSystem {
                 )
             }
         }
+    }
 
     private fun chooseEntry(
         definition: LootTableDefinition,
@@ -66,13 +72,19 @@ object LootTableSystem {
     private fun chooseRarity(
         entry: LootTableEntry,
         itemDefinitionAllows: (Rarity) -> Boolean,
-        random: GameRandom
+        random: GameRandom,
+        legendaryBonusWeight: Long
     ): Rarity {
         val options =
             Rarity.ordered()
                 .filter(itemDefinitionAllows)
                 .mapNotNull { rarity ->
-                    val weight = entry.rarityWeights[rarity] ?: 0L
+                    val authoredWeight = entry.rarityWeights[rarity] ?: 0L
+                    val weight = if (rarity == Rarity.LEGENDARY) {
+                        Math.addExact(authoredWeight, legendaryBonusWeight)
+                    } else {
+                        authoredWeight
+                    }
                     if (weight <= 0L) {
                         null
                     } else {

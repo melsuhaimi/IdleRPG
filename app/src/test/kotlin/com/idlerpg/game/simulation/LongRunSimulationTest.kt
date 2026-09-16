@@ -158,27 +158,31 @@ object LongRunSimulationTest {
     }
 }
 
-/**
- * Dependency-free FBE-05 executable integration harness.
- *
- * It deliberately uses plain checks rather than JUnit so the project does not need a
- * new testing dependency merely to preserve these scenarios as executable Kotlin source.
- */
-fun main() {
+/** Runs the executable scenario checks used by the application test suite. */
+fun runAllScenarioChecks(): BalanceSimulationReport {
     PrototypeParityTest.run()
     DeterminismTest.run()
     CommandRejectionTest.run()
     EconomyInvariantTest.run()
     CoreGrowthScenarioTest.run()
+    AchievementClaimScenarioTest.run()
     WorldProgressionScenarioTest.run()
     EnemyCombatVarietyScenarioTest.run()
     CombatStatContractScenarioTest.run()
     MultiEnemyCombatScenarioTest.run()
     SkillBuildcraftCoreScenarioTest.run()
+    ManualSkillQueueScenarioTest.run()
     StrategyEcosystemScenarioTest.run()
     IncrementalProgressionContractTest.run()
+    RebirthScenarioTest.run()
+    GearEnhancementScenarioTest.run()
+    SkillProgressionScenarioTest.run()
+    PowerScoreScenarioTest.run()
     LootWorldAutomationScenarioTest.run()
+    InventoryCapacityScenarioTest.run()
+    SaveV2MigrationTest.run()
     SaveV3WaveMigrationTest.run()
+    SaveV10FailstackMigrationTest.run()
     ResonanceScenarioTest.run()
     DefeatedTargetFollowUpScenarioTest.run()
     ProgressionRepairScenarioTest.run()
@@ -196,17 +200,41 @@ fun main() {
     ContentValidatorRegressionScenarioTest.run()
     NewGameDeploymentScenarioTest.run()
     SkillEvolutionScenarioTest.run()
+    SkillLoadoutScenarioTest.run()
     DamageKindIdentityScenarioTest.run()
     OfflineReturnScenarioTest.run()
+    QuestClaimScenarioTest.run()
     AdaptationScenarioTest.run()
     LootDeterminismTest.run()
     SaveRoundTripTest.run()
     ActiveOfflineEquivalenceTest.run()
     ChronicleResetTest.run()
+    EchoShopScenarioTest.run()
     EchoTrainingScenarioTest.run()
     FrontendEnablementIntegrationScenarioTest.run()
+    com.idlerpg.game.presentation.BattleIntentMappingTest.main(emptyArray())
+    com.idlerpg.game.presentation.BattleProjectionTest.main(emptyArray())
+    com.idlerpg.game.presentation.DoctrineDraftControllerTest.main(emptyArray())
+    com.idlerpg.game.presentation.DoctrineIntentMappingTest.main(emptyArray())
+    com.idlerpg.game.presentation.DoctrineProjectionTest.main(emptyArray())
+    com.idlerpg.game.presentation.GearIntentMappingTest.run()
+    com.idlerpg.game.presentation.GearProjectionTest.run()
+    com.idlerpg.game.presentation.OfflineProgressProjectionTest.main(emptyArray())
+    com.idlerpg.game.presentation.PresentationAccessibilityContractTest.main(emptyArray())
+    com.idlerpg.game.presentation.PresentationContentCoverageTest.main(emptyArray())
+    com.idlerpg.game.presentation.ProgressIntentMappingTest.main(emptyArray())
+    com.idlerpg.game.presentation.ProgressProjectionTest.main(emptyArray())
+    com.idlerpg.game.presentation.SkillLoadoutIntentMappingTest.main(emptyArray())
+    com.idlerpg.game.presentation.SkillLoadoutProjectionTest.main(emptyArray())
+    com.idlerpg.game.presentation.WorldIntentMappingTest.main(emptyArray())
+    com.idlerpg.game.presentation.WorldProjectionTest.main(emptyArray())
     val longRun = LongRunSimulationTest.run()
 
+    return longRun
+}
+
+fun main() {
+    val longRun = runAllScenarioChecks()
     println("FBE05_INTEGRATION_PASS")
     println("longRunMinutes=${longRun.simulatedDuration.millis / 60_000L}")
     println("longRunKills=${longRun.enemiesDefeated}")

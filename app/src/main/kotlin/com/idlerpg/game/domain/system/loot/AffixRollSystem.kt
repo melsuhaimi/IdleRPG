@@ -2,6 +2,7 @@ package com.idlerpg.game.domain.system.loot
 
 import com.idlerpg.game.core.random.GameRandom
 import com.idlerpg.game.core.random.WeightedValue
+import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.definition.Rarity
 import com.idlerpg.game.domain.definition.item.AffixDefinition
@@ -11,61 +12,71 @@ import com.idlerpg.game.domain.model.inventory.RolledAffix
 /** Deterministic affix generation for one item instance. */
 object AffixRollSystem {
 
+    fun rollMainStat(
+        itemDefinition: ItemDefinition,
+        contentRegistry: ContentRegistry,
+        random: GameRandom
+    ): RolledAffix? {
+        val candidates = candidatesFor(itemDefinition, contentRegistry)
+        if (candidates.isEmpty()) return null
+        val selected = chooseAffix(candidates, random)
+        return RolledAffix(
+            affixId = selected.id,
+            value = rollValue(selected, random)
+        )
+    }
+
     fun roll(
         itemDefinition: ItemDefinition,
         rarity: Rarity,
         contentRegistry: ContentRegistry,
-        random: GameRandom
+        random: GameRandom,
+        excludedAffixIds: Set<ContentId> = emptySet()
     ): List<RolledAffix> {
         val requestedCount = affixCountFor(rarity)
-        if (requestedCount == 0 || itemDefinition.allowedAffixIds.isEmpty()) {
+        val candidates = candidatesFor(itemDefinition, contentRegistry)
+            .filterNot { it.id in excludedAffixIds }
+            .toMutableList()
+        if (requestedCount == 0 || candidates.isEmpty()) {
             return emptyList()
         }
 
-        val equipmentDefinition =
-            itemDefinition.equipmentDefinitionId
-                ?.let(contentRegistry::equipment)
-
-        val candidates =
-            itemDefinition.allowedAffixIds
-                .map(contentRegistry::affix)
-                .filter { affix ->
-                    equipmentDefinition == null ||
-                        equipmentDefinition.slot in affix.compatibleSlots
-                }
-                .sortedBy { it.id }
-                .toMutableList()
-
         val count = minOf(requestedCount, candidates.size)
         val result = mutableListOf<RolledAffix>()
-
         repeat(count) {
-            val selected = chooseAffix(
-                candidates = candidates,
-                random = random
-            )
+            val selected = chooseAffix(candidates, random)
             candidates.remove(selected)
-
             result += RolledAffix(
                 affixId = selected.id,
-                value = rollValue(
-                    definition = selected,
-                    random = random
-                )
+                value = rollValue(selected, random)
             )
         }
-
         return result.sortedBy { it.affixId }
     }
 
     fun affixCountFor(rarity: Rarity): Int =
         when (rarity) {
-            Rarity.COMMON -> 0
-            Rarity.UNCOMMON -> 1
-            Rarity.RARE -> 1
-            Rarity.EPIC -> 2
-            Rarity.LEGENDARY -> 3
+            Rarity.COMMON,
+            Rarity.UNCOMMON,
+            Rarity.RARE -> 3
+            Rarity.EPIC,
+            Rarity.LEGENDARY -> 4
         }
+
+    private fun candidatesFor(
+        itemDefinition: ItemDefinition,
+        contentRegistry: ContentRegistry
+    ): List<AffixDefinition> {
+        val equipmentDefinition = itemDefinition.equipmentDefinitionId
+            ?.let(contentRegistry::equipment)
+        return itemDefinition.allowedAffixIds
+            .map(contentRegistry::affix)
+            .filter { affix ->
+                equipmentDefinition == null ||
+                    equipmentDefinition.slot in affix.compatibleSlots
+            }
+            .sortedBy { it.id }
+    }
 
     private fun chooseAffix(
         candidates: List<AffixDefinition>,

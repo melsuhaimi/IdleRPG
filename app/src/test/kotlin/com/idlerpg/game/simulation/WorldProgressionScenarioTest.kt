@@ -26,6 +26,6 @@ object WorldProgressionScenarioTest {
         check(runtime.state().run.combat.status == CombatStatus.ACTIVE)
         check(next.definitionId == com.idlerpg.game.data.content.DefaultGameContent.RIFTFANG_ENCOUNTER_ID)
         check(runtime.state().run.combat.enemies.single().definitionId == com.idlerpg.game.data.content.DefaultGameContent.RIFTFANG_ID)
-        check(SimulationTestSupport.primaryEnemyHealth(runtime.state()) == GameNumber.of(80L))
+        check(SimulationTestSupport.primaryEnemyHealth(runtime.state()) == SimulationTestSupport.riftfangTierOneHealth())
     }
 }

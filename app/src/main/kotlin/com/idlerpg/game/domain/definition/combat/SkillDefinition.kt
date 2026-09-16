@@ -36,11 +36,11 @@ data class SkillDefinition(
     val resonanceEmissions: List<ResonanceEmissionDefinition> = emptyList(),
     val requiresEquipped: Boolean = true,
     val requiredFeatureId: ContentId? = null,
-    /** Additive skill-power growth per player level after rank one. */
+    /** Additive skill-power growth per skill rank after rank one. */
     val powerGrowthPerPlayerLevel: Ratio = Ratio.ofUnits(75L),
-    /** Additive healing growth per player level after rank one. */
+    /** Additive healing growth per skill rank after rank one. */
     val healingGrowthPerPlayerLevel: Ratio = Ratio.ofUnits(60L),
-    /** Skill rank is derived from player level and stops at this authored cap. */
+    /** Skill rank is a separate run-scoped investment and stops at this authored cap. */
     val maxRank: Long? = 100L
 ) {
     init {

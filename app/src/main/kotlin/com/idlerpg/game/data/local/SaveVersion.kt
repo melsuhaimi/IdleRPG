@@ -39,6 +39,15 @@ data class SaveVersion(
         /** Chronicle-persistent player-facing hero identity. */
         val V7: SaveVersion = SaveVersion(7)
 
-        val CURRENT: SaveVersion = V7
+        /** Permanent Rebirth/Legacy point pools and stat allocations. */
+        val V8: SaveVersion = SaveVersion(8)
+
+        /** Explicit per-skill rank, mastery, and refinement tracks. */
+        val V9: SaveVersion = SaveVersion(9)
+
+        /** Bounded per-item enhancement failstack state. */
+        val V10: SaveVersion = SaveVersion(10)
+
+        val CURRENT: SaveVersion = V10
     }
 }

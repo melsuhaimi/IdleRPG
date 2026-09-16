@@ -3,6 +3,7 @@ package com.idlerpg.game.data.local.migration
 import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.data.local.SaveVersion
 
+
 /** Failure to reach the requested save schema through explicit sequential migrations. */
 class SaveMigrationException(
     message: String,
@@ -88,7 +89,10 @@ class SaveMigrationRegistry(
                 V3ToV4SaveMigration(),
                 V4ToV5SaveMigration(),
                 V5ToV6SaveMigration(),
-                V6ToV7SaveMigration()
+                V6ToV7SaveMigration(),
+                V7ToV8SaveMigration(),
+                V8ToV9SaveMigration(),
+                V9ToV10SaveMigration()
             )
     }
 }

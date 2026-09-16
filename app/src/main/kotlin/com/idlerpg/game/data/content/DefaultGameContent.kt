@@ -596,7 +596,7 @@ object DefaultGameContent {
             EncounterDefinition(TRAINING_SLIME_ENCOUNTER_ID, TRAINING_HOLLOW_REGION_ID, EncounterType.NORMAL, listOf(SLIME_ID), nextEncounterId = RIFTFANG_ENCOUNTER_ID),
             EncounterDefinition(RIFTFANG_ENCOUNTER_ID, TRAINING_HOLLOW_REGION_ID, EncounterType.NORMAL, listOf(RIFTFANG_ID), nextEncounterId = CINDER_WISP_ENCOUNTER_ID),
             EncounterDefinition(CINDER_WISP_ENCOUNTER_ID, TRAINING_HOLLOW_REGION_ID, EncounterType.NORMAL, listOf(CINDER_WISP_ID), nextEncounterId = HOLLOW_BULWARK_ENCOUNTER_ID),
-            EncounterDefinition(HOLLOW_BULWARK_ENCOUNTER_ID, TRAINING_HOLLOW_REGION_ID, EncounterType.ELITE, listOf(HOLLOW_BULWARK_ID, SLIME_ID), waves = 2, nextEncounterId = ARCANE_SEER_ENCOUNTER_ID, rewardLootTableId = TrainingHollowLootContent.ELITE_LOOT_TABLE_ID),
+            EncounterDefinition(HOLLOW_BULWARK_ENCOUNTER_ID, TRAINING_HOLLOW_REGION_ID, EncounterType.ELITE, listOf(HOLLOW_BULWARK_ID), waves = 2, nextEncounterId = ARCANE_SEER_ENCOUNTER_ID, rewardLootTableId = TrainingHollowLootContent.ELITE_LOOT_TABLE_ID),
             EncounterDefinition(ARCANE_SEER_ENCOUNTER_ID, TRAINING_HOLLOW_REGION_ID, EncounterType.ANOMALY, listOf(ARCANE_SEER_ID), nextEncounterId = TrainingHollowStrategyContent.FROSTBOUND_MITE_ENCOUNTER_ID, rewardLootTableId = TrainingHollowLootContent.ANOMALY_LOOT_TABLE_ID)
         ) + TrainingHollowStrategyContent.encounters + TrainingHollowWorldContent.encounters,
         bosses = listOf(HollowWardenContent.boss) + TrainingHollowWorldContent.additionalBosses,
@@ -712,11 +712,14 @@ object DefaultGameContent {
         levelCurves = listOf(
             LevelCurveDefinition.Progressive(
                 id = PLAYER_LEVEL_CURVE_ID,
-                baseExperienceToNextLevel = GameNumber.of(20L),
-                experienceIncrementPerLevel = GameNumber.of(10L),
+                baseExperienceToNextLevel = GameNumber.of(100L),
+                experienceIncrementPerLevel = GameNumber.ZERO,
                 accelerationStartLevel = 10L,
-                accelerationPerLevel = GameNumber.ONE,
-                maxLevel = 10_000L
+                accelerationPerLevel = GameNumber.ZERO,
+                compoundingMultiplierPerLevel = Ratio.ofUnits(10_080L),
+                softCapLevel = 800L,
+                postSoftCapCompoundingMultiplierPerLevel = Ratio.ofUnits(10_120L),
+                maxLevel = 15_000L
             )
         ),
         featureUnlocks = listOf(
