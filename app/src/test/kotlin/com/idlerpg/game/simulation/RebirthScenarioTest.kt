@@ -114,6 +114,13 @@ object RebirthScenarioTest {
         check(after.meta.rebirth.legacyPointsEarned == 20L)
         check(after.run.progression.playerLevel.level == 1L)
         check(after.run.progression.playerLevel.currentExperience == GameNumber.ZERO)
+        check(
+            after.run.player.currentHealth ==
+                DerivedStatSystem.maximumHealth(
+                    after,
+                    SimulationTestSupport.factory().contentRegistry
+                )
+        )
         check(after.run.progression.featureUnlocks.unlockedFeatureIds.isEmpty())
         check(after.run.player.equippedSkillIds.isEmpty())
         check(after.run.player.selectedSkillEvolutionBySkillId.isEmpty())
