@@ -192,6 +192,7 @@ class GearProjector(
             },
             enhancementLevel = item.enhancementLevel,
             enhancementLabel = EnhancementLevel.displayName(item.enhancementLevel),
+            enhancementTargetLabel = enhancementPreview?.targetLevel?.let(EnhancementLevel::displayName) ?: "MAX",
             enhancementFailstack = item.enhancementFailstack,
             enhancementSuccessChanceDisplay = enhancementPreview?.let {
                 formatRatioPercent(it.successChance)
