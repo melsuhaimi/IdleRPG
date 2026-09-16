@@ -591,6 +591,7 @@ private fun FocusedGearSheet(
     onIntent: (GearUiIntent) -> Unit,
     onRequestSalvage: () -> Unit
 ) {
+    var useProtection by remember(item.instanceId) { mutableStateOf(false) }
     PremiumPanel(
         backgroundResId = R.drawable.panel_secondary_premium,
         modifier = Modifier.fillMaxWidth(),
@@ -632,7 +633,18 @@ private fun FocusedGearSheet(
         if (item.equippedSlot == null) {
             FactualEffectComparison(candidate = item, equipped = equippedComparison)
         }
-        AffixList(item)
+        if (!item.overflow) {
+            GearEnhancementPanel(
+                item = item,
+                useProtection = useProtection,
+                onToggleProtection = { useProtection = !useProtection },
+                onEnhance = {
+                    onIntent(GearUiIntent.Enhance(item.instanceId, useProtection))
+                }
+            )
+            GameDivider()
+        }
+        AffixList(item, onIntent)
         if (item.overflow) {
             Text(stringResource(R.string.gear_overflow_item_note), style = MaterialTheme.typography.bodySmall, color = WarningAmber)
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -801,22 +813,152 @@ private fun FactualEffectGroup(title: String, effects: List<GearEffectUiState>, 
 }
 
 @Composable
-private fun AffixList(item: GearItemUiState) {
-    if (item.affixes.isEmpty()) return
+private fun AffixList(item: GearItemUiState, onIntent: (GearUiIntent) -> Unit) {
+    val affixes = listOfNotNull(item.mainStat) + item.affixes
+    if (affixes.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.gear_affixes_title), style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        item.affixes.forEach { affix ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            stringResource(R.string.gear_affixes_title),
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        affixes.forEach { affix ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Image(
                     painter = painterResource(affix.iconAssetKey.drawableResId()),
                     contentDescription = null,
                     modifier = Modifier.size(20.dp),
                     contentScale = ContentScale.Fit
                 )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        stringResource(
+                            R.string.gear_affix_format,
+                            stringResource(affix.titleStringKey.stringResId()),
+                            affix.rolledValue
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (affix.isMainStat) ResourceGold else ResonanceTeal
+                    )
+                    if (affix.isMainStat) {
+                        Text(
+                            "Main stat",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (item.canRefine) {
+                    GameOutlinedButton(
+                        onClick = {
+                            onIntent(GearUiIntent.Refine(item.instanceId, affix.affixId))
+                        },
+                        modifier = Modifier.widthIn(min = 72.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text("Refine", maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GearEnhancementPanel(
+    item: GearItemUiState,
+    useProtection: Boolean,
+    onToggleProtection: () -> Unit,
+    onEnhance: () -> Unit
+) {
+    GameCard(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = ObsidianSurface1.copy(alpha = 0.9f)),
+        border = BorderStroke(1.dp, ResourceGold.copy(alpha = 0.38f)),
+        accent = ResourceGold
+    ) {
+        Column(
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                "BASE ENHANCEMENT",
+                style = MaterialTheme.typography.labelLarge,
+                color = ResourceGold
+            )
+            Text(
+                item.enhancementLabel + " → " + item.enhancementTargetLabel,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                "Success chance: " + item.enhancementSuccessChanceDisplay +
+                    " · failstack: " + item.enhancementFailstack + "/20",
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                "Cost: " + item.enhancementMaterialCostDisplay +
+                    " enhancement material",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                "Failure without protection: " + item.enhancementFailureLevelDisplay +
+                    " · failstack → " + item.enhancementFailureFailstackDisplay,
+                style = MaterialTheme.typography.bodySmall,
+                color = WarningAmber
+            )
+            if (item.enhancementProtectionGemCostDisplay != "0") {
+                GameChoiceButton(
+                    selected = useProtection,
+                    onClick = onToggleProtection,
+                    modifier = Modifier.fillMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                ) {
+                    Text(
+                        if (useProtection) {
+                            "Protection ON · costs " + item.enhancementProtectionGemCostDisplay + " Gem"
+                        } else {
+                            "Use protection · costs " + item.enhancementProtectionGemCostDisplay + " Gem"
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip
+                    )
+                }
+                if (useProtection) {
+                    Text(
+                        "A protected failure keeps " + item.enhancementLabel +
+                            " and still consumes materials.",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+            } else {
                 Text(
-                    stringResource(R.string.gear_affix_format, stringResource(affix.titleStringKey.stringResId()), affix.rolledValue),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = ResonanceTeal
+                    "Protection unlocks from PRI onward. Materials are always consumed; no durability is lost.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            val canAttempt = if (useProtection) {
+                item.canEnhanceWithProtection
+            } else {
+                item.canEnhance
+            }
+            GameButton(
+                onClick = onEnhance,
+                enabled = canAttempt,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    when {
+                        item.enhancementTargetLabel == "MAX" -> "PEN reached"
+                        canAttempt -> "Attempt " + item.enhancementTargetLabel
+                        else -> "Need materials or Gems"
+                    }
                 )
             }
         }
