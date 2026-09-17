@@ -380,6 +380,12 @@ feature_skill_loadout() {
   capture_checkpoint "16-skill-loadout"
   scroll_ui_down "16-skill-loadout-scroll-down"
   capture_checkpoint "17-skill-loadout-lower"
+  if try_desc "18-skill-inspect-life-drain" '^Life Drain$'; then
+    capture_checkpoint "18-skill-life-drain-inspected"
+  else
+    try_desc "18b-skill-inspect-arcane-blast" '^Arcane Blast$'
+    capture_checkpoint "18b-skill-arcane-blast-inspected"
+  fi
   try_tap "18-skill-evolution-toggle" '^Skill evolutions$'
   capture_checkpoint "18-skill-evolutions"
   try_tap "19-skill-select-evolution" '^Select evolution$'
@@ -448,6 +454,9 @@ feature_adventure() {
   capture_checkpoint "36-adventure-region-selected"
   scroll_ui_down "37-adventure-scroll-down"
   capture_checkpoint "37-adventure-lower"
+  if try_desc "38-adventure-stage-1-card" '^Stage 1, .*Ready to start$'; then
+    capture_checkpoint "38-adventure-stage-1-result"
+  fi
   try_tap "38-adventure-start-battle" '^Start battle$'
   capture_checkpoint "38-adventure-battle-started"
   try_tap "39-adventure-farm-stage" '^Farm this stage$'
@@ -556,7 +565,9 @@ feature_doctrine() {
   capture_checkpoint "70-doctrine-lower"
   try_tap "71-doctrine-add-rule" '^Add rule$'
   capture_checkpoint "71-doctrine-editor"
-  try_tap "72-doctrine-add-condition" '^Add child condition$'
+  scroll_ui_down "72-doctrine-editor-scroll-down"
+  capture_checkpoint "72-doctrine-editor-lower"
+  try_tap "72-doctrine-add-condition" '^(Add child condition|Add condition)$'
   capture_checkpoint "72-doctrine-condition-added"
   if try_tap "73-doctrine-condition-picker" '^Condition$'; then
     capture_checkpoint "73-doctrine-condition-picker"
@@ -649,11 +660,15 @@ ensure_active_battle() {
     capture_checkpoint "96c-adventure-top-$attempt"
     scroll_ui_down "96d-adventure-scroll-down-$attempt"
     capture_checkpoint "96e-adventure-lower-$attempt"
-    if try_tap "96f-adventure-start-$attempt" '^(Start battle|Farm this stage)$'; then
-      capture_checkpoint "96g-adventure-start-result-$attempt"
+    if try_desc "96f-adventure-stage-1-$attempt" '^Stage 1, .*Ready to start$'; then
+      capture_checkpoint "96g-adventure-stage-1-result-$attempt"
+      try_tap "96h-adventure-start-control-$attempt" '^(Start battle|Farm this stage|Start Adventure)$'
+      capture_checkpoint "96i-adventure-start-control-result-$attempt"
     else
-      try_tap "96h-adventure-start-fallback-$attempt" '^Start battle$'
-      capture_checkpoint "96i-adventure-start-fallback-$attempt"
+      try_desc "96j-adventure-stage-2-$attempt" '^Stage 2, .*Last state: retreated$'
+      capture_checkpoint "96k-adventure-stage-2-result-$attempt"
+      try_tap "96l-adventure-start-control-$attempt" '^(Start battle|Farm this stage|Start Adventure)$'
+      capture_checkpoint "96m-adventure-start-control-result-$attempt"
     fi
   done
   record_event "state" "no_active_combat"
@@ -761,8 +776,10 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
       capture_checkpoint "hourly-$(printf '%03d' "$MINUTE")m"
       if grep -q "No active enemy" "$CURRENT_UI"; then
         record_event "warning" "hourly-$(printf '%03d' "$MINUTE")m-no-active-enemy"
+      elif grep -Eiq "AUTO-COMBAT // LIVE|THREAT //|WAVE [0-9]+/[0-9]+|Retreat from the current encounter" "$CURRENT_UI"; then
+        record_event "state" "hourly-$(printf '%03d' "$MINUTE")m-active-battle-screen"
       else
-        record_event "state" "hourly-$(printf '%03d' "$MINUTE")m-active-enemy-present"
+        record_event "state" "hourly-$(printf '%03d' "$MINUTE")m-not-on-battle-screen"
       fi
       adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/hourly-$(printf '%03d' "$MINUTE")m-gfxinfo.txt" 2>&1
       adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/hourly-$(printf '%03d' "$MINUTE")m-meminfo.txt" 2>&1
@@ -780,12 +797,14 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   if [ "$ELAPSED" -lt "$SESSION_SECONDS" ]; then
     sleep "$((SESSION_SECONDS - ELAPSED))"
   fi
+  try_desc "99b-final-nav-battle" '^Battle$'
+  sleep 2
   capture_checkpoint "hourly-060m-final"
   SESSION_COMPLETE_AT="$(date +%s)"
   if grep -q "No active enemy" "$CURRENT_UI"; then
     FINAL_COMBAT_ACTIVE=0
     PLAYTEST_STATE="one_hour_complete_no_active_combat"
-  elif grep -Eiq "Hollow Slime|Stage [0-9]+|Enemy" "$CURRENT_UI"; then
+  elif grep -Eiq "AUTO-COMBAT // LIVE|THREAT //|WAVE [0-9]+/[0-9]+|Retreat from the current encounter" "$CURRENT_UI"; then
     FINAL_COMBAT_ACTIVE=1
     PLAYTEST_STATE="one_hour_complete_active"
   else
