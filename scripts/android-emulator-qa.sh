@@ -349,6 +349,50 @@ PY
   return 0
 }
 
+scroll_until_text_down() {
+  local label="$1"
+  local pattern="$2"
+  local max_steps="${3:-12}"
+  local step=0
+  while [ "$step" -lt "$max_steps" ]; do
+    if grep -Eiq "$pattern" "$CURRENT_UI"; then
+      record_outcome "$label" "scroll-until-down" "found-after-$step"
+      return 0
+    fi
+    step=$((step + 1))
+    scroll_ui_down "$label-step-$step"
+    capture_checkpoint "$label-step-$step"
+  done
+  if grep -Eiq "$pattern" "$CURRENT_UI"; then
+    record_outcome "$label" "scroll-until-down" "found-after-$step"
+    return 0
+  fi
+  record_outcome "$label" "scroll-until-down" "not-found-after-$max_steps"
+  return 1
+}
+
+scroll_until_text_up() {
+  local label="$1"
+  local pattern="$2"
+  local max_steps="${3:-12}"
+  local step=0
+  while [ "$step" -lt "$max_steps" ]; do
+    if grep -Eiq "$pattern" "$CURRENT_UI"; then
+      record_outcome "$label" "scroll-until-up" "found-after-$step"
+      return 0
+    fi
+    step=$((step + 1))
+    scroll_ui_up "$label-step-$step"
+    capture_checkpoint "$label-step-$step"
+  done
+  if grep -Eiq "$pattern" "$CURRENT_UI"; then
+    record_outcome "$label" "scroll-until-up" "found-after-$step"
+    return 0
+  fi
+  record_outcome "$label" "scroll-until-up" "not-found-after-$max_steps"
+  return 1
+}
+
 cat > "$OUT/feature-plan.txt" <<'EOF'
 IdleRPG one-hour feature QA plan
 - cold launch, process, activity, menu, new-game/name flow
@@ -442,16 +486,12 @@ feature_adventure() {
   fi
   sleep 2
   capture_checkpoint "31-adventure-top"
-  scroll_ui_down "32-adventure-scroll-to-stages"
-  capture_checkpoint "32-adventure-stages"
-  scroll_ui_down "32b-adventure-scroll-to-card"
-  capture_checkpoint "32b-adventure-card"
+  scroll_until_text_down "32-adventure-selected-card" 'View details' 12
   try_tap "32c-adventure-view-details" '^View details$'
   capture_checkpoint "32c-adventure-details"
   try_tap "33c-adventure-hide-details" '^Hide details$'
   capture_checkpoint "33c-adventure-details-hidden"
-  scroll_ui_up "33b-adventure-scroll-top"
-  capture_checkpoint "33b-adventure-top-restored"
+  scroll_until_text_up "33b-adventure-scroll-top" 'Run mode' 12
   try_tap "34-adventure-push" '^Push$'
   capture_checkpoint "34-adventure-push"
   try_tap "35-adventure-farm" '^Farm$'
@@ -462,8 +502,7 @@ feature_adventure() {
   capture_checkpoint "37-adventure-lower"
   if try_desc "38-adventure-stage-1-card" '^Stage 1, .*Ready to start$'; then
     capture_checkpoint "38-adventure-stage-1-result"
-    scroll_ui_down "38b-adventure-scroll-to-selected-card"
-    capture_checkpoint "38c-adventure-selected-card"
+    scroll_until_text_down "38b-adventure-selected-card" 'Start battle|Farm this stage' 12
     if try_tap "38d-adventure-start-battle" '^Start battle$'; then
       capture_checkpoint "38e-adventure-battle-started"
     else
@@ -473,8 +512,7 @@ feature_adventure() {
   fi
   record_outcome "40-adventure-retreat" "text" "deferred-to-battle-retreat-test"
   capture_checkpoint "40-adventure-active-or-selected"
-  scroll_ui_up "41-adventure-scroll-up"
-  capture_checkpoint "41-adventure-top-restored"
+  scroll_until_text_up "41-adventure-scroll-up" 'Run mode' 12
 }
 
 feature_build() {
@@ -664,8 +702,7 @@ ensure_active_battle() {
     capture_checkpoint "96e-adventure-lower-$attempt"
     if try_desc "96f-adventure-stage-1-$attempt" '^Stage 1, .*Ready to start$'; then
       capture_checkpoint "96g-adventure-stage-1-result-$attempt"
-      scroll_ui_down "96h-adventure-scroll-to-selected-card-$attempt"
-      capture_checkpoint "96i-adventure-selected-card-$attempt"
+      scroll_until_text_down "96h-adventure-selected-card-$attempt" 'Start battle|Farm this stage' 12
       if try_tap "96j-adventure-start-battle-$attempt" '^Start battle$'; then
         capture_checkpoint "96k-adventure-started-$attempt"
       else
@@ -675,8 +712,7 @@ ensure_active_battle() {
     else
       try_desc "96n-adventure-stage-2-$attempt" '^Stage 2, .*Last state: retreated$'
       capture_checkpoint "96o-adventure-stage-2-result-$attempt"
-      scroll_ui_down "96p-adventure-scroll-to-selected-card-$attempt"
-      capture_checkpoint "96q-adventure-selected-card-$attempt"
+      scroll_until_text_down "96p-adventure-selected-card-$attempt" 'Start battle|Farm this stage' 12
       if try_tap "96r-adventure-start-battle-$attempt" '^Start battle$'; then
         capture_checkpoint "96s-adventure-started-$attempt"
       else
