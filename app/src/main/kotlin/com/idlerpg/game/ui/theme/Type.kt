@@ -7,53 +7,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * Compact terminal-forward typography for a phone-sized idle RPG.
+ * Focused game typography for a phone-sized idle RPG.
  *
- * Display text, labels, and metrics use Android's dependency-free monospace family for the
- * requested retro/hacking readout. Body copy remains a readable sans-serif so longer descriptions
- * do not become wider than the cards that contain them.
+ * Display text uses a readable sans-serif so hierarchy and longer titles remain easy to scan.
+ * Labels and metrics stay terminal-like, preserving the game's tactical readout identity without
+ * making every surface feel equally dense.
  */
 private val TerminalFamily = FontFamily.Monospace
 private val ReadingFamily = FontFamily.SansSerif
 
 val Typography = Typography(
     headlineLarge = TextStyle(
-        fontFamily = TerminalFamily,
+        fontFamily = ReadingFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
         lineHeight = 26.sp,
         letterSpacing = 0.1.sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = TerminalFamily,
+        fontFamily = ReadingFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 19.sp,
         lineHeight = 23.sp,
         letterSpacing = 0.1.sp
     ),
     headlineSmall = TextStyle(
-        fontFamily = TerminalFamily,
+        fontFamily = ReadingFamily,
         fontWeight = FontWeight.Bold,
         fontSize = 17.sp,
         lineHeight = 21.sp,
         letterSpacing = 0.1.sp
     ),
     titleLarge = TextStyle(
-        fontFamily = TerminalFamily,
+        fontFamily = ReadingFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 16.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
     ),
     titleMedium = TextStyle(
-        fontFamily = TerminalFamily,
+        fontFamily = ReadingFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 18.sp,
         letterSpacing = 0.1.sp
     ),
     titleSmall = TextStyle(
-        fontFamily = TerminalFamily,
+        fontFamily = ReadingFamily,
         fontWeight = FontWeight.SemiBold,
         fontSize = 12.sp,
         lineHeight = 16.sp,

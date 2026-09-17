@@ -288,6 +288,31 @@ private fun BattleHeader(
         WorldAutomationMode.PUSH -> R.drawable.ic_mode_push
         WorldAutomationMode.FARM -> R.drawable.ic_mode_farm
     }
+    val hasSelectedEncounter = state.encounterTitleStringKey != null
+    val lifecycleLabel = when (state.combatStatus) {
+        BattleCombatStatusUi.IDLE -> stringResource(
+            if (hasSelectedEncounter) R.string.battle_status_ready
+            else R.string.battle_status_standby
+        )
+        BattleCombatStatusUi.ACTIVE -> stringResource(R.string.battle_status_combat)
+        BattleCombatStatusUi.VICTORY -> stringResource(R.string.battle_status_victory)
+        BattleCombatStatusUi.DEFEAT -> stringResource(R.string.battle_status_defeat)
+    }
+    val lifecycleAccent = when (state.combatStatus) {
+        BattleCombatStatusUi.IDLE -> if (hasSelectedEncounter) ResourceGold else TextSecondary
+        BattleCombatStatusUi.ACTIVE -> ResonanceTeal
+        BattleCombatStatusUi.VICTORY -> PositiveGreen
+        BattleCombatStatusUi.DEFEAT -> ErrorRose
+    }
+    val stageTagline = when (state.combatStatus) {
+        BattleCombatStatusUi.IDLE -> stringResource(
+            if (hasSelectedEncounter) R.string.battle_ready_tagline
+            else R.string.battle_standby_tagline
+        )
+        BattleCombatStatusUi.ACTIVE -> stringResource(R.string.battle_stage_tagline)
+        BattleCombatStatusUi.VICTORY -> stringResource(R.string.battle_victory_tagline)
+        BattleCombatStatusUi.DEFEAT -> stringResource(R.string.battle_defeat_tagline)
+    }
 
     val shape = RoundedCornerShape(
         if (compact) GameDimensions.ActorNameplateRadius + 6.dp
@@ -388,23 +413,29 @@ private fun BattleHeader(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            state.stageNumber?.let { stageNumber ->
+                                Text(
+                                    text = stringResource(
+                                        R.string.battle_stage_format,
+                                        stageNumber.toString()
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = ResourceGold,
+                                    maxLines = 1
+                                )
+                            }
                             Text(
-                                text = stringResource(
-                                    R.string.battle_stage_format,
-                                    state.stageNumber?.toString() ?: "-"
-                                ),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = ResourceGold,
-                                maxLines = 1
-                            )
-                            Text(
-                                text = stringResource(
-                                    R.string.battle_wave_format,
-                                    state.currentWave,
-                                    state.totalWaves
-                                ),
+                                text = if (state.combatStatus == BattleCombatStatusUi.ACTIVE) {
+                                    stringResource(
+                                        R.string.battle_wave_format,
+                                        state.currentWave,
+                                        state.totalWaves
+                                    )
+                                } else {
+                                    lifecycleLabel
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
+                                color = lifecycleAccent,
                                 maxLines = 1
                             )
                             Surface(
@@ -433,7 +464,7 @@ private fun BattleHeader(
                             }
                         }
                         Text(
-                            text = stringResource(R.string.battle_stage_tagline),
+                            text = stageTagline,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 7.sp,
                                 letterSpacing = 0.8.sp
@@ -981,34 +1012,82 @@ private fun BattleEmptyState(
     onDeployStartingEncounter: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    val hasSelectedEncounter = state.encounterTitleStringKey != null
+    val isWaitingForDeployment = state.combatStatus == BattleCombatStatusUi.IDLE
+    val statusLabel = when (state.combatStatus) {
+        BattleCombatStatusUi.IDLE -> stringResource(
+            if (hasSelectedEncounter) R.string.battle_status_ready
+            else R.string.battle_status_standby
+        )
+        BattleCombatStatusUi.ACTIVE -> stringResource(R.string.battle_status_combat)
+        BattleCombatStatusUi.VICTORY -> stringResource(R.string.battle_status_victory)
+        BattleCombatStatusUi.DEFEAT -> stringResource(R.string.battle_status_defeat)
+    }
+    val statusAccent = when (state.combatStatus) {
+        BattleCombatStatusUi.IDLE -> if (hasSelectedEncounter) ResourceGold else TextSecondary
+        BattleCombatStatusUi.ACTIVE -> ResonanceTeal
+        BattleCombatStatusUi.VICTORY -> PositiveGreen
+        BattleCombatStatusUi.DEFEAT -> ErrorRose
+    }
+
+    Box(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = stringResource(R.string.battle_no_active_enemy),
-            style = MaterialTheme.typography.titleMedium,
-            color = TextPrimary
-        )
-        Text(
-            text = if (state.encounterTitleStringKey == null) {
-                stringResource(R.string.battle_deploy_to_hollow_hint)
-            } else {
-                stringResource(R.string.battle_no_active_enemy_detail)
-            },
-            style = MaterialTheme.typography.bodySmall,
-            color = TextSecondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = 270.dp)
-        )
-        if (state.encounterTitleStringKey == null) {
-            Spacer(Modifier.height(10.dp))
-            GameButton(
-                onClick = onDeployStartingEncounter,
-                modifier = Modifier.heightIn(min = 48.dp)
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 320.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = ObsidianSurface1.copy(alpha = 0.84f),
+            border = BorderStroke(1.dp, statusAccent.copy(alpha = 0.52f)),
+            tonalElevation = 0.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(7.dp)
             ) {
-                Text(stringResource(R.string.battle_deploy_to_hollow))
+                Text(
+                    text = statusLabel,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = statusAccent
+                )
+                Text(
+                    text = when {
+                        isWaitingForDeployment && hasSelectedEncounter ->
+                            stringResource(R.string.battle_target_ready_title)
+                        isWaitingForDeployment -> stringResource(R.string.battle_standby_title)
+                        else -> stringResource(R.string.battle_no_active_enemy)
+                    },
+                    style = MaterialTheme.typography.titleLarge,
+                    color = TextPrimary,
+                    textAlign = TextAlign.Center
+                )
+                Text(
+                    text = when {
+                        isWaitingForDeployment && hasSelectedEncounter ->
+                            stringResource(R.string.battle_target_ready_detail)
+                        isWaitingForDeployment -> stringResource(R.string.battle_standby_detail)
+                        else -> stringResource(R.string.battle_no_active_enemy_detail)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.widthIn(max = 270.dp)
+                )
+                if (!hasSelectedEncounter) {
+                    Spacer(Modifier.height(4.dp))
+                    GameButton(
+                        onClick = onDeployStartingEncounter,
+                        modifier = Modifier.heightIn(min = 48.dp)
+                    ) {
+                        Text(stringResource(R.string.battle_deploy_to_hollow))
+                    }
+                }
             }
         }
     }

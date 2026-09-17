@@ -396,6 +396,20 @@ private fun RegionCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
+        selectedEncounter?.let { encounter ->
+            GameSectionHeader(
+                eyebrow = stringResource(R.string.world_next_action),
+                title = stringResource(R.string.world_selected_encounter_title),
+                subtitle = stringResource(R.string.world_selected_encounter_subtitle)
+            )
+            SelectedEncounterCard(
+                encounter = encounter,
+                stageNumber = region.encounters.indexOfFirst { it.encounterId == encounter.encounterId } + 1,
+                inventoryBlocked = inventoryBlocked,
+                onIntent = onIntent
+            )
+        }
+
         GameSectionHeader(
             eyebrow = stringResource(R.string.world_encounters),
             title = stringResource(R.string.world_route_title),
@@ -411,15 +425,6 @@ private fun RegionCard(
                 allEncounters = region.encounters,
                 selectedId = selectedEncounter?.encounterId?.value,
                 onSelect = { selectedEncounterId = it.encounterId.value }
-            )
-        }
-
-        selectedEncounter?.let { encounter ->
-            SelectedEncounterCard(
-                encounter = encounter,
-                stageNumber = region.encounters.indexOfFirst { it.encounterId == encounter.encounterId } + 1,
-                inventoryBlocked = inventoryBlocked,
-                onIntent = onIntent
             )
         }
 

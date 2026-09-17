@@ -66,7 +66,7 @@ fun PremiumPanel(
                     // Decoration must follow content size, never expand a Scaffold top bar.
                     .matchParentSize()
                     .align(Alignment.Center)
-                    .alpha(0.12f),
+                    .alpha(0.08f),
                 contentScale = ContentScale.Crop
             )
             Image(
@@ -74,7 +74,7 @@ fun PremiumPanel(
                 contentDescription = null,
                 modifier = Modifier
                     .matchParentSize()
-                    .alpha(0.24f),
+                    .alpha(0.14f),
                 contentScale = ContentScale.FillBounds
             )
             Box(
@@ -82,7 +82,7 @@ fun PremiumPanel(
                     .fillMaxWidth()
                     .height(2.dp)
                     .align(Alignment.TopCenter)
-                    .alpha(0.76f)
+                    .alpha(0.58f)
                     .background(
                         androidx.compose.ui.graphics.Brush.horizontalGradient(
                             listOf(
