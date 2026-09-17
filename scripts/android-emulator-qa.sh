@@ -62,7 +62,7 @@ try:
     root = ET.fromstring(raw[start:end + len("</hierarchy>")])
     matcher = re.compile(pattern, re.IGNORECASE)
     for node in root.iter("node"):
-        value = " ".join(part for part in (node.attrib.get("text", ""), node.attrib.get("content-desc", "")) if part)
+        value = " ".join(part for part in (node.attrib.get("text", ""), node.attrib.get("content-desc", ""), node.attrib.get("class", ""), node.attrib.get("resource-id", "")) if part)
         if not matcher.search(value):
             continue
         bounds = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
@@ -131,6 +131,7 @@ printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
   "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
 
 PLAYTEST_STATE="not_run"
+PLAYTEST_ACTION_COUNT=0
 if [ -n "$PID_AFTER_LAUNCH" ]; then
   PLAYTEST_STATE="start_target_not_found"
   adb_cmd shell dumpsys gfxinfo "$PACKAGE" reset > "$OUT/05-playtest-gfxinfo-reset.txt" 2>&1
@@ -141,17 +142,30 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   fi
 
   sleep 5
-  capture_checkpoint "06-after-start"
+  capture_checkpoint "06-name-dialog"
+  if tap_ui_text "06-hero-name-field" "android.widget.EditText" "$OUT/06-name-dialog-ui.xml"; then
+    adb_cmd shell input text "Mel" > "$OUT/06-hero-name-input.txt" 2>&1
+    adb_cmd shell input keyevent 4 >> "$OUT/06-hero-name-input.txt" 2>&1
+    capture_checkpoint "07-before-continue"
+    if tap_ui_text "07-continue" '^Continue$' "$OUT/07-before-continue-ui.xml"; then
+      PLAYTEST_STATE="continue_tapped"
+    fi
+  fi
+
+  sleep 5
+  capture_checkpoint "08-after-continue"
 
   for delay in 10 20 30 40 50; do
     sleep 10
-    label="07-t-"$delay"s"
+    label="playtest-t-"$delay"s"
     capture_checkpoint "$label"
-    tap_ui_text "$label-safe-action" '^(Continue|Begin|Next|Claim|Collect|Enter)' "$OUT/$label-ui.xml" || true
+    if tap_ui_text "$label-safe-action" '^(Continue|Begin|Next|Claim|Collect|Enter)' "$OUT/$label-ui.xml"; then
+      PLAYTEST_ACTION_COUNT=$((PLAYTEST_ACTION_COUNT + 1))
+    fi
   done
 
   sleep 5
-  capture_checkpoint "13-final-playtest"
+  capture_checkpoint "playtest-final"
 fi
 
 if [ -n "$PID_AFTER_LAUNCH" ]; then
@@ -200,6 +214,7 @@ fi
   printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
   printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
   printf 'playtest_state=%s\n' "$PLAYTEST_STATE"
+  printf 'playtest_action_count=%s\n' "$PLAYTEST_ACTION_COUNT"
 } > "$OUT/verdict.txt"
 
 printf 'scenario=%s launch_verdict=%s\n' "$SCENARIO" "$LAUNCH_VERDICT"
@@ -211,6 +226,7 @@ if [ -n "$GITHUB_STEP_SUMMARY" ]; then
     echo "- Scenario: $SCENARIO"
     echo "- Launch verdict: $LAUNCH_VERDICT"
     echo "- Playtest state: $PLAYTEST_STATE"
+    echo "- Playtest actions: $PLAYTEST_ACTION_COUNT"
     echo "- Evidence is uploaded under artifacts/emulator/."
   } >> "$GITHUB_STEP_SUMMARY"
 fi
