@@ -62,8 +62,8 @@ try:
     root = ET.fromstring(raw[start:end + len("</hierarchy>")])
     matcher = re.compile(pattern, re.IGNORECASE)
     for node in root.iter("node"):
-        value = " ".join(part for part in (node.attrib.get("text", ""), node.attrib.get("content-desc", ""), node.attrib.get("class", ""), node.attrib.get("resource-id", "")) if part)
-        if not matcher.search(value):
+        values = [node.attrib.get(key, "") for key in ("text", "content-desc", "class", "resource-id")]
+        if not any(matcher.search(value) for value in values):
             continue
         bounds = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
         if len(bounds) == 4:
