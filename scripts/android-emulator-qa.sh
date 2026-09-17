@@ -26,6 +26,8 @@ SESSION_START=0
 PERFETTO_HOST_PID=""
 SESSION_COMPLETE_AT=0
 GAME_STARTED=0
+COMBAT_ACTIVE=0
+FINAL_COMBAT_ACTIVE=0
 
 mkdir -p "$OUT"
 : > "$EVENT_LOG"
@@ -270,8 +272,7 @@ try:
     root = ET.fromstring(raw[start:end + len("</hierarchy>")])
     candidates = []
     for node in root.iter("node"):
-        klass = node.attrib.get("class", "")
-        if "ScrollView" not in klass:
+        if node.attrib.get("scrollable", "false").lower() != "true":
             continue
         bounds = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
         if len(bounds) == 4 and bounds[3] - bounds[1] > 300:
@@ -318,8 +319,7 @@ try:
     root = ET.fromstring(raw[start:end + len("</hierarchy>")])
     candidates = []
     for node in root.iter("node"):
-        klass = node.attrib.get("class", "")
-        if "ScrollView" not in klass:
+        if node.attrib.get("scrollable", "false").lower() != "true":
             continue
         bounds = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
         if len(bounds) == 4 and bounds[3] - bounds[1] > 300:
@@ -464,6 +464,14 @@ feature_build() {
   fi
   sleep 2
   capture_checkpoint "42-build-top"
+  if try_tap "42-build-skills-tab" '^Skills$'; then
+    sleep 2
+    feature_skill_loadout
+    if try_desc "42b-nav-build" '^Build$'; then
+      sleep 1
+      capture_checkpoint "42b-build-after-skills"
+    fi
+  fi
   try_tap "43-build-show-details" '^(Show details|Inspect stats and affixes)$'
   capture_checkpoint "43-build-details"
   try_tap "44-build-hide-details" '^Hide details$'
@@ -516,14 +524,24 @@ feature_build() {
   capture_checkpoint "62-build-salvage-stash"
   scroll_ui_up "63-build-scroll-up"
   capture_checkpoint "63-build-top-restored"
+  if try_desc "63b-nav-build" '^Build$'; then
+    sleep 1
+    capture_checkpoint "63b-build-restored"
+  fi
 }
 
 feature_doctrine() {
-  if ! try_desc "64-nav-doctrine" '^Auto Battle$'; then
-    return
+  if grep -Eiq "Action Priority|Auto Battle Rules|No Auto Battle rules" "$CURRENT_UI"; then
+    capture_checkpoint "64-doctrine-top"
+  else
+    if ! try_desc "64-nav-doctrine" '^Auto Battle$'; then
+      if ! try_tap "64-build-auto-battle-tab" '^Auto Battle$'; then
+        return
+      fi
+    fi
+    sleep 2
+    capture_checkpoint "64-doctrine-top"
   fi
-  sleep 2
-  capture_checkpoint "64-doctrine-top"
   try_tap "65-doctrine-balanced" '^Balanced$'
   capture_checkpoint "65-doctrine-balanced"
   try_tap "66-doctrine-aggressive" '^Aggressive$'
@@ -611,14 +629,45 @@ feature_progress() {
   capture_checkpoint "95-growth-rebirth-cancelled"
 }
 
-return_to_battle() {
-  if try_desc "96-nav-battle" '^Battle$'; then
+ensure_active_battle() {
+  local attempt
+  COMBAT_ACTIVE=0
+  for attempt in 1 2 3; do
+    if try_desc "96-nav-battle-$attempt" '^Battle$'; then
+      sleep 2
+      capture_checkpoint "96-battle-after-feature-pass-$attempt"
+      if ! grep -q "No active enemy" "$CURRENT_UI"; then
+        COMBAT_ACTIVE=1
+        record_event "state" "active_combat_attempt_$attempt"
+        return 0
+      fi
+    fi
+    if ! try_desc "96b-nav-adventure-$attempt" '^Adventure$'; then
+      break
+    fi
     sleep 2
-    capture_checkpoint "96-battle-after-feature-pass"
-    try_desc "97-battle-auto-on" '^Auto Battle is off'
-    capture_checkpoint "97-battle-auto-restored"
-    try_tap "98-battle-start-if-stopped" '^(Start Adventure|Start battle)$'
-    capture_checkpoint "98-battle-running"
+    capture_checkpoint "96c-adventure-top-$attempt"
+    scroll_ui_down "96d-adventure-scroll-down-$attempt"
+    capture_checkpoint "96e-adventure-lower-$attempt"
+    if try_tap "96f-adventure-start-$attempt" '^(Start battle|Farm this stage)$'; then
+      capture_checkpoint "96g-adventure-start-result-$attempt"
+    else
+      try_tap "96h-adventure-start-fallback-$attempt" '^Start battle$'
+      capture_checkpoint "96i-adventure-start-fallback-$attempt"
+    fi
+  done
+  record_event "state" "no_active_combat"
+  return 1
+}
+
+return_to_battle() {
+  ensure_active_battle
+  try_desc "97-battle-auto-on" '^Auto Battle is off'
+  capture_checkpoint "97-battle-auto-restored"
+  if [ "$COMBAT_ACTIVE" -eq 1 ]; then
+    record_outcome "hourly_combat_guard" "state" "active"
+  else
+    record_outcome "hourly_combat_guard" "state" "inactive"
   fi
 }
 
@@ -710,6 +759,11 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
       ELAPSED=$((NOW - SESSION_START))
       MINUTE=$((ELAPSED / 60))
       capture_checkpoint "hourly-$(printf '%03d' "$MINUTE")m"
+      if grep -q "No active enemy" "$CURRENT_UI"; then
+        record_event "warning" "hourly-$(printf '%03d' "$MINUTE")m-no-active-enemy"
+      else
+        record_event "state" "hourly-$(printf '%03d' "$MINUTE")m-active-enemy-present"
+      fi
       adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/hourly-$(printf '%03d' "$MINUTE")m-gfxinfo.txt" 2>&1
       adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/hourly-$(printf '%03d' "$MINUTE")m-meminfo.txt" 2>&1
       NEXT_CAPTURE=$((NEXT_CAPTURE + 300))
@@ -728,7 +782,16 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   fi
   capture_checkpoint "hourly-060m-final"
   SESSION_COMPLETE_AT="$(date +%s)"
-  PLAYTEST_STATE="one_hour_complete"
+  if grep -q "No active enemy" "$CURRENT_UI"; then
+    FINAL_COMBAT_ACTIVE=0
+    PLAYTEST_STATE="one_hour_complete_no_active_combat"
+  elif grep -Eiq "Hollow Slime|Stage [0-9]+|Enemy" "$CURRENT_UI"; then
+    FINAL_COMBAT_ACTIVE=1
+    PLAYTEST_STATE="one_hour_complete_active"
+  else
+    FINAL_COMBAT_ACTIVE=0
+    PLAYTEST_STATE="one_hour_complete_no_active_combat"
+  fi
 
   adb_cmd shell am force-stop "$PACKAGE" > "$OUT/100-force-stop-after-hour.txt" 2>&1
   sleep 2
@@ -806,6 +869,8 @@ SCREENSHOT_COUNT="$(find "$OUT" -name '*.png' | wc -l | tr -d ' ')"
   printf 'session_target_seconds=%s\n' "$SESSION_SECONDS"
   printf 'session_elapsed_seconds=%s\n' "$SESSION_ELAPSED"
   printf 'feature_action_count=%s\n' "$FEATURE_ACTION_COUNT"
+  printf 'combat_active_at_feature_pass=%s\n' "$COMBAT_ACTIVE"
+  printf 'combat_active_at_final=%s\n' "$FINAL_COMBAT_ACTIVE"
   printf 'checkpoint_count=%s\n' "$CHECKPOINT_COUNT"
   printf 'screenshot_count=%s\n' "$SCREENSHOT_COUNT"
 } > "$OUT/verdict.txt"
@@ -823,6 +888,8 @@ if [ -n "$GITHUB_STEP_SUMMARY" ]; then
     echo "- Session target: $SESSION_SECONDS seconds"
     echo "- Session elapsed: $SESSION_ELAPSED seconds"
     echo "- Feature actions: $FEATURE_ACTION_COUNT"
+    echo "- Combat active at feature pass: $COMBAT_ACTIVE"
+    echo "- Combat active at final: $FINAL_COMBAT_ACTIVE"
     echo "- UI checkpoints: $CHECKPOINT_COUNT"
     echo "- Screenshots: $SCREENSHOT_COUNT"
     echo "- Evidence is uploaded under artifacts/emulator/."
