@@ -9,11 +9,12 @@ on:
       scenario:
         description: "Flow to exercise"
         required: false
-        default: "launch_crash"
+        default: "hourly_full_feature_qa"
         type: choice
         options:
           - "launch_crash"
           - "battle_flow"
+          - "hourly_full_feature_qa"
 
 permissions:
   contents: read
@@ -21,11 +22,12 @@ permissions:
 jobs:
   emulator-qa:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 95
     env:
       PACKAGE: com.idlerpg.game
       ACTIVITY: .MainActivity
-      SCENARIO: ${{ inputs.scenario || 'launch_crash' }}
+      SCENARIO: ${{ inputs.scenario || 'hourly_full_feature_qa' }}
+      SESSION_SECONDS: 3600
 
     steps:
       - name: Check out source
@@ -72,7 +74,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: idlerpg-emulator-evidence
+          name: idlerpg-emulator-hourly-evidence
           path: artifacts
           if-no-files-found: warn
           retention-days: 7
