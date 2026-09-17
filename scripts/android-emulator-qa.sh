@@ -134,6 +134,11 @@ adb_cmd shell dumpsys window windows > "$OUT/03-after-launch-window.txt" 2>&1
 adb_cmd shell dumpsys input_method > "$OUT/03-after-launch-input-method.txt" 2>&1
 
 
+PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
+printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
+  "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
+
+
 PLAYTEST_STATE="not_run"
 if [ -n "$PID_AFTER_LAUNCH" ]; then
   PLAYTEST_STATE="start_target_not_found"
@@ -289,10 +294,6 @@ exit 0
   sleep 5
   capture_checkpoint "13-final-playtest"
 fi
-
-PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
-printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
-  "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
 
 if [ -n "$PID_AFTER_LAUNCH" ]; then
   adb_cmd shell rm -f "$PERF_DATA_DEVICE"
