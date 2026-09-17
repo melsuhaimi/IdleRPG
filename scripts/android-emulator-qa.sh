@@ -25,7 +25,6 @@ adb_cmd() {
   adb -s "$SERIAL" "$@"
 }
 
-
 ui_dump() {
   local label="$1"
   adb_cmd exec-out uiautomator dump /dev/tty > "$OUT/$label-ui.xml" 2> "$OUT/$label-ui.err"
@@ -63,12 +62,7 @@ try:
     root = ET.fromstring(raw[start:end + len("</hierarchy>")])
     matcher = re.compile(pattern, re.IGNORECASE)
     for node in root.iter("node"):
-        value = " ".join(
-            part for part in (
-                node.attrib.get("text", ""),
-                node.attrib.get("content-desc", "")
-            ) if part
-        )
+        value = " ".join(part for part in (node.attrib.get("text", ""), node.attrib.get("content-desc", "")) if part)
         if not matcher.search(value):
             continue
         bounds = [int(value) for value in re.findall(r"\d+", node.attrib.get("bounds", ""))]
@@ -98,7 +92,6 @@ tap_ui_text() {
   } > "$OUT/$label-tap.txt"
   adb_cmd shell input tap "$x" "$y" >> "$OUT/$label-tap.txt" 2>&1
 }
-
 
 printf 'scenario=%s\npackage=%s\ncomponent=%s\nserial=%s\n' \
   "$SCENARIO" "$PACKAGE" "$COMPONENT" "$SERIAL" > "$OUT/run-info.txt"
@@ -133,7 +126,6 @@ adb_cmd shell dumpsys activity activities > "$OUT/03-after-launch-activity.txt" 
 adb_cmd shell dumpsys window windows > "$OUT/03-after-launch-window.txt" 2>&1
 adb_cmd shell dumpsys input_method > "$OUT/03-after-launch-input-method.txt" 2>&1
 
-
 PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
 printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
   "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
@@ -144,217 +136,7 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   adb_cmd shell dumpsys gfxinfo "$PACKAGE" reset > "$OUT/05-playtest-gfxinfo-reset.txt" 2>&1
 
   capture_checkpoint "05-before-start"
-  if tap_ui_text "05-start-expedition" '^Start Expedition
-PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
-printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
-  "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  adb_cmd shell rm -f "$PERF_DATA_DEVICE"
-  adb_cmd shell simpleperf record --app "$PACKAGE" \
-    -o "$PERF_DATA_DEVICE" -e cpu-clock -f 4000 -g --duration 12 \
-    > "$OUT/07-simpleperf-console.txt" 2>&1
-  adb_cmd pull "$PERF_DATA_DEVICE" "$OUT/idlerpg.perf.data" \
-    > "$OUT/07-simpleperf-pull.txt" 2>&1
-  adb_cmd shell simpleperf report -i "$PERF_DATA_DEVICE" \
-    > "$OUT/07-simpleperf-report.txt" 2>&1
-else
-  printf 'Skipped because the app had no live process after launch.\n' \
-    > "$OUT/07-simpleperf-console.txt"
-fi
-
-wait "$PERFETTO_HOST_PID" > "$OUT/02-perfetto-wait.txt" 2>&1
-adb_cmd pull "$TRACE_DEVICE" "$OUT/idlerpg-launch.pftrace" \
-  > "$OUT/02-perfetto-pull.txt" 2>&1
-
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/08-gfxinfo.txt" 2>&1
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" framestats \
-  > "$OUT/08-gfxinfo-framestats.txt" 2>&1
-adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/08-meminfo.txt" 2>&1
-adb_cmd shell dumpsys cpuinfo > "$OUT/08-cpuinfo.txt" 2>&1
-adb_cmd logcat -d -v threadtime > "$OUT/09-logcat.txt" 2>&1
-adb_cmd logcat -b crash -d > "$OUT/09-crash-buffer.txt" 2>&1
-adb_cmd shell dumpsys activity activities > "$OUT/09-final-activity.txt" 2>&1
-adb_cmd shell dumpsys window windows > "$OUT/09-final-window.txt" 2>&1
-adb_cmd shell dumpsys package "$PACKAGE" > "$OUT/09-final-package-state.txt" 2>&1
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  LAUNCH_VERDICT="launch_did_not_crash"
-elif grep -Eiq "$PACKAGE|FATAL EXCEPTION|AndroidRuntime" "$OUT/09-crash-buffer.txt"; then
-  LAUNCH_VERDICT="launch_crash_evidence"
-else
-  LAUNCH_VERDICT="app_not_running_after_launch"
-fi
-
-{
-  printf 'scenario=%s\n' "$SCENARIO"
-  printf 'package=%s\n' "$PACKAGE"
-  printf 'component=%s\n' "$COMPONENT"
-  printf 'serial=%s\n' "$SERIAL"
-  printf 'launch_exit_code=%s\n' "$LAUNCH_CODE"
-  printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
-  printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
-  printf 'playtest_state=%s\n' "$PLAYTEST_STATE"
-} > "$OUT/verdict.txt"
-
-printf 'scenario=%s launch_verdict=%s\n' "$SCENARIO" "$LAUNCH_VERDICT"
-
-if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-  {
-    echo "## IdleRPG emulator QA"
-    echo
-    echo "- Scenario: $SCENARIO"
-    echo "- Launch verdict: $LAUNCH_VERDICT"
-    echo "- Playtest state: $PLAYTEST_STATE"
-    echo "- Evidence is uploaded under artifacts/emulator/."
-  } >> "$GITHUB_STEP_SUMMARY"
-fi
-
-exit 0
- "$OUT/05-before-start-ui.xml"; then
-    PLAYTEST_STATE="started"
-  fi
-
-  sleep 5
-  capture_checkpoint "06-after-start"
-
-  for delay in 10 20 30 40 50; do
-    sleep 10
-    label="07-t-"$delay"s"
-    capture_checkpoint "$label"
-    tap_ui_text "$label-safe-action" '^(Continue|Begin|Next|Claim|Collect|Enter)
-PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
-printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
-  "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  adb_cmd shell rm -f "$PERF_DATA_DEVICE"
-  adb_cmd shell simpleperf record --app "$PACKAGE" \
-    -o "$PERF_DATA_DEVICE" -e cpu-clock -f 4000 -g --duration 12 \
-    > "$OUT/07-simpleperf-console.txt" 2>&1
-  adb_cmd pull "$PERF_DATA_DEVICE" "$OUT/idlerpg.perf.data" \
-    > "$OUT/07-simpleperf-pull.txt" 2>&1
-  adb_cmd shell simpleperf report -i "$PERF_DATA_DEVICE" \
-    > "$OUT/07-simpleperf-report.txt" 2>&1
-else
-  printf 'Skipped because the app had no live process after launch.\n' \
-    > "$OUT/07-simpleperf-console.txt"
-fi
-
-wait "$PERFETTO_HOST_PID" > "$OUT/02-perfetto-wait.txt" 2>&1
-adb_cmd pull "$TRACE_DEVICE" "$OUT/idlerpg-launch.pftrace" \
-  > "$OUT/02-perfetto-pull.txt" 2>&1
-
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/08-gfxinfo.txt" 2>&1
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" framestats \
-  > "$OUT/08-gfxinfo-framestats.txt" 2>&1
-adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/08-meminfo.txt" 2>&1
-adb_cmd shell dumpsys cpuinfo > "$OUT/08-cpuinfo.txt" 2>&1
-adb_cmd logcat -d -v threadtime > "$OUT/09-logcat.txt" 2>&1
-adb_cmd logcat -b crash -d > "$OUT/09-crash-buffer.txt" 2>&1
-adb_cmd shell dumpsys activity activities > "$OUT/09-final-activity.txt" 2>&1
-adb_cmd shell dumpsys window windows > "$OUT/09-final-window.txt" 2>&1
-adb_cmd shell dumpsys package "$PACKAGE" > "$OUT/09-final-package-state.txt" 2>&1
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  LAUNCH_VERDICT="launch_did_not_crash"
-elif grep -Eiq "$PACKAGE|FATAL EXCEPTION|AndroidRuntime" "$OUT/09-crash-buffer.txt"; then
-  LAUNCH_VERDICT="launch_crash_evidence"
-else
-  LAUNCH_VERDICT="app_not_running_after_launch"
-fi
-
-{
-  printf 'scenario=%s\n' "$SCENARIO"
-  printf 'package=%s\n' "$PACKAGE"
-  printf 'component=%s\n' "$COMPONENT"
-  printf 'serial=%s\n' "$SERIAL"
-  printf 'launch_exit_code=%s\n' "$LAUNCH_CODE"
-  printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
-  printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
-} > "$OUT/verdict.txt"
-
-printf 'scenario=%s launch_verdict=%s\n' "$SCENARIO" "$LAUNCH_VERDICT"
-
-if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-  {
-    echo "## IdleRPG emulator QA"
-    echo
-    echo "- Scenario: $SCENARIO"
-    echo "- Launch verdict: $LAUNCH_VERDICT"
-    echo "- Evidence is uploaded under artifacts/emulator/."
-  } >> "$GITHUB_STEP_SUMMARY"
-fi
-
-exit 0
- "$OUT/$label-ui.xml" || true
-  done
-
-  sleep 5
-  capture_checkpoint "13-final-playtest"
-fi
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  adb_cmd shell rm -f "$PERF_DATA_DEVICE"
-  adb_cmd shell simpleperf record --app "$PACKAGE" \
-    -o "$PERF_DATA_DEVICE" -e cpu-clock -f 4000 -g --duration 12 \
-    > "$OUT/07-simpleperf-console.txt" 2>&1
-  adb_cmd pull "$PERF_DATA_DEVICE" "$OUT/idlerpg.perf.data" \
-    > "$OUT/07-simpleperf-pull.txt" 2>&1
-  adb_cmd shell simpleperf report -i "$PERF_DATA_DEVICE" \
-    > "$OUT/07-simpleperf-report.txt" 2>&1
-else
-  printf 'Skipped because the app had no live process after launch.\n' \
-    > "$OUT/07-simpleperf-console.txt"
-fi
-
-wait "$PERFETTO_HOST_PID" > "$OUT/02-perfetto-wait.txt" 2>&1
-adb_cmd pull "$TRACE_DEVICE" "$OUT/idlerpg-launch.pftrace" \
-  > "$OUT/02-perfetto-pull.txt" 2>&1
-
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/08-gfxinfo.txt" 2>&1
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" framestats \
-  > "$OUT/08-gfxinfo-framestats.txt" 2>&1
-adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/08-meminfo.txt" 2>&1
-adb_cmd shell dumpsys cpuinfo > "$OUT/08-cpuinfo.txt" 2>&1
-adb_cmd logcat -d -v threadtime > "$OUT/09-logcat.txt" 2>&1
-adb_cmd logcat -b crash -d > "$OUT/09-crash-buffer.txt" 2>&1
-adb_cmd shell dumpsys activity activities > "$OUT/09-final-activity.txt" 2>&1
-adb_cmd shell dumpsys window windows > "$OUT/09-final-window.txt" 2>&1
-adb_cmd shell dumpsys package "$PACKAGE" > "$OUT/09-final-package-state.txt" 2>&1
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  LAUNCH_VERDICT="launch_did_not_crash"
-elif grep -Eiq "$PACKAGE|FATAL EXCEPTION|AndroidRuntime" "$OUT/09-crash-buffer.txt"; then
-  LAUNCH_VERDICT="launch_crash_evidence"
-else
-  LAUNCH_VERDICT="app_not_running_after_launch"
-fi
-
-{
-  printf 'scenario=%s\n' "$SCENARIO"
-  printf 'package=%s\n' "$PACKAGE"
-  printf 'component=%s\n' "$COMPONENT"
-  printf 'serial=%s\n' "$SERIAL"
-  printf 'launch_exit_code=%s\n' "$LAUNCH_CODE"
-  printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
-  printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
-} > "$OUT/verdict.txt"
-
-printf 'scenario=%s launch_verdict=%s\n' "$SCENARIO" "$LAUNCH_VERDICT"
-
-if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-  {
-    echo "## IdleRPG emulator QA"
-    echo
-    echo "- Scenario: $SCENARIO"
-    echo "- Launch verdict: $LAUNCH_VERDICT"
-    echo "- Evidence is uploaded under artifacts/emulator/."
-  } >> "$GITHUB_STEP_SUMMARY"
-fi
-
-exit 0
- "$OUT/05-before-start-ui.xml"; then
+  if tap_ui_text "05-start-expedition" '^Start Expedition$' "$OUT/05-before-start-ui.xml"; then
     PLAYTEST_STATE="started"
   fi
 
@@ -372,10 +154,6 @@ exit 0
   capture_checkpoint "13-final-playtest"
 fi
 
-PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
-printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
-  "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
-
 if [ -n "$PID_AFTER_LAUNCH" ]; then
   adb_cmd shell rm -f "$PERF_DATA_DEVICE"
   adb_cmd shell simpleperf record --app "$PACKAGE" \
@@ -433,149 +211,6 @@ if [ -n "$GITHUB_STEP_SUMMARY" ]; then
     echo "- Scenario: $SCENARIO"
     echo "- Launch verdict: $LAUNCH_VERDICT"
     echo "- Playtest state: $PLAYTEST_STATE"
-    echo "- Evidence is uploaded under artifacts/emulator/."
-  } >> "$GITHUB_STEP_SUMMARY"
-fi
-
-exit 0
- "$OUT/05-before-start-ui.xml"; then
-    PLAYTEST_STATE="started"
-  fi
-
-  sleep 5
-  capture_checkpoint "06-after-start"
-
-  for delay in 10 20 30 40 50; do
-    sleep 10
-    label="07-t-"$delay"s"
-    capture_checkpoint "$label"
-    tap_ui_text "$label-safe-action" '^(Continue|Begin|Next|Claim|Collect|Enter)
-PID_AFTER_LAUNCH="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
-printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
-  "$LAUNCH_CODE" "$PID_AFTER_LAUNCH" > "$OUT/04-launch-state.txt"
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  adb_cmd shell rm -f "$PERF_DATA_DEVICE"
-  adb_cmd shell simpleperf record --app "$PACKAGE" \
-    -o "$PERF_DATA_DEVICE" -e cpu-clock -f 4000 -g --duration 12 \
-    > "$OUT/07-simpleperf-console.txt" 2>&1
-  adb_cmd pull "$PERF_DATA_DEVICE" "$OUT/idlerpg.perf.data" \
-    > "$OUT/07-simpleperf-pull.txt" 2>&1
-  adb_cmd shell simpleperf report -i "$PERF_DATA_DEVICE" \
-    > "$OUT/07-simpleperf-report.txt" 2>&1
-else
-  printf 'Skipped because the app had no live process after launch.\n' \
-    > "$OUT/07-simpleperf-console.txt"
-fi
-
-wait "$PERFETTO_HOST_PID" > "$OUT/02-perfetto-wait.txt" 2>&1
-adb_cmd pull "$TRACE_DEVICE" "$OUT/idlerpg-launch.pftrace" \
-  > "$OUT/02-perfetto-pull.txt" 2>&1
-
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/08-gfxinfo.txt" 2>&1
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" framestats \
-  > "$OUT/08-gfxinfo-framestats.txt" 2>&1
-adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/08-meminfo.txt" 2>&1
-adb_cmd shell dumpsys cpuinfo > "$OUT/08-cpuinfo.txt" 2>&1
-adb_cmd logcat -d -v threadtime > "$OUT/09-logcat.txt" 2>&1
-adb_cmd logcat -b crash -d > "$OUT/09-crash-buffer.txt" 2>&1
-adb_cmd shell dumpsys activity activities > "$OUT/09-final-activity.txt" 2>&1
-adb_cmd shell dumpsys window windows > "$OUT/09-final-window.txt" 2>&1
-adb_cmd shell dumpsys package "$PACKAGE" > "$OUT/09-final-package-state.txt" 2>&1
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  LAUNCH_VERDICT="launch_did_not_crash"
-elif grep -Eiq "$PACKAGE|FATAL EXCEPTION|AndroidRuntime" "$OUT/09-crash-buffer.txt"; then
-  LAUNCH_VERDICT="launch_crash_evidence"
-else
-  LAUNCH_VERDICT="app_not_running_after_launch"
-fi
-
-{
-  printf 'scenario=%s\n' "$SCENARIO"
-  printf 'package=%s\n' "$PACKAGE"
-  printf 'component=%s\n' "$COMPONENT"
-  printf 'serial=%s\n' "$SERIAL"
-  printf 'launch_exit_code=%s\n' "$LAUNCH_CODE"
-  printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
-  printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
-} > "$OUT/verdict.txt"
-
-printf 'scenario=%s launch_verdict=%s\n' "$SCENARIO" "$LAUNCH_VERDICT"
-
-if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-  {
-    echo "## IdleRPG emulator QA"
-    echo
-    echo "- Scenario: $SCENARIO"
-    echo "- Launch verdict: $LAUNCH_VERDICT"
-    echo "- Evidence is uploaded under artifacts/emulator/."
-  } >> "$GITHUB_STEP_SUMMARY"
-fi
-
-exit 0
- "$OUT/$label-ui.xml" || true
-  done
-
-  sleep 5
-  capture_checkpoint "13-final-playtest"
-fi
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  adb_cmd shell rm -f "$PERF_DATA_DEVICE"
-  adb_cmd shell simpleperf record --app "$PACKAGE" \
-    -o "$PERF_DATA_DEVICE" -e cpu-clock -f 4000 -g --duration 12 \
-    > "$OUT/07-simpleperf-console.txt" 2>&1
-  adb_cmd pull "$PERF_DATA_DEVICE" "$OUT/idlerpg.perf.data" \
-    > "$OUT/07-simpleperf-pull.txt" 2>&1
-  adb_cmd shell simpleperf report -i "$PERF_DATA_DEVICE" \
-    > "$OUT/07-simpleperf-report.txt" 2>&1
-else
-  printf 'Skipped because the app had no live process after launch.\n' \
-    > "$OUT/07-simpleperf-console.txt"
-fi
-
-wait "$PERFETTO_HOST_PID" > "$OUT/02-perfetto-wait.txt" 2>&1
-adb_cmd pull "$TRACE_DEVICE" "$OUT/idlerpg-launch.pftrace" \
-  > "$OUT/02-perfetto-pull.txt" 2>&1
-
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" > "$OUT/08-gfxinfo.txt" 2>&1
-adb_cmd shell dumpsys gfxinfo "$PACKAGE" framestats \
-  > "$OUT/08-gfxinfo-framestats.txt" 2>&1
-adb_cmd shell dumpsys meminfo "$PACKAGE" > "$OUT/08-meminfo.txt" 2>&1
-adb_cmd shell dumpsys cpuinfo > "$OUT/08-cpuinfo.txt" 2>&1
-adb_cmd logcat -d -v threadtime > "$OUT/09-logcat.txt" 2>&1
-adb_cmd logcat -b crash -d > "$OUT/09-crash-buffer.txt" 2>&1
-adb_cmd shell dumpsys activity activities > "$OUT/09-final-activity.txt" 2>&1
-adb_cmd shell dumpsys window windows > "$OUT/09-final-window.txt" 2>&1
-adb_cmd shell dumpsys package "$PACKAGE" > "$OUT/09-final-package-state.txt" 2>&1
-
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  LAUNCH_VERDICT="launch_did_not_crash"
-elif grep -Eiq "$PACKAGE|FATAL EXCEPTION|AndroidRuntime" "$OUT/09-crash-buffer.txt"; then
-  LAUNCH_VERDICT="launch_crash_evidence"
-else
-  LAUNCH_VERDICT="app_not_running_after_launch"
-fi
-
-{
-  printf 'scenario=%s\n' "$SCENARIO"
-  printf 'package=%s\n' "$PACKAGE"
-  printf 'component=%s\n' "$COMPONENT"
-  printf 'serial=%s\n' "$SERIAL"
-  printf 'launch_exit_code=%s\n' "$LAUNCH_CODE"
-  printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
-  printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
-} > "$OUT/verdict.txt"
-
-printf 'scenario=%s launch_verdict=%s\n' "$SCENARIO" "$LAUNCH_VERDICT"
-
-if [ -n "$GITHUB_STEP_SUMMARY" ]; then
-  {
-    echo "## IdleRPG emulator QA"
-    echo
-    echo "- Scenario: $SCENARIO"
-    echo "- Launch verdict: $LAUNCH_VERDICT"
     echo "- Evidence is uploaded under artifacts/emulator/."
   } >> "$GITHUB_STEP_SUMMARY"
 fi
