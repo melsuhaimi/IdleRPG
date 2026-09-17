@@ -442,10 +442,16 @@ feature_adventure() {
   fi
   sleep 2
   capture_checkpoint "31-adventure-top"
-  try_tap "32-adventure-view-details" '^View details$'
-  capture_checkpoint "32-adventure-details"
-  try_tap "33-adventure-hide-details" '^Hide details$'
-  capture_checkpoint "33-adventure-details-hidden"
+  scroll_ui_down "32-adventure-scroll-to-stages"
+  capture_checkpoint "32-adventure-stages"
+  scroll_ui_down "32b-adventure-scroll-to-card"
+  capture_checkpoint "32b-adventure-card"
+  try_tap "32c-adventure-view-details" '^View details$'
+  capture_checkpoint "32c-adventure-details"
+  try_tap "33c-adventure-hide-details" '^Hide details$'
+  capture_checkpoint "33c-adventure-details-hidden"
+  scroll_ui_up "33b-adventure-scroll-top"
+  capture_checkpoint "33b-adventure-top-restored"
   try_tap "34-adventure-push" '^Push$'
   capture_checkpoint "34-adventure-push"
   try_tap "35-adventure-farm" '^Farm$'
@@ -456,13 +462,17 @@ feature_adventure() {
   capture_checkpoint "37-adventure-lower"
   if try_desc "38-adventure-stage-1-card" '^Stage 1, .*Ready to start$'; then
     capture_checkpoint "38-adventure-stage-1-result"
+    scroll_ui_down "38b-adventure-scroll-to-selected-card"
+    capture_checkpoint "38c-adventure-selected-card"
+    if try_tap "38d-adventure-start-battle" '^Start battle$'; then
+      capture_checkpoint "38e-adventure-battle-started"
+    else
+      try_tap "38f-adventure-farm-stage" '^Farm this stage$'
+      capture_checkpoint "38g-adventure-farm-stage"
+    fi
   fi
-  try_tap "38-adventure-start-battle" '^Start battle$'
-  capture_checkpoint "38-adventure-battle-started"
-  try_tap "39-adventure-farm-stage" '^Farm this stage$'
-  capture_checkpoint "39-adventure-farm-stage"
-  try_tap "40-adventure-retreat" '^Retreat$'
-  capture_checkpoint "40-adventure-retreated"
+  record_outcome "40-adventure-retreat" "text" "deferred-to-battle-retreat-test"
+  capture_checkpoint "40-adventure-active-or-selected"
   scroll_ui_up "41-adventure-scroll-up"
   capture_checkpoint "41-adventure-top-restored"
 }
@@ -567,24 +577,16 @@ feature_doctrine() {
   capture_checkpoint "71-doctrine-editor"
   scroll_ui_down "72-doctrine-editor-scroll-down"
   capture_checkpoint "72-doctrine-editor-lower"
-  try_tap "72-doctrine-add-condition" '^(Add child condition|Add condition)$'
+  try_tap "72-doctrine-condition" '^(Hero HP %|Enemy count)$'
   capture_checkpoint "72-doctrine-condition-added"
-  if try_tap "73-doctrine-condition-picker" '^Condition$'; then
-    capture_checkpoint "73-doctrine-condition-picker"
-    adb_cmd shell input keyevent 4 > "$OUT/73-doctrine-condition-picker-back.txt" 2>&1
-    capture_checkpoint "73-doctrine-condition-picker-closed"
-  else
-    capture_checkpoint "73-doctrine-condition-picker-not-found"
-  fi
-  if try_tap "74-doctrine-action-picker" '^Action$'; then
-    capture_checkpoint "74-doctrine-action-picker"
-    adb_cmd shell input keyevent 4 > "$OUT/74-doctrine-action-picker-back.txt" 2>&1
-    capture_checkpoint "74-doctrine-action-picker-closed"
-  else
-    capture_checkpoint "74-doctrine-action-picker-not-found"
-  fi
-  try_tap "75-doctrine-cancel-editor" '^Cancel$'
-  capture_checkpoint "75-doctrine-editor-cancelled"
+  try_tap "73-doctrine-condition-picker" '^(<|≤|=|≥|>)$'
+  capture_checkpoint "73-doctrine-condition-picker"
+  try_tap "74-doctrine-action-picker" '^(Basic Attack|Use skill)$'
+  capture_checkpoint "74-doctrine-action-picker"
+  try_tap "75-doctrine-save-rule" '^Save rule$'
+  capture_checkpoint "75-doctrine-rule-saved"
+  try_tap "76-doctrine-cancel-editor" '^Cancel$'
+  capture_checkpoint "76-doctrine-editor-cancelled"
   try_tap "76-doctrine-disable-rule" '^Disable$'
   capture_checkpoint "76-doctrine-rule-disabled"
   try_tap "77-doctrine-enable-rule" '^Enable$'
@@ -662,13 +664,25 @@ ensure_active_battle() {
     capture_checkpoint "96e-adventure-lower-$attempt"
     if try_desc "96f-adventure-stage-1-$attempt" '^Stage 1, .*Ready to start$'; then
       capture_checkpoint "96g-adventure-stage-1-result-$attempt"
-      try_tap "96h-adventure-start-control-$attempt" '^(Start battle|Farm this stage|Start Adventure)$'
-      capture_checkpoint "96i-adventure-start-control-result-$attempt"
+      scroll_ui_down "96h-adventure-scroll-to-selected-card-$attempt"
+      capture_checkpoint "96i-adventure-selected-card-$attempt"
+      if try_tap "96j-adventure-start-battle-$attempt" '^Start battle$'; then
+        capture_checkpoint "96k-adventure-started-$attempt"
+      else
+        try_tap "96l-adventure-farm-stage-$attempt" '^Farm this stage$'
+        capture_checkpoint "96m-adventure-farm-stage-$attempt"
+      fi
     else
-      try_desc "96j-adventure-stage-2-$attempt" '^Stage 2, .*Last state: retreated$'
-      capture_checkpoint "96k-adventure-stage-2-result-$attempt"
-      try_tap "96l-adventure-start-control-$attempt" '^(Start battle|Farm this stage|Start Adventure)$'
-      capture_checkpoint "96m-adventure-start-control-result-$attempt"
+      try_desc "96n-adventure-stage-2-$attempt" '^Stage 2, .*Last state: retreated$'
+      capture_checkpoint "96o-adventure-stage-2-result-$attempt"
+      scroll_ui_down "96p-adventure-scroll-to-selected-card-$attempt"
+      capture_checkpoint "96q-adventure-selected-card-$attempt"
+      if try_tap "96r-adventure-start-battle-$attempt" '^Start battle$'; then
+        capture_checkpoint "96s-adventure-started-$attempt"
+      else
+        try_tap "96t-adventure-farm-stage-$attempt" '^Farm this stage$'
+        capture_checkpoint "96u-adventure-farm-stage-$attempt"
+      fi
     fi
   done
   record_event "state" "no_active_combat"
