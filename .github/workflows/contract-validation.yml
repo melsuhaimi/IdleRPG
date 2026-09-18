@@ -1,0 +1,28 @@
+name: Contract validation
+on:
+  push:
+    branches: [design/idle-rpg-ui-v1]
+    paths-ignore: ['docs/**', '**/*.bak']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Compile and test
+        run: bash ./gradlew testDebugUnitTest assembleDebug --console=plain
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-validation
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/reports/tests/
+            app/build/test-results/
