@@ -105,6 +105,12 @@ class ForegroundSimulationDriver(
         }
     }
 
+    /** Drops elapsed time measured before an explicit runtime recovery action. */
+    fun resetAfterRuntimeRecovery() {
+        awaitingReadyBaseline = true
+        lastPumpAtMillis = monotonicNowMillis()
+    }
+
     /**
      * Genuine background stop. Flush active monotonic time and create the checkpoint that the
      * next onStart will consume through canonical offline resume.

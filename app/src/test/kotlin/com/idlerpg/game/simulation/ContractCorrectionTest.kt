@@ -209,4 +209,17 @@ class ContractCorrectionTest {
         )
         check(nextTick.shouldSubmitElapsed)
     }
+
+    @Test fun recoveryActionBaselineBlocksTickWhenFailureWasNotObservedByPump() {
+        val recoveryAction = foregroundPumpDecision(
+            nowMillis = 1_100L,
+            lastPumpAtMillis = 750L,
+            runtimeReady = true,
+            lifecycleBarrier = false,
+            awaitingReadyBaseline = true
+        )
+        check(!recoveryAction.shouldSubmitElapsed)
+        check(!recoveryAction.awaitingReadyBaseline)
+        check(recoveryAction.lastPumpAtMillis == 1_100L)
+    }
 }

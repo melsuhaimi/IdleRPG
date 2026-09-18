@@ -68,7 +68,10 @@ class MainActivity : ComponentActivity() {
                     onRetrySave = gameViewModel::retrySave,
                     onClearOperationError = gameViewModel::clearOperationError,
                     onContinueGame = gameViewModel::continueGame,
-                    onContinueWithSavedGame = gameViewModel::continueWithSavedGame,
+                    onContinueWithSavedGame = {
+                        foregroundSimulationDriver.resetAfterRuntimeRecovery()
+                        gameViewModel.continueWithSavedGame()
+                    },
                     onStartNewGame = gameViewModel::startNewGame,
                     onSetHeroName = gameViewModel::setHeroName,
                     onQuitGame = { finishAndRemoveTask() },
