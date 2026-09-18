@@ -7,6 +7,40 @@ import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.presentation.runtime.GameRuntimeController
 import com.idlerpg.game.presentation.runtime.RuntimeHostStatus
 
+internal data class ForegroundPumpDecision(
+    val lastPumpAtMillis: Long,
+    val awaitingReadyBaseline: Boolean,
+    val shouldSubmitElapsed: Boolean
+)
+
+internal fun foregroundPumpDecision(
+    nowMillis: Long,
+    lastPumpAtMillis: Long,
+    runtimeReady: Boolean,
+    lifecycleBarrier: Boolean,
+    awaitingReadyBaseline: Boolean
+): ForegroundPumpDecision {
+    if (!runtimeReady || lifecycleBarrier) {
+        return ForegroundPumpDecision(
+            lastPumpAtMillis = nowMillis,
+            awaitingReadyBaseline = true,
+            shouldSubmitElapsed = false
+        )
+    }
+    if (awaitingReadyBaseline) {
+        return ForegroundPumpDecision(
+            lastPumpAtMillis = nowMillis,
+            awaitingReadyBaseline = false,
+            shouldSubmitElapsed = false
+        )
+    }
+    return ForegroundPumpDecision(
+        lastPumpAtMillis = lastPumpAtMillis,
+        awaitingReadyBaseline = false,
+        shouldSubmitElapsed = true
+    )
+}
+
 /**
  * Android lifecycle boundary for foreground simulation.
  *
@@ -38,14 +72,16 @@ class ForegroundSimulationDriver(
                 runtimeController.state.value.status == RuntimeHostStatus.READY
             val lifecycleBarrier = runtimeController.backgroundResumePending()
 
-            if (!runtimeReady || lifecycleBarrier || awaitingReadyBaseline) {
-                // Never count boot/offline-resume/error time as foreground simulation. The first
-                // READY observation establishes a fresh monotonic baseline and grants nothing.
-                lastPumpAtMillis = now
-                if (runtimeReady && !lifecycleBarrier) {
-                    awaitingReadyBaseline = false
-                }
-            } else {
+            val decision = foregroundPumpDecision(
+                nowMillis = now,
+                lastPumpAtMillis = lastPumpAtMillis,
+                runtimeReady = runtimeReady,
+                lifecycleBarrier = lifecycleBarrier,
+                awaitingReadyBaseline = awaitingReadyBaseline
+            )
+            lastPumpAtMillis = decision.lastPumpAtMillis
+            awaitingReadyBaseline = decision.awaitingReadyBaseline
+            if (decision.shouldSubmitElapsed) {
                 submitElapsed(now)
             }
 

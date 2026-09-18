@@ -13,6 +13,7 @@ import com.idlerpg.game.domain.engine.CommandResult
 import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
 import com.idlerpg.game.domain.model.rebirth.RebirthState
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
+import com.idlerpg.game.ui.app.foregroundPumpDecision
 import org.junit.Test
 
 class ContractCorrectionTest {
@@ -176,5 +177,36 @@ class ContractCorrectionTest {
         check(resumed.state == startingState)
         check(resumed.events.isEmpty())
         check(resumed.summary.simulatedElapsed.millis == 0L)
+    }
+
+    @Test fun simulationFailureForcesFreshForegroundBaselineBeforeRecoveryTick() {
+        val failed = foregroundPumpDecision(
+            nowMillis = 1_000L,
+            lastPumpAtMillis = 750L,
+            runtimeReady = false,
+            lifecycleBarrier = false,
+            awaitingReadyBaseline = false
+        )
+        check(failed.awaitingReadyBaseline)
+        check(!failed.shouldSubmitElapsed)
+
+        val recovered = foregroundPumpDecision(
+            nowMillis = 1_250L,
+            lastPumpAtMillis = failed.lastPumpAtMillis,
+            runtimeReady = true,
+            lifecycleBarrier = false,
+            awaitingReadyBaseline = failed.awaitingReadyBaseline
+        )
+        check(!recovered.shouldSubmitElapsed)
+        check(!recovered.awaitingReadyBaseline)
+
+        val nextTick = foregroundPumpDecision(
+            nowMillis = 1_500L,
+            lastPumpAtMillis = recovered.lastPumpAtMillis,
+            runtimeReady = true,
+            lifecycleBarrier = false,
+            awaitingReadyBaseline = recovered.awaitingReadyBaseline
+        )
+        check(nextTick.shouldSubmitElapsed)
     }
 }
