@@ -214,7 +214,8 @@ class OfflineSessionCoordinator(
         }
         val engineResult = projectOfflineResult(
             before = before,
-            canonicalResult = canonicalResult
+            canonicalResult = canonicalResult,
+            simulatedElapsed = simulatedElapsed
         )
 
         val expectedTime = before.engine.simulationTime + simulatedElapsed
@@ -321,44 +322,113 @@ class OfflineSessionCoordinator(
     }
 
     /**
-     * Keeps only the deterministic engine cursor, Gold balance, and player XP/level from the
-     * canonical result. All other run and meta partitions remain byte-for-byte equivalent to
-     * the saved state.
+     * Keeps the deterministic engine cursor, Gold balance, and player XP/level from the
+     * canonical result. Retained gameplay state remains unchanged except that every absolute
+     * simulation timestamp is shifted with the advanced engine cursor.
      */
     private fun projectOfflineResult(
         before: GameState,
-        canonicalResult: EngineResult
+        canonicalResult: EngineResult,
+        simulatedElapsed: GameDuration
     ): EngineResult {
+        val timestampConsistentBefore = shiftRetainedSimulationTimestamps(
+            state = before,
+            elapsed = simulatedElapsed
+        )
         val simulatedGold =
             canonicalResult.state.run.economy.wallet.amountsByCurrencyId[CurrencyId.GOLD]
                 ?: GameNumber.ZERO
-        val walletAmounts = before.run.economy.wallet.amountsByCurrencyId.toMutableMap()
+        val walletAmounts = timestampConsistentBefore.run.economy.wallet.amountsByCurrencyId.toMutableMap()
         if (simulatedGold == GameNumber.ZERO) {
             walletAmounts.remove(CurrencyId.GOLD)
         } else {
             walletAmounts[CurrencyId.GOLD] = simulatedGold
         }
 
-        val projectedRun = before.run.copy(
-            economy = before.run.economy.copy(
-                wallet = before.run.economy.wallet.copy(
+        val projectedRun = timestampConsistentBefore.run.copy(
+            economy = timestampConsistentBefore.run.economy.copy(
+                wallet = timestampConsistentBefore.run.economy.wallet.copy(
                     amountsByCurrencyId = walletAmounts
                 )
             ),
-            progression = before.run.progression.copy(
+            progression = timestampConsistentBefore.run.progression.copy(
                 playerLevel = canonicalResult.state.run.progression.playerLevel,
                 featureUnlocks = canonicalResult.state.run.progression.featureUnlocks
             )
         )
-        val projectedState = before.copy(
+        val projectedState = timestampConsistentBefore.copy(
             engine = canonicalResult.state.engine,
             run = projectedRun,
-            meta = before.meta
+            meta = timestampConsistentBefore.meta
         )
 
         return canonicalResult.copy(
             state = projectedState,
             events = canonicalResult.events.filter(::isAllowedOfflineEvent)
+        )
+    }
+
+    /**
+     * Keeps retained gameplay facts aligned with the advanced deterministic simulation clock.
+     * Offline farming discards combat outcomes, but an active combat save remains resumable
+     * after the offline interval, so every stored deadline moves by the same elapsed duration.
+     */
+    private fun shiftRetainedSimulationTimestamps(
+        state: GameState,
+        elapsed: GameDuration
+    ): GameState {
+        if (elapsed == GameDuration.ZERO) return state
+
+        val combat = state.run.combat
+        val convergence = state.run.resonance.convergence
+        return state.copy(
+            run = state.run.copy(
+                combat = combat.copy(
+                    playerCombatant = combat.playerCombatant?.let {
+                        shiftCombatantSimulationTimestamps(it, elapsed)
+                    },
+                    enemies = combat.enemies.map { enemy ->
+                        enemy.copy(
+                            combatant = shiftCombatantSimulationTimestamps(
+                                enemy.combatant,
+                                elapsed
+                            )
+                        )
+                    },
+                    nextPlayerDecisionAt = combat.nextPlayerDecisionAt?.plus(elapsed),
+                    nextEnemyDecisionAt = combat.nextEnemyDecisionAt.mapValues { (_, dueAt) ->
+                        dueAt + elapsed
+                    },
+                    encounterStartedAt = combat.encounterStartedAt?.plus(elapsed)
+                ),
+                resonance = state.run.resonance.copy(
+                    convergence = convergence.copy(
+                        readyAtById = convergence.readyAtById.mapValues { (_, readyAt) ->
+                            readyAt + elapsed
+                        }
+                    )
+                )
+            )
+        )
+    }
+
+    private fun shiftCombatantSimulationTimestamps(
+        combatant: com.idlerpg.game.domain.model.combat.CombatantState,
+        elapsed: GameDuration
+    ): com.idlerpg.game.domain.model.combat.CombatantState =
+        combatant.copy(
+            cooldowns = combatant.cooldowns.copy(
+                readyAtByActionId = combatant.cooldowns.readyAtByActionId.mapValues {
+                    (_, readyAt) -> readyAt + elapsed
+                }
+            ),
+            statusEffects = combatant.statusEffects.map { status ->
+                status.copy(
+                    appliedAt = status.appliedAt + elapsed,
+                    expiresAt = status.expiresAt + elapsed,
+                    nextPeriodicTickAt = status.nextPeriodicTickAt?.plus(elapsed)
+                )
+            }
         )
     }
 
