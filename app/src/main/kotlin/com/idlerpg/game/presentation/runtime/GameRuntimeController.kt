@@ -377,7 +377,8 @@ class GameRuntimeController(
             val current = _state.value
             val failureKind = current.failure?.kind ?: return@execute
             if (failureKind != RuntimeFailureKind.INITIALIZATION &&
-                failureKind != RuntimeFailureKind.SIMULATION
+                failureKind != RuntimeFailureKind.SIMULATION &&
+                failureKind != RuntimeFailureKind.SAVE
             ) {
                 return@execute
             }
@@ -401,13 +402,17 @@ class GameRuntimeController(
                     canRetryInitialization = false
                 )
             } catch (error: Throwable) {
+                // The runtime stages the candidate session before publishing it. Report a
+                // checkpoint failure as retryable save work while retaining the old session.
                 _state.value = current.copy(
                     status = RuntimeHostStatus.ERROR,
+                    snapshot = runtime.snapshot(),
+                    saveStatus = RuntimeSaveStatus.ERROR,
                     failure = RuntimeFailure(
-                        kind = failureKind,
+                        kind = RuntimeFailureKind.SAVE,
                         diagnosticMessage = error.toDiagnosticMessage()
                     ),
-                    canRetryInitialization = failureKind == RuntimeFailureKind.INITIALIZATION
+                    canRetryInitialization = false
                 )
             }
         }

@@ -95,8 +95,12 @@ class GameRuntime(
         val coordinator = offlineSessionCoordinator
             ?: error("GameRuntime has no OfflineSessionCoordinator")
         val savedState = coordinator.loadSavedState() ?: return null
-        activeSession = sessionFactory.loadedGame(savedState)
-        autosaveCoordinator?.save(activeSession)
-        return activeSession.state()
+        val restoredSession = sessionFactory.loadedGame(savedState)
+
+        // Checkpoint the validated candidate before publishing it as the active session. If
+        // persistence fails, the caller keeps the pre-recovery session and can retry recovery.
+        autosaveCoordinator?.save(restoredSession)
+        activeSession = restoredSession
+        return restoredSession.state()
     }
 }

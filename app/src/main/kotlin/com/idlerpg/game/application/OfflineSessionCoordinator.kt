@@ -169,8 +169,45 @@ class OfflineSessionCoordinator(
         OfflineClockRollbackPolicy.CLAMP_TO_ZERO
 ) {
 
-    /** Loads the current migrated save without simulating wall time. */
-    fun loadSavedState(): GameState? = repository.load()?.gameState()
+    /**
+     * Loads the latest checkpoint for explicit recovery without claiming wall-clock progress.
+     *
+     * A legacy offline projection may have advanced the engine cursor without advancing its
+     * retained scheduling deadlines. Recovery repairs that mixed-time shape before the caller
+     * can deploy or checkpoint a new session.
+     */
+    fun loadSavedState(): GameState? =
+        repository.load()?.gameState()?.let(::coherentRecoveryState)
+
+    /**
+     * Repairs legacy checkpoints whose projected scheduled actions predate the saved engine
+     * cursor. All retained simulation timestamps move together, preserving their relative
+     * timing while making the checkpoint safe for the next foreground advance.
+     */
+    private fun coherentRecoveryState(state: GameState): GameState {
+        val currentTime = state.engine.simulationTime
+        val earliestScheduledTime = engineContext.scheduledActionSource
+            .scheduledActions(state)
+            .minOfOrNull { it.dueAt }
+            ?: return state
+
+        if (earliestScheduledTime >= currentTime) {
+            return state
+        }
+
+        val repaired = shiftRetainedSimulationTimestamps(
+            state = state,
+            elapsed = currentTime - earliestScheduledTime
+        )
+        check(
+            engineContext.scheduledActionSource
+                .scheduledActions(repaired)
+                .all { it.dueAt >= repaired.engine.simulationTime }
+        ) {
+            "Recovered save retains a scheduled action in the past"
+        }
+        return repaired
+    }
 
     /**
      * Loads and resumes the current save, or returns null when no save exists.

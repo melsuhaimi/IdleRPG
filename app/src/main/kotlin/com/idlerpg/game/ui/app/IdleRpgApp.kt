@@ -936,7 +936,8 @@ private fun RuntimeErrorSurface(
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
-                    IdleRpgRuntimeFailureKind.SIMULATION -> {
+                    IdleRpgRuntimeFailureKind.SIMULATION,
+                    IdleRpgRuntimeFailureKind.SAVE -> {
                         if (hasExistingSave) {
                             GameButton(onClick = onContinueWithSavedGame) {
                                 Text(stringResource(R.string.runtime_continue_with_saved_game))
@@ -950,7 +951,11 @@ private fun RuntimeErrorSurface(
                             )
                         } else {
                             Text(
-                                text = stringResource(R.string.runtime_simulation_fault_recovery),
+                                text = if (kind == IdleRpgRuntimeFailureKind.SAVE) {
+                                    stringResource(R.string.runtime_failure_save_message)
+                                } else {
+                                    stringResource(R.string.runtime_simulation_fault_recovery)
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
