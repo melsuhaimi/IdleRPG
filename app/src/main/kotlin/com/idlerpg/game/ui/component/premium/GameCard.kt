@@ -41,7 +41,7 @@ import com.idlerpg.game.ui.theme.ObsidianSurface1
 @Composable
 fun GameCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(14.dp),
+    shape: Shape = RoundedCornerShape(12.dp),
     colors: CardColors = CardDefaults.cardColors(
         containerColor = ObsidianSurface1.copy(alpha = 0.96f)
     ),
@@ -51,7 +51,7 @@ fun GameCard(
     ),
     border: BorderStroke? = BorderStroke(
         width = 1.dp,
-        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.44f)
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
     ),
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -72,7 +72,7 @@ fun GameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    shape: Shape = RoundedCornerShape(14.dp),
+    shape: Shape = RoundedCornerShape(12.dp),
     colors: CardColors = CardDefaults.cardColors(
         containerColor = ObsidianSurface1.copy(alpha = 0.96f)
     ),
@@ -82,7 +82,7 @@ fun GameCard(
     ),
     border: BorderStroke? = BorderStroke(
         width = 1.dp,
-        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.44f)
+        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.28f)
     ),
     accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit
@@ -119,14 +119,6 @@ private fun GameCardContent(
                         )
                     )
                 )
-        )
-        Image(
-            painter = painterResource(R.drawable.ui_panel_frame_generated),
-            contentDescription = null,
-            modifier = Modifier
-                .matchParentSize()
-                .alpha(0.10f),
-            contentScale = ContentScale.FillBounds
         )
         Column(
             modifier = Modifier.fillMaxWidth(),

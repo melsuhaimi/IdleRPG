@@ -10,7 +10,12 @@ enum class RebirthStat {
     CRITICAL_MULTIPLIER,
     EFFECT_POWER,
     HEALING_POWER,
-    LEGENDARY_FIND
+    LEGENDARY_FIND;
+
+    fun supports(pool: RebirthPointPool): Boolean = when (pool) {
+        RebirthPointPool.NORMAL -> this != LEGENDARY_FIND
+        RebirthPointPool.LEGACY -> this == LEGENDARY_FIND
+    }
 }
 
 /** Permanent point pools earned by the Rebirth system. */

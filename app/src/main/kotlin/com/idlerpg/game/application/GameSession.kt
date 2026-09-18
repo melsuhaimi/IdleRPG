@@ -32,21 +32,29 @@ class GameSession internal constructor(
 
     fun recentEvents(): List<GameEventEnvelope> = currentRecentEvents
 
-    fun applyCommand(command: GameCommand): EngineResult {
+    fun applyCommand(
+        command: GameCommand,
+        beforeCommit: (EngineResult) -> Unit = {}
+    ): EngineResult {
         val result = commandDispatcher.dispatch(
             state = currentState,
             command = command
         )
+        beforeCommit(result)
         commit(result)
         return result
     }
 
-    fun advance(duration: GameDuration): EngineResult {
+    fun advance(
+        duration: GameDuration,
+        beforeCommit: (EngineResult) -> Unit = {}
+    ): EngineResult {
         val result = SimulationEngine.advance(
             state = currentState,
             duration = duration,
             context = engineContext
         )
+        beforeCommit(result)
         commit(result)
         return result
     }

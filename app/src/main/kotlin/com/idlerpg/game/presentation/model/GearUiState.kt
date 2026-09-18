@@ -28,7 +28,9 @@ data class GearAffixUiState(
     val titleStringKey: PresentationStringKey,
     val iconAssetKey: PresentationAssetKey,
     val rolledValue: Long,
-    val isMainStat: Boolean = false
+    val isMainStat: Boolean = false,
+    val minimumRoll: Long = rolledValue,
+    val maximumRoll: Long = rolledValue
 )
 
 /**

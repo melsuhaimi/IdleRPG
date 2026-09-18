@@ -35,10 +35,18 @@ class GameRuntime(
         activeSession.recentEvents()
 
     fun dispatch(command: GameCommand): EngineResult =
-        activeSession.applyCommand(command)
+        activeSession.applyCommand(command) { result ->
+            if (result.commandResult == com.idlerpg.game.domain.engine.CommandResult.Accepted) {
+                autosaveCoordinator?.save(result.state)
+            }
+        }
 
     fun advance(duration: GameDuration): EngineResult =
-        activeSession.advance(duration)
+        activeSession.advance(duration) { result ->
+            if (result.events.any { it.event is com.idlerpg.game.domain.event.ItemDropped }) {
+                autosaveCoordinator?.save(result.state)
+            }
+        }
 
     fun startNewGame(
         randomSeed: Long = com.idlerpg.game.domain.model.EngineState.DEFAULT_RANDOM_SEED

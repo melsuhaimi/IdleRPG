@@ -26,22 +26,18 @@ object RebirthStatSystem {
      * drop rolls, or becomes a guarantee; the cap keeps long-lived Legacy investment bounded.
      */
     fun legendaryLootBonusWeight(state: RebirthState): Long {
-        val normal = state.allocation(RebirthPointPool.NORMAL, RebirthStat.LEGENDARY_FIND)
         val legacy = state.allocation(RebirthPointPool.LEGACY, RebirthStat.LEGENDARY_FIND)
         return minOf(
             MAX_LEGENDARY_FIND_WEIGHT,
             Math.multiplyExact(
-                Math.addExact(normal, legacy),
+                legacy,
                 LEGENDARY_FIND_WEIGHT_PER_POINT
             )
         )
     }
 
     fun apply(base: BaseStats, state: RebirthState): BaseStats =
-        applyPool(
-            applyPool(base, state.normalAllocations),
-            state.legacyAllocations
-        )
+        applyPool(base, state.normalAllocations)
 
     private fun applyPool(
         base: BaseStats,

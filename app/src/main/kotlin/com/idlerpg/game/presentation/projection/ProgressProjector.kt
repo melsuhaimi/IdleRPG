@@ -161,7 +161,17 @@ class ProgressProjector(
             stats = RebirthStat.values().map { stat ->
                 RebirthStatAllocationUiState(
                     stat = stat,
-                    label = stat.name.replace('_', ' '),
+                    label = when (stat) {
+                        RebirthStat.ATTACK_POWER -> "Attack"
+                        RebirthStat.MAX_HEALTH -> "Max HP"
+                        RebirthStat.ARMOR -> "Armor"
+                        RebirthStat.ACTION_SPEED -> "Speed"
+                        RebirthStat.CRITICAL_CHANCE -> "Critical Chance"
+                        RebirthStat.CRITICAL_MULTIPLIER -> "Critical Damage"
+                        RebirthStat.EFFECT_POWER -> "Skill Power"
+                        RebirthStat.HEALING_POWER -> "Healing Power"
+                        RebirthStat.LEGENDARY_FIND -> "Legendary Find"
+                    },
                     normalAllocated = rebirth.allocation(RebirthPointPool.NORMAL, stat),
                     legacyAllocated = rebirth.allocation(RebirthPointPool.LEGACY, stat)
                 )
@@ -341,7 +351,7 @@ class ProgressProjector(
                         id = "offense",
                         label = "OFFENSE",
                         valueDisplay = GameNumberFormatter.full(powerScore.offense),
-                        formula = "Expected Basic Attack damage with critical chance and multiplier"
+                        formula = "Attack × [1 + Critical Chance × (Critical Multiplier − 1)], rounded down. Chance capped at 100%; critical bonus at least zero."
                     ),
                     PowerScoreComponentUiState(
                         id = "defense",
@@ -353,19 +363,19 @@ class ProgressProjector(
                         id = "gear",
                         label = "GEAR",
                         valueDisplay = GameNumberFormatter.full(powerScore.gear),
-                        formula = "Equipped rarity + enhancement + rolled affix values"
+                        formula = "Sum per equipped item: rarity rank × ${PowerScoreSystem.RARITY_SCORE} + enhancement level × ${PowerScoreSystem.ENHANCEMENT_SCORE} + main/substat roll values. Rarity ranks: Common 0 through Legendary 4; PRI–PEN use levels 16–20."
                     ),
                     PowerScoreComponentUiState(
                         id = "skills",
                         label = "SKILLS",
                         valueDisplay = GameNumberFormatter.full(powerScore.skills),
-                        formula = "Equipped skill rank + mastery + refinement"
+                        formula = "Sum for Basic Attack and equipped skills: rank × ${PowerScoreSystem.RANK_SCORE} + mastery × ${PowerScoreSystem.MASTERY_SCORE} + refinement × ${PowerScoreSystem.REFINEMENT_SCORE}."
                     ),
                     PowerScoreComponentUiState(
                         id = "rebirth",
                         label = "REBIRTH",
                         valueDisplay = GameNumberFormatter.full(powerScore.rebirth),
-                        formula = "Allocated Normal and Legacy points"
+                        formula = "(Allocated Normal points + allocated Legacy points) × ${PowerScoreSystem.REBIRTH_POINT_SCORE}. Unspent points add zero."
                     )
                 ),
                 expectedBasicAttackDamageDisplay =

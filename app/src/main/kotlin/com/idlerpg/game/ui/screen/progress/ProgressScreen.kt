@@ -392,6 +392,7 @@ private fun ProgressHeader(destination: ProgressDestination) {
 private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
     val overview = state.overview
     var expandedStatId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showCombatStats by rememberSaveable { mutableStateOf(false) }
     PremiumPanel(
         backgroundResId = R.drawable.panel_secondary_premium,
         modifier = Modifier.fillMaxWidth(),
@@ -427,16 +428,8 @@ private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
                     )
                 }
                 GameStatusPill(
-                    text = if (overview.chronicleEligible) {
-                        stringResource(R.string.progress_chronicle_ready)
-                    } else {
-                        stringResource(R.string.progress_chronicle_not_ready)
-                    },
-                    accent = if (overview.chronicleEligible) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    text = if (state.rebirth.eligible) "Rebirth ready" else "This life",
+                    accent = ResourceGold
                 )
             }
             GameProgressBar(
@@ -452,11 +445,10 @@ private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
             NextGoalPanel(goal = overview.nextGoal)
             PowerScorePanel(score = overview.powerScore)
             GameDivider()
-            Text(
-                text = stringResource(R.string.progress_combat_readout),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.secondary
-            )
+            GameOutlinedButton(onClick = { showCombatStats = !showCombatStats }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (showCombatStats) "Hide combat stats" else "Inspect combat stats")
+            }
+            if (showCombatStats) {
             overview.statCards.chunked(if (useTwoColumns) 2 else 1).forEach { rowStats ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -476,6 +468,7 @@ private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
                         repeat(2 - rowStats.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
+            }
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -503,6 +496,7 @@ private fun OverviewCard(state: ProgressUiState, useTwoColumns: Boolean) {
 
 @Composable
 private fun PowerScorePanel(score: PowerScoreUiState) {
+    var expanded by rememberSaveable { mutableStateOf(false) }
     GameCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -518,6 +512,11 @@ private fun PowerScorePanel(score: PowerScoreUiState) {
                 style = MaterialTheme.typography.titleMedium,
                 color = com.idlerpg.game.ui.theme.ResourceGold
             )
+            GameOutlinedButton(onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (expanded) "Hide calculation" else "How is this calculated?")
+            }
+            if (expanded) {
+            Text("Total = Offense + Defense + Gear + Skills + Rebirth. This weighted score includes overlapping contributions; it does not multiply damage or gate stages.", style = MaterialTheme.typography.bodyMedium)
             score.components.forEach { component ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -532,9 +531,11 @@ private fun PowerScorePanel(score: PowerScoreUiState) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            }
             Text(
-                text = "Expected hit " + score.expectedBasicAttackDamageDisplay +
-                    " · Effective health " + score.effectiveHealthDisplay,
+                text = "Expected basic hit " + score.expectedBasicAttackDamageDisplay +
+                    " · Physical effective HP " + score.effectiveHealthDisplay +
+                    "\nPhysical EHP assumes no penetration: HP × (100 + Armor) / 100, before minimum-hit rounding.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.secondary
             )
@@ -1347,156 +1348,69 @@ private fun RebirthPanel(
     onAllocate: (RebirthPointPool, RebirthStat) -> Unit,
     onReset: (RebirthPointPool) -> Unit
 ) {
-    GameCard(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = com.idlerpg.game.ui.theme.ObsidianSurface2.copy(alpha = 0.82f)
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            com.idlerpg.game.ui.theme.ResourceGold.copy(alpha = 0.46f)
-        ),
-        accent = com.idlerpg.game.ui.theme.ResourceGold
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text("REBIRTH", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        "Level ${rebirth.currentLevel} · next life ${rebirth.nextRebirthNumber}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                GameStatusPill(
-                    text = if (rebirth.eligible) "READY" else "LOCKED",
-                    accent = if (rebirth.eligible) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    }
-                )
+    var showAllocation by rememberSaveable { mutableStateOf(false) }
+    var legacySelected by rememberSaveable { mutableStateOf(false) }
+    var confirmReset by rememberSaveable { mutableStateOf(false) }
+    val pool = if (legacySelected) RebirthPointPool.LEGACY else RebirthPointPool.NORMAL
+    val unspent = if (legacySelected) rebirth.legacyUnspent else rebirth.normalUnspent
+    val canReset = if (legacySelected) rebirth.canRespecLegacy else rebirth.canRespecNormal
+    val poolLabel = if (legacySelected) "Legacy" else "Normal"
+    GameCard(modifier = Modifier.fillMaxWidth(), accent = ResourceGold) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text("REBIRTH / LIFE ${rebirth.nextRebirthNumber}", style = MaterialTheme.typography.labelLarge, color = ResourceGold)
+            Text("Choose when to start again", style = MaterialTheme.typography.titleLarge)
+            Text("Keep your equipment and permanent growth. Reset this life for points you choose how to spend.", style = MaterialTheme.typography.bodyMedium)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GameMetricChip("GOLD COST", rebirth.goldCostDisplay, ResourceGold, Modifier.weight(1f))
+                GameMetricChip("AVAILABLE", rebirth.goldAvailableDisplay, ResonanceTeal, Modifier.weight(1f))
             }
+            Text("+${rebirth.normalPointsGranted} Normal  ·  +${rebirth.legacyPointsGranted} Legacy", style = MaterialTheme.typography.titleMedium, color = ResourceGold)
             Text(
-                "Soft reset at level ${rebirth.minimumLevel}. Level, skills, mastery, refinements, quests, stage progress, and Doctrine rules reset; gear, rolls, materials, Gold remaining after the cost, Gems, and Legacy persist.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                if (rebirth.deepLevelRewardDisplay == "—") "At level 15,000: an additional material reward, with the same point grant."
+                else "Also receive ${rebirth.deepLevelRewardDisplay}",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                GameMetricChip(
-                    label = "GOLD COST",
-                    value = rebirth.goldCostDisplay,
-                    accent = ResourceGold,
-                    modifier = Modifier.weight(1f)
-                )
-                GameMetricChip(
-                    label = "GOLD AVAILABLE",
-                    value = rebirth.goldAvailableDisplay,
-                    accent = ResonanceTeal,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Text(
-                "Next reward: ${rebirth.normalPointsGranted} Normal · ${rebirth.legacyPointsGranted} Legacy points",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            Text(
-                if (rebirth.deepLevelRewardDisplay == "—") {
-                    "Deep-push reward unlocks at level 15,000."
-                } else {
-                    "Deep-push reward: ${rebirth.deepLevelRewardDisplay}"
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            GameButton(
-                onClick = onRequestRebirth,
-                enabled = rebirth.eligible,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (rebirth.eligible) "Review Rebirth" else "Reach level ${rebirth.minimumLevel} and afford the cost")
+            if (!rebirth.eligible) Text("Requires level ${rebirth.minimumLevel}, enough Gold, and leaving combat.", style = MaterialTheme.typography.bodyMedium)
+            GameButton(onClick = onRequestRebirth, enabled = rebirth.eligible, modifier = Modifier.fillMaxWidth()) {
+                Text("Review reset and rewards")
             }
             GameDivider()
-            Text(
-                "PERMANENT STAT ALLOCATION",
-                style = MaterialTheme.typography.labelLarge,
-                color = ResourceGold
-            )
-            Text(
-                "Normal ${rebirth.normalUnspent} unspent · Legacy ${rebirth.legacyUnspent} unspent",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            rebirth.stats.forEach { stat ->
-                Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(stat.label, style = MaterialTheme.typography.labelMedium)
-                        Text(
-                            "Normal ${stat.normalAllocated} · Legacy ${stat.legacyAllocated}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        GameOutlinedButton(
-                            onClick = { onAllocate(RebirthPointPool.NORMAL, stat.stat) },
-                            enabled = rebirth.normalUnspent > 0L,
-                            modifier = Modifier.weight(1f),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)
-                        ) {
-                            Text("+1 Normal", maxLines = 1)
-                        }
-                        GameOutlinedButton(
-                            onClick = { onAllocate(RebirthPointPool.LEGACY, stat.stat) },
-                            enabled = rebirth.legacyUnspent > 0L,
-                            modifier = Modifier.weight(1f),
-                            contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)
-                        ) {
-                            Text("+1 Legacy", maxLines = 1)
-                        }
-                    }
-                }
+            GameOutlinedButton(onClick = { showAllocation = !showAllocation }, modifier = Modifier.fillMaxWidth()) {
+                Text(if (showAllocation) "Close permanent growth" else "Allocate points · ${rebirth.normalUnspent} Normal / ${rebirth.legacyUnspent} Legacy")
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                GameOutlinedButton(
-                    onClick = { onReset(RebirthPointPool.NORMAL) },
-                    enabled = rebirth.canRespecNormal,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)
-                ) {
-                    Text("Reset Normal (${rebirth.respecGemCostDisplay} Gems)", maxLines = 1)
+            if (showAllocation) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.idlerpg.game.ui.component.premium.GameChoiceButton(selected = !legacySelected, onClick = { legacySelected = false }, modifier = Modifier.weight(1f)) { Text("Normal") }
+                    com.idlerpg.game.ui.component.premium.GameChoiceButton(selected = legacySelected, onClick = { legacySelected = true }, modifier = Modifier.weight(1f)) { Text("Legacy") }
                 }
-                GameOutlinedButton(
-                    onClick = { onReset(RebirthPointPool.LEGACY) },
-                    enabled = rebirth.canRespecLegacy,
-                    modifier = Modifier.weight(1f),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(4.dp)
-                ) {
-                    Text("Reset Legacy (${rebirth.respecGemCostDisplay} Gems)", maxLines = 1)
+                Text("$unspent $poolLabel points available", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (legacySelected) "Improves Legendary loot weighting. The additive bonus is capped; drops are never guaranteed."
+                    else "Permanent combat growth. These investments survive Rebirth.",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                rebirth.stats.filter { it.stat.supports(pool) }.forEach { stat ->
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            Text(stat.label, style = MaterialTheme.typography.titleMedium)
+                            Text("${if (legacySelected) stat.legacyAllocated else stat.normalAllocated} invested", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        GameOutlinedButton(onClick = { onAllocate(pool, stat.stat) }, enabled = unspent > 0) { Text("+1") }
+                    }
+                }
+                GameOutlinedButton(onClick = { confirmReset = true }, enabled = canReset, modifier = Modifier.fillMaxWidth()) {
+                    Text("Reset $poolLabel allocation · ${rebirth.respecGemCostDisplay} Gems")
                 }
             }
         }
     }
+    if (confirmReset) AlertDialog(
+        onDismissRequest = { confirmReset = false },
+        title = { Text("Reset $poolLabel allocation?") },
+        text = { Text("Spend ${rebirth.respecGemCostDisplay} Gems to return the invested $poolLabel points to this pool. You can allocate them again.") },
+        confirmButton = { GameButton(onClick = { confirmReset = false; onReset(pool) }, enabled = canReset) { Text("Spend Gems and reset") } },
+        dismissButton = { TextButton(onClick = { confirmReset = false }) { Text("Cancel") } }
+    )
 }
 
 @Composable
@@ -1519,13 +1433,13 @@ private fun RebirthConfirmationDialog(
                 Text("You receive ${rebirth.normalPointsGranted} Normal and ${rebirth.legacyPointsGranted} Legacy points.")
                 Text(
                     if (rebirth.deepLevelRewardDisplay == "—") {
-                        "Reach level 15,000 for the modest deep-push reward; that reward replaces the point grant."
+                        "Reach level 15,000 for the modest deep-push reward; that reward is in addition to the usual point grant."
                     } else {
                         "Deep-push reward: ${rebirth.deepLevelRewardDisplay}"
                     }
                 )
                 Text("Reset now: level and XP, normal stat purchases, skill unlocks/loadout/rank/mastery/evolution/refinement, Doctrine rules, quests, and stage progress.")
-                Text("Keep: gear and enhancement rolls, refinement materials, inventory, Gems, existing Rebirth allocations, Legacy, and lifetime statistics.")
+                Text("Keep: Gold remaining after the cost, gear and enhancement levels, main and substat rolls, all materials, inventory and overflow, Gems, Rebirth count and allocations, Legacy allocations, lifetime statistics and permanent achievements.")
                 Text("Rebirth is optional. You can continue leveling beyond the threshold when you are not ready.")
             }
         },

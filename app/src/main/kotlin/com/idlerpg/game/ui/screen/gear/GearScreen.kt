@@ -20,6 +20,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -154,8 +158,8 @@ fun GearScreen(
         focusItemId?.let { selectedItemValue = it.value }
     }
     LaunchedEffect(state.ownedItems, state.overflowItems) {
-        if (selectedItemValue == null || allItems.none { it.instanceId.value == selectedItemValue }) {
-            selectedItemValue = state.ownedItems.firstOrNull()?.instanceId?.value
+        if (selectedItemValue != null && allItems.none { it.instanceId.value == selectedItemValue }) {
+            selectedItemValue = null
         }
         selectedItemIds = selectedItemIds.intersect(state.ownedItems.map { it.instanceId }.toSet())
         selectedOverflowIds = selectedOverflowIds.intersect(state.overflowItems.map { it.instanceId }.toSet())
@@ -176,6 +180,32 @@ fun GearScreen(
         selectedOverflowIds = selectedOverflowIds.intersect(visibleOverflowIds)
     }
 
+
+    selectedItem?.let { inspected ->
+        Dialog(onDismissRequest = { selectedItemValue = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            Column(
+                Modifier.padding(12.dp).widthIn(max = 640.dp).fillMaxWidth()
+                    .heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.88f).dp)
+                    .clip(RoundedCornerShape(16.dp)).background(ObsidianSurface1)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("EQUIPMENT", Modifier.weight(1f), style = MaterialTheme.typography.labelLarge, color = ResourceGold)
+                    TextButton(onClick = { selectedItemValue = null }) { Text("Close") }
+                }
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+                    FocusedGearSheet(
+                        item = inspected,
+                        equippedComparison = equippedComparison,
+                        onIntent = onIntent,
+                        onRequestSalvage = {
+                            pendingDestructiveAction = if (inspected.overflow) PendingGearDestructiveAction.SalvageOverflow(inspected.instanceId)
+                            else PendingGearDestructiveAction.SalvageOwned(inspected.instanceId)
+                        }
+                    )
+                }
+            }
+        }
+    }
 
     if (confirmBulkSalvage) {
         AlertDialog(
@@ -263,11 +293,6 @@ fun GearScreen(
     }
 
     val listState = rememberLazyListState()
-    LaunchedEffect(focusItemId, visibleItems.size, storageIsStash, state.feedback != null) {
-        val focusedIndex = focusItemId?.let { id -> visibleItems.indexOfFirst { it.instanceId == id } } ?: -1
-        val fixedItemPrefix = 6 + if (state.feedback != null) 1 else 0
-        if (focusedIndex >= 0) listState.animateScrollToItem(fixedItemPrefix + focusedIndex)
-    }
 
     LazyColumn(
         state = listState,
@@ -290,24 +315,6 @@ fun GearScreen(
                 onSelectItem = { selectedItemValue = it }
             )
         }
-        item(key = "gear-focus") {
-            if (selectedItem != null) {
-                FocusedGearSheet(
-                    item = selectedItem,
-                    equippedComparison = equippedComparison,
-                    onIntent = onIntent,
-                    onRequestSalvage = {
-                        pendingDestructiveAction = if (selectedItem.overflow) {
-                            PendingGearDestructiveAction.SalvageOverflow(selectedItem.instanceId)
-                        } else {
-                            PendingGearDestructiveAction.SalvageOwned(selectedItem.instanceId)
-                        }
-                    }
-                )
-            } else {
-                EmptyFocusPanel()
-            }
-        }
         item(key = "gear-capacity") {
             CapacityPanel(state = state, onExpand = { onIntent(GearUiIntent.ExpandCapacity) })
         }
@@ -320,12 +327,12 @@ fun GearScreen(
                 onSelectInventory = {
                     storageTabId = "inventory"
                     selectedOverflowIds = emptySet()
-                    selectedItemValue = visibleOwnedItems.firstOrNull()?.instanceId?.value
+                    selectedItemValue = null
                 },
                 onSelectStash = {
                     storageTabId = "stash"
                     selectedItemIds = emptySet()
-                    selectedItemValue = visibleOverflowItems.firstOrNull()?.instanceId?.value
+                    selectedItemValue = null
                 }
             )
         }
@@ -814,8 +821,25 @@ private fun FactualEffectGroup(title: String, effects: List<GearEffectUiState>, 
 
 @Composable
 private fun AffixList(item: GearItemUiState, onIntent: (GearUiIntent) -> Unit) {
+    var pendingAffixId by remember(item.instanceId) { mutableStateOf<ContentId?>(null) }
     val affixes = listOfNotNull(item.mainStat) + item.affixes
     if (affixes.isEmpty()) return
+    affixes.firstOrNull { it.affixId == pendingAffixId }?.let { affix ->
+        AlertDialog(
+            onDismissRequest = { pendingAffixId = null },
+            title = { Text("Reroll ${stringResource(affix.titleStringKey.stringResId())}?") },
+            text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Current roll: ${affix.rolledValue}")
+                Text("Possible result: ${affix.minimumRoll}–${affix.maximumRoll}. The new value can be lower, equal, or higher.")
+                Text("Cost: ${item.refinementMaterialCostDisplay} refinement material. Enhancement and other stat lines stay unchanged.")
+            } },
+            confirmButton = { GameButton(onClick = {
+                pendingAffixId = null
+                onIntent(GearUiIntent.Refine(item.instanceId, affix.affixId))
+            }, enabled = item.canRefine) { Text("Spend material and reroll") } },
+            dismissButton = { TextButton(onClick = { pendingAffixId = null }) { Text("Cancel") } }
+        )
+    }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
             stringResource(R.string.gear_affixes_title),
@@ -855,7 +879,7 @@ private fun AffixList(item: GearItemUiState, onIntent: (GearUiIntent) -> Unit) {
                 if (item.canRefine) {
                     GameOutlinedButton(
                         onClick = {
-                            onIntent(GearUiIntent.Refine(item.instanceId, affix.affixId))
+                            pendingAffixId = affix.affixId
                         },
                         modifier = Modifier.widthIn(min = 72.dp),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)

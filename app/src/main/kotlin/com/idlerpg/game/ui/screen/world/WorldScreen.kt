@@ -311,8 +311,8 @@ private fun RegionCard(
 ) {
     var selectedEncounterId by rememberSaveable(region.regionId.value) { mutableStateOf<String?>(null) }
     var showThreatIntel by rememberSaveable(region.regionId.value) { mutableStateOf(false) }
-    val selectedEncounter = region.encounters.firstOrNull { it.status == WorldEncounterStatusUi.ACTIVE }
-        ?: region.encounters.firstOrNull { it.encounterId.value == selectedEncounterId }
+    val selectedEncounter = region.encounters.firstOrNull { it.encounterId.value == selectedEncounterId }
+        ?: region.encounters.firstOrNull { it.status == WorldEncounterStatusUi.ACTIVE }
         ?: region.encounters.firstOrNull { it.canStart }
         ?: region.encounters.lastOrNull { it.cleared }
     PremiumPanel(

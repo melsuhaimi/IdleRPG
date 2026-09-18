@@ -83,15 +83,12 @@ object RebirthSystem : GameCommandHandler {
         val nextNumber = Math.addExact(state.meta.rebirth.completedRebirths, 1L)
         val currentLevel = state.run.progression.playerLevel.level
         val deepLevelReward = deepLevelRewardForLevel(currentLevel)
-        val normal = if (deepLevelReward > GameNumber.ZERO) {
-            0L
-        } else {
-            normalPointsForRebirth(nextNumber)
-        }
+        val normal = normalPointsForRebirth(nextNumber)
         return RebirthPreview(
             currentLevel = currentLevel,
             minimumLevel = MINIMUM_REBIRTH_LEVEL,
-            eligible = currentLevel >= MINIMUM_REBIRTH_LEVEL &&
+            eligible = state.run.combat.status == CombatStatus.IDLE &&
+                currentLevel >= MINIMUM_REBIRTH_LEVEL &&
                 TransactionSystem.canAfford(
                     state.run.economy,
                     CurrencyId.GOLD,
@@ -100,11 +97,7 @@ object RebirthSystem : GameCommandHandler {
             nextRebirthNumber = nextNumber,
             goldCost = goldCostForRebirth(nextNumber),
             normalPointsGranted = normal,
-            legacyPointsGranted = if (deepLevelReward > GameNumber.ZERO) {
-                0L
-            } else {
-                legacyPointsForRebirth(nextNumber)
-            },
+            legacyPointsGranted = legacyPointsForRebirth(nextNumber),
             deepLevelReward = deepLevelReward,
             goldAvailable = TransactionSystem.balance(state.run.economy, CurrencyId.GOLD)
         )
@@ -148,16 +141,8 @@ object RebirthSystem : GameCommandHandler {
         ) ?: return rejected(CommandRejectionCode.INSUFFICIENT_RESOURCE)
 
         val deepLevelReward = deepLevelRewardForLevel(level)
-        val normalPoints = if (deepLevelReward > GameNumber.ZERO) {
-            0L
-        } else {
-            normalPointsForRebirth(nextNumber)
-        }
-        val legacyPoints = if (deepLevelReward > GameNumber.ZERO) {
-            0L
-        } else {
-            legacyPointsForRebirth(nextNumber)
-        }
+        val normalPoints = normalPointsForRebirth(nextNumber)
+        val legacyPoints = legacyPointsForRebirth(nextNumber)
         val nextRebirth = state.meta.rebirth.copy(
             completedRebirths = nextNumber,
             normalPointsEarned = Math.addExact(
@@ -253,6 +238,9 @@ object RebirthSystem : GameCommandHandler {
         command: AllocateRebirthPoints
     ): CommandHandlingResult {
         val rebirth = state.meta.rebirth
+        if (!command.stat.supports(command.pool)) {
+            return rejected(CommandRejectionCode.INVALID_ARGUMENT)
+        }
         if (rebirth.completedRebirths == 0L) {
             return rejected(CommandRejectionCode.NOT_READY)
         }

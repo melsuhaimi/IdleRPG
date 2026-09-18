@@ -32,15 +32,15 @@ object LootDeterminismTest {
         check(first.size < 300)
 
         val rebirth = RebirthState(
-            normalPointsEarned = 25L,
-            normalAllocations = mapOf(RebirthStat.LEGENDARY_FIND to 25L)
+            legacyPointsEarned = 25L,
+            legacyAllocations = mapOf(RebirthStat.LEGENDARY_FIND to 25L)
         )
         check(
             RebirthStatSystem.legendaryLootBonusWeight(rebirth) == 25L
         )
         val capped = RebirthState(
-            normalPointsEarned = 900L,
-            normalAllocations = mapOf(RebirthStat.LEGENDARY_FIND to 900L)
+            legacyPointsEarned = 900L,
+            legacyAllocations = mapOf(RebirthStat.LEGENDARY_FIND to 900L)
         )
         check(
             RebirthStatSystem.legendaryLootBonusWeight(capped) ==

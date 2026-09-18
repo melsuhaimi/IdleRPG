@@ -229,8 +229,9 @@ object GearEnhancementSystem : GameCommandHandler {
             ?: return rejected(CommandRejectionCode.INVALID_ARGUMENT, command.itemInstanceId)
         val definition = context.contentRegistry.affixOrNull(command.affixId)
             ?: return rejected(CommandRejectionCode.UNKNOWN_CONTENT, command.affixId)
+        val minimum = com.idlerpg.game.domain.system.loot.GearRollQuality.minimum(definition, item.rarity)
         val rangeSize = Math.addExact(
-            Math.subtractExact(definition.maximumRollValue, definition.minimumRollValue),
+            Math.subtractExact(definition.maximumRollValue, minimum),
             1L
         )
         val materialCost = GameNumber.ONE
@@ -240,7 +241,7 @@ object GearEnhancementSystem : GameCommandHandler {
             materialCost
         ) ?: return rejected(CommandRejectionCode.INSUFFICIENT_RESOURCE, command.itemInstanceId)
         val resultingValue = Math.addExact(
-            definition.minimumRollValue,
+            minimum,
             context.random.nextLong(rangeSize)
         )
         val updatedRoll = target.copy(value = resultingValue)

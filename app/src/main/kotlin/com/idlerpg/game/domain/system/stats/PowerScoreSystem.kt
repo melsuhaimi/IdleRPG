@@ -50,9 +50,13 @@ object PowerScoreSystem {
         )
         val maximumHealth = DerivedStatSystem.maximumHealth(state, contentRegistry)
         val armor = DerivedStatSystem.armor(state, contentRegistry)
-        val effectiveHealth = maximumHealth + (armor * 10L)
+        val effectiveHealth = GameNumber.fromBigInteger(
+            maximumHealth.toBigInteger()
+                .multiply(CombatMath.DEFAULT_ARMOR_SCALE.toBigInteger().add(armor.toBigInteger()))
+                .divide(CombatMath.DEFAULT_ARMOR_SCALE.toBigInteger())
+        )
         val offense = expectedDamage
-        val defense = effectiveHealth
+        val defense = maximumHealth + (armor * 10L)
         val gear = equippedGearScore(state)
         val skills = skillScore(state, contentRegistry)
         val rebirth = rebirthScore(state)
@@ -110,10 +114,10 @@ object PowerScoreSystem {
         return GameNumber.of((normal + legacy) * REBIRTH_POINT_SCORE)
     }
 
-    private const val RARITY_SCORE: Long = 1_000L
-    private const val ENHANCEMENT_SCORE: Long = 250L
-    private const val RANK_SCORE: Long = 100L
-    private const val MASTERY_SCORE: Long = 25L
-    private const val REFINEMENT_SCORE: Long = 100L
-    private const val REBIRTH_POINT_SCORE: Long = 100L
+    const val RARITY_SCORE: Long = 1_000L
+    const val ENHANCEMENT_SCORE: Long = 250L
+    const val RANK_SCORE: Long = 100L
+    const val MASTERY_SCORE: Long = 25L
+    const val REFINEMENT_SCORE: Long = 100L
+    const val REBIRTH_POINT_SCORE: Long = 100L
 }

@@ -111,6 +111,11 @@ fun SkillLoadoutScreen(
         )
 
         LoadoutHeaderRail(state = state)
+        Text(
+            "Basic Attack is always available. These slots define your skill build; Auto Battle follows your rules.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary
+        )
 
         state.feedback?.let { feedback ->
             LoadoutFeedbackCard(state = state, feedback = feedback)

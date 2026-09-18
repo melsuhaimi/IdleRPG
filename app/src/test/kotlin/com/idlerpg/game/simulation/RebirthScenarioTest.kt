@@ -36,7 +36,7 @@ object RebirthScenarioTest {
         rejectedDuringActiveCombatIsAtomic()
         resetPreservesLongLivedStateAndClearsRunProgression()
         allocationAndGemRespecArePersistent()
-        deepRebirthSkipsPointsAndGrantsModestReward()
+        deepRebirthRetainsPointsAndGrantsModestReward()
     }
 
     private fun rejectedBeforeThresholdIsAtomic() {
@@ -66,6 +66,7 @@ object RebirthScenarioTest {
         )
         runtime.replaceLoadedState(active)
         val before = runtime.state()
+        check(!RebirthSystem.preview(before).eligible)
         val result = runtime.dispatch(PerformRebirth())
         check((result.commandResult as CommandResult.Rejected).reason.code == CommandRejectionCode.INVALID_STATE)
         check(runtime.state() == before)
@@ -160,7 +161,7 @@ object RebirthScenarioTest {
         check(after.run.adaptation == preservedAdaptation)
     }
 
-    private fun deepRebirthSkipsPointsAndGrantsModestReward() {
+    private fun deepRebirthRetainsPointsAndGrantsModestReward() {
         val runtime = SimulationTestSupport.runtime(seed = 9_005L)
         val initial = runtime.state()
         runtime.replaceLoadedState(
@@ -184,8 +185,8 @@ object RebirthScenarioTest {
         SimulationTestSupport.checkAccepted(result)
         val after = runtime.state()
         check(after.meta.rebirth.completedRebirths == 1L)
-        check(after.meta.rebirth.normalPointsEarned == 0L)
-        check(after.meta.rebirth.legacyPointsEarned == 0L)
+        check(after.meta.rebirth.normalPointsEarned == 100L)
+        check(after.meta.rebirth.legacyPointsEarned == 20L)
         check(
             after.run.economy.wallet.amountsByCurrencyId[CurrencyId.ENHANCEMENT_MATERIAL] ==
                 GameNumber.of(RebirthSystem.DEEP_REBIRTH_ENHANCEMENT_MATERIAL_REWARD)

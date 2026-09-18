@@ -169,7 +169,9 @@ class GearProjector(
                     affixId = rolled.affixId,
                     titleStringKey = affixPresentation.titleStringKey,
                     iconAssetKey = affixPresentation.iconAssetKey,
-                    rolledValue = rolled.value
+                    rolledValue = rolled.value,
+                    minimumRoll = com.idlerpg.game.domain.system.loot.GearRollQuality.minimum(contentRegistry.affix(rolled.affixId), item.rarity),
+                    maximumRoll = contentRegistry.affix(rolled.affixId).maximumRollValue
                 )
             },
             effects = equipmentDefinition?.activeEffects(item.rarity).orEmpty().map(::projectEffect),
@@ -187,7 +189,9 @@ class GearProjector(
                     titleStringKey = affixPresentation.titleStringKey,
                     iconAssetKey = affixPresentation.iconAssetKey,
                     rolledValue = rolled.value,
-                    isMainStat = true
+                    isMainStat = true,
+                    minimumRoll = com.idlerpg.game.domain.system.loot.GearRollQuality.minimum(contentRegistry.affix(rolled.affixId), item.rarity),
+                    maximumRoll = contentRegistry.affix(rolled.affixId).maximumRollValue
                 )
             },
             enhancementLevel = item.enhancementLevel,

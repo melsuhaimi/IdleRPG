@@ -15,14 +15,15 @@ object AffixRollSystem {
     fun rollMainStat(
         itemDefinition: ItemDefinition,
         contentRegistry: ContentRegistry,
-        random: GameRandom
+        random: GameRandom,
+        rarity: Rarity = Rarity.COMMON
     ): RolledAffix? {
         val candidates = candidatesFor(itemDefinition, contentRegistry)
         if (candidates.isEmpty()) return null
         val selected = chooseAffix(candidates, random)
         return RolledAffix(
             affixId = selected.id,
-            value = rollValue(selected, random)
+            value = rollValue(selected, random, rarity)
         )
     }
 
@@ -48,7 +49,7 @@ object AffixRollSystem {
             candidates.remove(selected)
             result += RolledAffix(
                 affixId = selected.id,
-                value = rollValue(selected, random)
+                value = rollValue(selected, random, rarity)
             )
         }
         return result.sortedBy { it.affixId }
@@ -95,17 +96,19 @@ object AffixRollSystem {
 
     private fun rollValue(
         definition: AffixDefinition,
-        random: GameRandom
+        random: GameRandom,
+        rarity: Rarity
     ): Long {
+        val minimum = GearRollQuality.minimum(definition, rarity)
         val rangeSize = Math.addExact(
             Math.subtractExact(
                 definition.maximumRollValue,
-                definition.minimumRollValue
+                minimum
             ),
             1L
         )
         return Math.addExact(
-            definition.minimumRollValue,
+            minimum,
             random.nextLong(rangeSize)
         )
     }

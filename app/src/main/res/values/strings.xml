@@ -33,7 +33,7 @@
     <string name="runtime_simulation_time">Expedition status</string>
     <string name="runtime_gold">Gold</string>
     <string name="runtime_player_level">Level</string>
-    <string name="runtime_echo">Legacy</string>
+    <string name="runtime_echo">Echo Shards</string>
     <string name="runtime_inventory">Inventory</string>
     <string name="runtime_overflow">Stash</string>
     <string name="save_status_idle">Saved</string>
@@ -69,8 +69,8 @@
     <string name="progress_quests">Quests</string>
     <string name="progress_achievements">Achievements</string>
     <string name="progress_discoveries">Codex</string>
-    <string name="progress_echo">Legacy</string>
-    <string name="progress_chronicle">Prestige</string>
+    <string name="progress_echo">Echo Shards</string>
+    <string name="progress_chronicle">Chronicle</string>
 
     <string name="hud_no_region">No area selected</string>
     <string name="hud_expedition_label">ADVENTURE</string>
@@ -125,13 +125,13 @@
     <string name="doctrine_when_format">When %1$s</string>
     <string name="doctrine_rule_arrow">→</string>
 
-    <string name="progress_overview_notice">Track your level, XP, unlocked skills, Legacy, and Prestige progress.</string>
+    <string name="progress_overview_notice">Track your level, XP, unlocked skills, Legacy, and Chronicle progress.</string>
     <string name="progress_mastery_notice">Use each element to earn Skill Mastery and unlock stronger skills.</string>
     <string name="progress_quests_notice">Complete objectives and claim your rewards.</string>
     <string name="progress_achievements_notice">Complete challenges and claim permanent rewards.</string>
     <string name="progress_discoveries_notice">Record rare finds from your adventures.</string>
-    <string name="progress_echo_notice">Spend Legacy on permanent upgrades and useful bonuses.</string>
-    <string name="progress_chronicle_notice">Prestige resets your run and grants permanent rewards.</string>
+    <string name="progress_echo_notice">Spend Echo Shards on permanent upgrades and useful bonuses.</string>
+    <string name="progress_chronicle_notice">Chronicle resets your run and grants permanent rewards.</string>
 
     <string name="content_world">Adventure</string>
     <string name="world_sector_outer_fracture">Outer Ruins</string>
@@ -192,7 +192,7 @@
     <string name="content_fracture_mail">Fracture Mail</string>
     <string name="content_seers_helm">Seer\'s Helm</string>
     <string name="content_riftstep_boots">Riftstep Boots</string>
-    <string name="content_echo_sigil">Legacy Sigil</string>
+    <string name="content_echo_sigil">Echo Sigil</string>
     <string name="content_voidglass_edge">Voidglass Edge</string>
     <string name="content_warden_plate">Warden Plate</string>
     <string name="content_starfall_visor">Starfall Visor</string>
@@ -218,8 +218,8 @@
     <string name="content_first_hunt_objective">Defeat Slimes</string>
     <string name="content_forged_flame_achievement">Forged Flame</string>
     <string name="content_forged_flame_achievement_objective">Trigger Forged Flame</string>
-    <string name="content_chronicle_collapse">Prestige</string>
-    <string name="content_first_collapse">First Prestige</string>
+    <string name="content_chronicle_collapse">Chronicle</string>
+    <string name="content_first_collapse">First Chronicle</string>
     <string name="content_adaptation_forecast">Enemy Preview</string>
     <string name="content_affinity_might">ATK</string>
     <string name="content_affinity_tempo">SPD</string>
@@ -276,8 +276,8 @@
     <string name="content_desc_quest_objective">Quest objective progress.</string>
     <string name="content_desc_achievement">Achievement and reward.</string>
     <string name="content_desc_achievement_objective">Achievement objective progress.</string>
-    <string name="content_desc_chronicle">Prestige requirements, reward, and reset details.</string>
-    <string name="content_desc_milestone">Permanent Prestige milestone.</string>
+    <string name="content_desc_chronicle">Chronicle requirements, reward, and reset details.</string>
+    <string name="content_desc_milestone">Permanent Chronicle milestone.</string>
     <string name="content_desc_echo_offer">Permanent upgrade and cost.</string>
     <string name="content_desc_discovery">Codex entry.</string>
     <string name="content_desc_affinity">Element shown with color, icon, and label.</string>
@@ -477,7 +477,7 @@
     <string name="rejection_cooldown_active">That skill is still on cooldown.</string>
     <string name="rejection_not_ready">That reward or action is not ready yet.</string>
     <string name="rejection_already_claimed">That reward was already claimed.</string>
-    <string name="rejection_stale_preview">The Prestige preview is out of date. Open it again before confirming.</string>
+    <string name="rejection_stale_preview">The Chronicle preview is out of date. Open it again before confirming.</string>
     <string name="rejection_unsupported">This action is not supported by the current game content.</string>
 
 
@@ -814,7 +814,7 @@
     <!-- Progression + Manual Quest/Achievement Claims -->
     <string name="progress_projection_unavailable">Growth data is temporarily unavailable.</string>
     <string name="progress_fui08_subtitle">Fight for XP, upgrade your stats with Gold, and claim completed objectives.</string>
-    <string name="progress_fui09_subtitle">Spend Gold to improve stats. Level up to unlock skills. Skill Mastery unlocks advanced choices. Prestige grants permanent bonuses.</string>
+    <string name="progress_fui09_subtitle">Spend Gold to improve stats. Level up to unlock skills. Skill Mastery unlocks advanced choices. Chronicle grants permanent bonuses.</string>
     <string name="progress_core_growth_title">Stat Upgrades</string>
     <string name="progress_core_growth_subtitle">Spend Gold to improve your stats. Milestone levels 10 and 20 give extra power.</string>
     <string name="progress_core_growth_gold">Gold: %1$s</string>
@@ -830,26 +830,26 @@
     <string name="progress_player_level_format">LV %1$d</string>
     <string name="progress_player_xp_format">XP %1$s / %2$s</string>
     <string name="progress_player_max_level">Max Level reached</string>
-    <string name="progress_chronicle_ready">Prestige ready</string>
-    <string name="progress_chronicle_not_ready">Prestige not ready</string>
-    <string name="progress_echo_available_format">Legacy available: %1$s</string>
-    <string name="progress_echo_spent_format">Legacy spent: %1$s</string>
+    <string name="progress_chronicle_ready">Chronicle ready</string>
+    <string name="progress_chronicle_not_ready">Chronicle not ready</string>
+    <string name="progress_echo_available_format">Echo Shards available: %1$s</string>
+    <string name="progress_echo_spent_format">Echo Shards spent: %1$s</string>
     <string name="progress_echo_spent_label">Spent</string>
     <string name="progress_unlocked_features">Unlocked features</string>
     <string name="progress_unlocked_features_subtitle">Features unlocked in this run.</string>
     <string name="progress_no_unlocked_features">No features unlocked yet.</string>
     <string name="progress_mastery_title">Skill Mastery</string>
-    <string name="progress_mastery_subtitle">Use each element to deal damage or restore missing HP and earn Mastery. Mastery unlocks skills; it is not a direct damage bonus and resets when you Prestige.</string>
+    <string name="progress_mastery_subtitle">Use each element to deal damage or restore missing HP and earn Mastery. Mastery unlocks skills; it is not a direct damage bonus and resets when you Chronicle.</string>
     <string name="progress_mastery_level_format">Level %1$d / %2$s</string>
     <string name="progress_mastery_total_xp_format">Total Mastery XP: %1$s</string>
     <string name="progress_mastery_to_next_format">%1$s XP until next level</string>
     <string name="progress_mastery_maximum">Max Mastery reached</string>
     <string name="progress_unbounded">∞</string>
     <string name="progress_quests_title">Quests</string>
-    <string name="progress_quests_subtitle">Complete objectives to earn rewards. Repeating quests keep building rewards while you play or stay away.</string>
+    <string name="progress_quests_subtitle">Complete objectives to earn rewards. Quest progress is earned during active play. Offline rewards are Gold and XP only.</string>
     <string name="progress_no_quests">No quests are available yet.</string>
     <string name="progress_achievements_title">Achievements</string>
-    <string name="progress_achievements_subtitle">Complete challenges to earn rewards that survive Prestige.</string>
+    <string name="progress_achievements_subtitle">Complete challenges to earn rewards that survive Chronicle.</string>
     <string name="progress_no_achievements">No achievements are available yet.</string>
     <string name="progress_locked">Locked</string>
     <string name="progress_in_progress">In progress</string>
@@ -863,7 +863,7 @@
     <string name="progress_reward_xp_format">%1$s XP</string>
     <string name="progress_reward_loot_tables_format">%1$d loot item(s)</string>
     <string name="progress_quest_claim_counts_format">Rewards claimed: %1$s / %2$s</string>
-    <string name="progress_achievement_persistent">Survives Prestige.</string>
+    <string name="progress_achievement_persistent">Survives Chronicle.</string>
     <string name="progress_feedback_quest_ready">Quest complete. Reward is ready to claim.</string>
     <string name="progress_feedback_quest_claimed">Quest reward claimed.</string>
     <string name="progress_feedback_achievement_ready">Achievement complete. Reward is ready to claim.</string>
@@ -888,47 +888,47 @@
 
     <!-- Chronicle + Echo Shop + Discoveries -->
     <string name="progress_discoveries_title">Codex</string>
-    <string name="progress_discoveries_subtitle">Rare finds that survive Prestige.</string>
+    <string name="progress_discoveries_subtitle">Rare finds that survive Chronicle.</string>
     <string name="progress_no_discoveries">No Codex entries yet.</string>
     <string name="progress_discovery_convergence">Combo find</string>
     <string name="progress_discovery_mutation">Enemy modifier</string>
     <string name="progress_discovery_enemy">Enemy info</string>
     <string name="progress_discovery_hidden">Hidden entry</string>
 
-    <string name="progress_echo_balance_title">Legacy</string>
-    <string name="progress_echo_lifetime_format">Legacy earned: %1$s</string>
-    <string name="progress_echo_balance_note">Legacy survives Prestige. Spend it here on permanent upgrades.</string>
+    <string name="progress_echo_balance_title">Echo Shards</string>
+    <string name="progress_echo_lifetime_format">Echo Shards earned: %1$s</string>
+    <string name="progress_echo_balance_note">Echo Shards survive Chronicle. Spend it here on permanent upgrades.</string>
     <string name="progress_echo_shop_title">Permanent Upgrades</string>
-    <string name="progress_echo_shop_subtitle">Defeat the Warden and use Prestige to earn Legacy. Spend it on upgrades that survive every reset.</string>
+    <string name="progress_echo_shop_subtitle">Defeat the Warden and use Chronicle to earn Echo Shards. Spend it on upgrades that survive every reset.</string>
     <string name="progress_no_echo_offers">No permanent upgrades available yet.</string>
-    <string name="progress_echo_cost_format">%1$s Legacy</string>
+    <string name="progress_echo_cost_format">%1$s Echo Shards</string>
     <string name="progress_echo_effects_title">Permanent bonuses</string>
     <string name="progress_echo_effect_reveal_format">Reveal %1$s</string>
     <string name="progress_echo_effect_unlock_format">Unlock %1$s</string>
     <string name="progress_echo_affordable">Affordable</string>
-    <string name="progress_echo_insufficient">Not enough Legacy</string>
+    <string name="progress_echo_insufficient">Not enough Echo Shards</string>
     <string name="progress_echo_purchased">Purchased</string>
     <string name="progress_echo_prerequisite_locked">Prerequisite locked</string>
     <string name="progress_echo_purchase">Buy upgrade</string>
 
-    <string name="progress_chronicle_number_format">Prestige %1$d</string>
-    <string name="progress_chronicle_completed_format">Prestiges completed: %1$s</string>
+    <string name="progress_chronicle_number_format">Chronicle %1$d</string>
+    <string name="progress_chronicle_completed_format">Chronicles completed: %1$s</string>
     <string name="progress_chronicle_clears_format">Normal clears: %1$s / %2$s</string>
-    <string name="progress_chronicle_reward_format">Current Prestige reward: %1$s Legacy</string>
-    <string name="progress_chronicle_reset_warning">Defeat the Warden and meet the clear requirement to earn Legacy. Prestige resets Level, Gold, gear, skills, Mastery, and stage progress. Legacy upgrades, Codex entries, achievements, and records remain. Preview before confirming.</string>
-    <string name="progress_chronicle_preview">Preview Prestige</string>
+    <string name="progress_chronicle_reward_format">Current Chronicle reward: %1$s Echo Shards</string>
+    <string name="progress_chronicle_reset_warning">Defeat the Warden and meet the clear requirement to earn Echo Shards. Chronicle resets Level, Gold, gear, skills, Mastery, and stage progress. Echo Shards upgrades, Codex entries, achievements, and records remain. Preview before confirming.</string>
+    <string name="progress_chronicle_preview">Preview Chronicle</string>
     <string name="progress_chronicle_preview_pending">Reading preview…</string>
-    <string name="progress_chronicle_milestones">Prestige Milestones</string>
-    <string name="progress_chronicle_milestones_subtitle">Milestones that survive each Prestige.</string>
-    <string name="progress_chronicle_preview_title_format">Prestige %1$d?</string>
+    <string name="progress_chronicle_milestones">Chronicle Milestones</string>
+    <string name="progress_chronicle_milestones_subtitle">Milestones that survive each Chronicle.</string>
+    <string name="progress_chronicle_preview_title_format">Chronicle %1$d?</string>
     <string name="progress_chronicle_preview_rule_format">Reset rules v%1$d</string>
     <string name="progress_chronicle_preview_clears_format">Clear progress: %1$s / %2$s normal clears</string>
-    <string name="progress_chronicle_preview_grant_format">WILL GRANT: %1$s Legacy</string>
+    <string name="progress_chronicle_preview_grant_format">WILL GRANT: %1$s Echo Shards</string>
     <string name="progress_chronicle_will_reset">WILL RESET</string>
     <string name="progress_chronicle_will_persist">WILL REMAIN</string>
-    <string name="progress_chronicle_preview_pause_note">Battle pauses while this Prestige preview is open.</string>
-    <string name="progress_chronicle_commit">Prestige</string>
-    <string name="progress_chronicle_committing">Applying Prestige…</string>
+    <string name="progress_chronicle_preview_pause_note">Battle pauses while this Chronicle preview is open.</string>
+    <string name="progress_chronicle_commit">Chronicle</string>
+    <string name="progress_chronicle_committing">Applying Chronicle…</string>
     <string name="progress_chronicle_cancel">Cancel</string>
 
     <string name="progress_chronicle_scope_player">Your run</string>
@@ -944,19 +944,19 @@
     <string name="progress_chronicle_scope_run_statistics">Run statistics</string>
 
     <string name="progress_chronicle_persist_engine">Adventure state, event order, and item history</string>
-    <string name="progress_chronicle_persist_chronicle">Prestige history and milestones</string>
-    <string name="progress_chronicle_persist_echoes">Legacy and purchased upgrades</string>
+    <string name="progress_chronicle_persist_chronicle">Chronicle history and milestones</string>
+    <string name="progress_chronicle_persist_echoes">Echo Shards and purchased upgrades</string>
     <string name="progress_chronicle_persist_discoveries">Codex entries</string>
     <string name="progress_chronicle_persist_features">Permanent feature unlocks</string>
     <string name="progress_chronicle_persist_achievements">Achievements and reward-claimed state</string>
     <string name="progress_chronicle_persist_lifetime">Lifetime statistics</string>
 
-    <string name="progress_feedback_echo_purchased">Permanent upgrade purchased for %1$s Legacy.</string>
+    <string name="progress_feedback_echo_purchased">Permanent upgrade purchased for %1$s Echo Shards.</string>
     <string name="progress_feedback_discovery_unlocked">Codex entry unlocked.</string>
-    <string name="progress_feedback_echo_granted">%1$s Legacy gained.</string>
-    <string name="progress_feedback_chronicle_preview">Prestige preview ready.</string>
-    <string name="progress_feedback_chronicle_collapsed">Prestige complete. Prestige %1$s is now active.</string>
-    <string name="progress_rejection_stale_preview">The Prestige preview is out of date. Open a new preview; nothing was reset.</string>
+    <string name="progress_feedback_echo_granted">%1$s Echo Shards gained.</string>
+    <string name="progress_feedback_chronicle_preview">Chronicle preview ready.</string>
+    <string name="progress_feedback_chronicle_collapsed">Chronicle complete. Chronicle %1$s is now active.</string>
+    <string name="progress_rejection_stale_preview">The Chronicle preview is out of date. Open a new preview; nothing was reset.</string>
 
 
     <!-- Offline UX + Lifecycle Hardening -->
@@ -1006,7 +1006,7 @@
     <string name="offline_insight_caster">Controllers disrupted your rhythm. Add an Auto Battle rule for dangerous support enemies.</string>
     <string name="offline_insight_swarm">Enemy numbers overwhelmed this build. Equip area damage before pushing again.</string>
     <string name="offline_insight_survival">This build could not survive the stage. Raise HP, defense, or healing.</string>
-    <string name="offline_canonical_note">Rewards earned while you were away. Review them before continuing.</string>
+    <string name="offline_canonical_note">Up to 12 hours of Gold and XP from your latest cleared non-boss stage. No gear or stage progress is awarded offline.</string>
     <string name="offline_continue">Continue</string>
 
 <!-- Assets, motion, accessibility -->
@@ -1110,12 +1110,12 @@
     <string name="progress_mastery_other_requirements">These are Mastery requirements. See Skills for Level and other element requirements.</string>
     <string name="progress_boss_required">Still required: defeat %1$s</string>
     <string name="progress_boss_complete">Defeated: %1$s</string>
-    <string name="content_desc_echo_training">Gain up to 5 levels in this stat track now. Every future Prestige starts this track at Level 5, saving the first 200 Gold. Buy once; choose the stats that support your build.</string>
-    <string name="content_desc_legacy_acceleration">Every future Prestige begins with 100 Gold for your next build. This purchase does not reset your current run.</string>
-    <string name="content_desc_doctrine_memory">Adds one Auto Battle rule slot. Build longer plans for survival, targeting, and combo timing. This upgrade remains after Prestige.</string>
-    <string name="content_desc_expedition_memory">Future Prestiges begin with Stages 1–3 cleared and ready to farm. Push starts at Stage 4 so you can skip the opening battles.</string>
+    <string name="content_desc_echo_training">Gain up to 5 levels in this stat track now. Every future Chronicle starts this track at Level 5, saving the first 200 Gold. Buy once; choose the stats that support your build.</string>
+    <string name="content_desc_legacy_acceleration">Every future Chronicle begins with 100 Gold for your next build. This purchase does not reset your current run.</string>
+    <string name="content_desc_doctrine_memory">Adds one Auto Battle rule slot. Build longer plans for survival, targeting, and combo timing. This upgrade remains after Chronicle.</string>
+    <string name="content_desc_expedition_memory">Future Chronicles begin with Stages 1–3 cleared and ready to farm. Push starts at Stage 4 so you can skip the opening battles.</string>
     <string name="content_desc_adaptation_forecast">Permanently reveals future enemy modifiers.</string>
-    <string name="progress_legacy_training_start">Legacy: starts at Level %1$d after Prestige</string>
+    <string name="progress_legacy_training_start">Echo Shards: starts at Level %1$d after Chronicle</string>
     <string name="world_adaptation_simple">Enemies learn from your attacks. Repeated elements face more resistance and earn better rewards. Change your skills to let unused resistance fade.</string>
     <string name="world_adaptation_how">How does Enemy Resistance work?</string>
     <string name="world_adaptation_less">Hide explanation</string>

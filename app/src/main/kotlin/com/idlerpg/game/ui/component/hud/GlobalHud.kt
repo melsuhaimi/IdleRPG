@@ -75,7 +75,7 @@ fun GlobalHud(
         shape = RoundedCornerShape(GameDimensions.LargePanelRadius),
         color = ObsidianSurface1.copy(alpha = 0.93f),
         border = BorderStroke(1.dp, ObsidianOutline.copy(alpha = 0.82f)),
-        shadowElevation = 8.dp,
+        shadowElevation = 0.dp,
         tonalElevation = 0.dp
     ) {
         Box(
@@ -88,7 +88,7 @@ fun GlobalHud(
                 contentDescription = null,
                 modifier = Modifier
                     .matchParentSize()
-                    .alpha(0.38f),
+                    .alpha(0.12f),
                 contentScale = ContentScale.Crop
             )
             Box(
@@ -109,7 +109,7 @@ fun GlobalHud(
                 contentDescription = null,
                 modifier = Modifier
                     .matchParentSize()
-                    .alpha(0.38f),
+                    .alpha(0.12f),
                 contentScale = ContentScale.FillBounds
             )
             Column(modifier = Modifier.fillMaxWidth()) {
@@ -150,7 +150,7 @@ fun GlobalHud(
                         Text(
                             text = stringResource(R.string.hud_expedition_label).uppercase(),
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = if (compact) 8.sp else 9.sp,
+                                fontSize = 10.sp,
                                 letterSpacing = 0.9.sp
                             ),
                             color = ResourceGold,
@@ -168,16 +168,7 @@ fun GlobalHud(
                             maxLines = 1,
                             overflow = TextOverflow.Clip
                         )
-                        Text(
-                            text = stringResource(R.string.hud_adventure_tagline),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = if (compact) 7.sp else 8.sp,
-                                letterSpacing = 0.7.sp
-                            ),
-                            color = ResonanceTeal.copy(alpha = 0.86f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Clip
-                        )
+
                     }
 
                     Surface(
@@ -269,7 +260,7 @@ fun GlobalHud(
                             Text(
                                 text = stringResource(R.string.hud_xp).uppercase(),
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = if (compact) 8.sp else 9.sp,
+                                    fontSize = 10.sp,
                                     letterSpacing = 0.45.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -363,7 +354,7 @@ private fun HudResourceValue(
                 Text(
                     text = label.uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = if (compact) 7.sp else 8.sp,
+                        fontSize = 10.sp,
                         letterSpacing = if (compact) 0.55.sp else 0.7.sp
                     ),
                     color = accent,

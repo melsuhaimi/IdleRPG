@@ -222,7 +222,11 @@ object DamageSystem {
             }
         }
         val armor = com.idlerpg.game.domain.system.stats.DerivedStatSystem.armor(state, contentRegistry)
-        val requested = CombatMath.mitigate(pressuredDamage, armor, armorPenetration)
+        val requested = if (damageKindId == DamageKind.PHYSICAL.id) {
+            CombatMath.mitigate(pressuredDamage, armor, armorPenetration)
+        } else {
+            pressuredDamage
+        }
         val applied = if (requested > target.currentHealth) target.currentHealth else requested
         val updatedCombatant = target.copy(currentHealth = target.currentHealth - applied)
         val updatedState = state.copy(

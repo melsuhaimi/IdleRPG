@@ -70,7 +70,8 @@ object LootSystem {
             val mainStat = AffixRollSystem.rollMainStat(
                 itemDefinition,
                 context.contentRegistry,
-                context.random
+                context.random,
+                selection.rarity
             )
             val affixes = AffixRollSystem.roll(
                 itemDefinition = itemDefinition,

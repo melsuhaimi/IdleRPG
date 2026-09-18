@@ -41,7 +41,7 @@ object SaveV10FailstackMigrationTest {
             )
         )
 
-        check(migrated.schemaVersion == SaveVersion.V10)
+        check(migrated.schemaVersion == SaveVersion.CURRENT)
         check(migrated.gameState() == current)
         check(
             migrated.gameState().run.inventory.item(itemId)?.enhancementFailstack == 0

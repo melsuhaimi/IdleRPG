@@ -183,7 +183,7 @@ private fun GameNavigationItem(
 
     Box(
         modifier = modifier
-            .heightIn(min = 44.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(
                 if (selected) {
@@ -271,7 +271,7 @@ fun ProgressDestinationBar(
             val label = stringResource(destination.labelResId)
             Box(
                 modifier = Modifier
-                    .heightIn(min = 44.dp)
+                    .heightIn(min = 48.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (isSelected) {

@@ -182,6 +182,7 @@ fun BattleScreen(
                 .fillMaxSize()
                 .padding(horizontal = if (compact) 6.dp else 10.dp, vertical = 6.dp)
         ) {
+            val scrollEncounter = maxHeight < 420.dp || LocalDensity.current.fontScale >= 1.3f
             val lowerContentMinimumHeight = if (compact) 72.dp else 88.dp
             val battleHeaderMinimumHeight = if (compact) {
                 GameDimensions.BattleHeaderMinHeight
@@ -194,7 +195,7 @@ fun BattleScreen(
             val minimumBattleHeight = (if (compact) 260.dp else 300.dp)
                 .coerceAtMost(battleBudget)
             val preferredBattleHeight = maxHeight * if (compact) 0.54f else 0.58f
-            val battlefieldHeight = preferredBattleHeight.coerceIn(
+            val battlefieldHeight = if (scrollEncounter) 300.dp else preferredBattleHeight.coerceIn(
                 minimumBattleHeight,
                 battleBudget
             )
@@ -202,7 +203,9 @@ fun BattleScreen(
                 reward.reward != null && reward.token !in consumedRewardTokens
             }
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().then(
+                    if (scrollEncounter) Modifier.verticalScroll(rememberScrollState()) else Modifier
+                ),
                 verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
             ) {
                 BattleHeader(
@@ -239,8 +242,7 @@ fun BattleScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
+                        .then(if (scrollEncounter) Modifier else Modifier.weight(1f).verticalScroll(rememberScrollState())),
                     verticalArrangement = Arrangement.spacedBy(if (compact) 5.dp else 6.dp)
                 ) {
                     BattleCombatStatsRail(

@@ -48,6 +48,9 @@ data class SaveVersion(
         /** Bounded per-item enhancement failstack state. */
         val V10: SaveVersion = SaveVersion(10)
 
-        val CURRENT: SaveVersion = V10
+        /** Separates Normal combat and Legacy acquisition allocations. */
+        val V11: SaveVersion = SaveVersion(11)
+
+        val CURRENT: SaveVersion = V11
     }
 }
