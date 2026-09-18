@@ -68,7 +68,28 @@ object ActiveOfflineEquivalenceTest {
                 startingState.run.combat.encounterStartedAt?.plus(elapsed)
         )
         check(offlineResult.state.run.player == startingState.run.player)
-        check(offlineResult.state.run.resonance == startingState.run.resonance)
+        check(
+            offlineResult.state.run.resonance.chargeByAffinityId ==
+                startingState.run.resonance.chargeByAffinityId
+        )
+        check(
+            offlineResult.state.run.resonance.sequence ==
+                startingState.run.resonance.sequence
+        )
+        check(
+            offlineResult.state.run.resonance.convergence.readyAtById ==
+                startingState.run.resonance.convergence.readyAtById.mapValues { (_, readyAt) ->
+                    readyAt + elapsed
+                }
+        )
+        check(
+            offlineResult.state.run.resonance.convergence.triggerCountById ==
+                startingState.run.resonance.convergence.triggerCountById
+        )
+        check(
+            offlineResult.state.run.resonance.convergence.encounterTriggerCountById ==
+                startingState.run.resonance.convergence.encounterTriggerCountById
+        )
         check(offlineResult.state.run.doctrine == startingState.run.doctrine)
         check(offlineResult.state.run.adaptation == startingState.run.adaptation)
         check(offlineResult.state.run.quests == startingState.run.quests)

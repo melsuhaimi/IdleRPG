@@ -23,6 +23,7 @@ import com.idlerpg.game.domain.event.GameEventEnvelope
 import com.idlerpg.game.domain.event.PlayerLeveledUp
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.model.combat.CombatState
+import CombatantState
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
 import com.idlerpg.game.domain.model.world.WorldAutomationMode
@@ -338,7 +339,8 @@ class OfflineSessionCoordinator(
         val simulatedGold =
             canonicalResult.state.run.economy.wallet.amountsByCurrencyId[CurrencyId.GOLD]
                 ?: GameNumber.ZERO
-        val walletAmounts = timestampConsistentBefore.run.economy.wallet.amountsByCurrencyId.toMutableMap()
+        val walletAmounts = timestampConsistentBefore.run.economy.wallet
+            .amountsByCurrencyId.toMutableMap()
         if (simulatedGold == GameNumber.ZERO) {
             walletAmounts.remove(CurrencyId.GOLD)
         } else {
@@ -413,9 +415,9 @@ class OfflineSessionCoordinator(
     }
 
     private fun shiftCombatantSimulationTimestamps(
-        combatant: com.idlerpg.game.domain.model.combat.CombatantState,
+        combatant: CombatantState,
         elapsed: GameDuration
-    ): com.idlerpg.game.domain.model.combat.CombatantState =
+    ): CombatantState =
         combatant.copy(
             cooldowns = combatant.cooldowns.copy(
                 readyAtByActionId = combatant.cooldowns.readyAtByActionId.mapValues {
