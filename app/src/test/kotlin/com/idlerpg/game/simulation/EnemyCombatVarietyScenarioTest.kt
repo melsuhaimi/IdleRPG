@@ -33,7 +33,7 @@ import com.idlerpg.game.domain.model.world.EncounterStatus
 object EnemyCombatVarietyScenarioTest {
     fun run() {
         enemyAttackDeadlineIsExact()
-        armorAndPenetrationAreAuthoritative()
+        elementalDamageBypassesPhysicalArmor()
         encounterOrderIsLockedAndCycles()
         defeatGrantsNothingAndRetryRecovers()
         legacyV2ActiveCombatReconstructsEnemyDeadline()
@@ -63,7 +63,7 @@ object EnemyCombatVarietyScenarioTest {
         check(runtime.state().run.player.currentHealth == GameNumber.of(94L))
     }
 
-    private fun armorAndPenetrationAreAuthoritative() {
+    private fun elementalDamageBypassesPhysicalArmor() {
         val runtime = SimulationTestSupport.runtime(seed = 902L)
         SimulationTestSupport.checkAccepted(
             runtime.dispatch(SelectRegion(DefaultGameContent.TRAINING_HOLLOW_REGION_ID))
@@ -115,10 +115,9 @@ object EnemyCombatVarietyScenarioTest {
             .filterIsInstance<DamageDealt>()
             .single { it.sourceInstanceId == enemyId && it.targetInstanceId == playerId }
 
-        // Tier two scales Cinder Bolt to 10 damage; 2 penetration leaves 3 armor.
-        // Diminishing mitigation with armorScale 100 floors 1000 / 103 to 9.
-        check(incoming.amount == GameNumber.of(9L))
-        check(runtime.state().run.player.currentHealth == GameNumber.of(91L))
+        // Tier two scales Cinder Bolt to 10 elemental damage; Armor only mitigates physical hits.
+        check(incoming.amount == GameNumber.of(10L))
+        check(runtime.state().run.player.currentHealth == GameNumber.of(90L))
     }
 
     private fun encounterOrderIsLockedAndCycles() {

@@ -78,8 +78,8 @@
     <string name="hud_level_format">Lv. %1$d</string>
     <string name="hud_gold">Gold</string>
     <string name="hud_gold_value_format">Gold %1$s</string>
-    <string name="hud_echo">Lumen</string>
-    <string name="hud_legacy_value_format">Lumen %1$s</string>
+    <string name="hud_echo">Echo</string>
+    <string name="hud_legacy_value_format">Echo Shards %1$s</string>
     <string name="hud_inventory">Inventory</string>
     <string name="hud_gear_value_format">Inventory %1$d / %2$d</string>
     <string name="hud_xp">XP</string>
