@@ -354,6 +354,10 @@ class IdleRpgViewModel(
         runtimeController.continueGame()
     }
 
+    fun continueWithSavedGame() {
+        runtimeController.continueWithSavedGame()
+    }
+
     fun startNewGame(heroName: String) {
         runtimeController.startNewGameWithName(heroName)
     }

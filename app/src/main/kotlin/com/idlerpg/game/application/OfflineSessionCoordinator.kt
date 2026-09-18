@@ -168,6 +168,9 @@ class OfflineSessionCoordinator(
         OfflineClockRollbackPolicy.CLAMP_TO_ZERO
 ) {
 
+    /** Loads the current migrated save without simulating wall time. */
+    fun loadSavedState(): GameState? = repository.load()?.gameState()
+
     /**
      * Loads and resumes the current save, or returns null when no save exists.
      *
@@ -193,10 +196,22 @@ class OfflineSessionCoordinator(
         val simulatedElapsed = if (durationClamped) maximum else elapsed.requested
         val farmTarget = latestEligibleFarmEncounter(before)
 
-        val canonicalResult = advanceExact(
-            state = offlineSimulationState(before, farmTarget),
-            duration = simulatedElapsed
-        )
+        // A return in the same wall-clock millisecond must not execute a scheduled action at
+        // the current simulation time. There is no elapsed offline interval to claim, so keep
+        // the saved state and event cursor untouched.
+        val canonicalResult = if (simulatedElapsed == GameDuration.ZERO) {
+            EngineResult(
+                state = before,
+                events = emptyList(),
+                commandResult = null,
+                diagnostics = EngineDiagnostics(processedScheduledActions = 0)
+            )
+        } else {
+            advanceExact(
+                state = offlineSimulationState(before, farmTarget),
+                duration = simulatedElapsed
+            )
+        }
         val engineResult = projectOfflineResult(
             before = before,
             canonicalResult = canonicalResult

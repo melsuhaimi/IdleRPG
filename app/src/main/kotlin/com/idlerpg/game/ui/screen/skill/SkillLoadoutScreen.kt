@@ -36,7 +36,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.idlerpg.game.R
 import com.idlerpg.game.core.id.ContentId
 import com.idlerpg.game.domain.command.CommandRejectionCode
@@ -96,8 +98,8 @@ fun SkillLoadoutScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         GameSectionHeader(
             eyebrow = stringResource(R.string.nav_gear),
@@ -112,8 +114,8 @@ fun SkillLoadoutScreen(
 
         LoadoutHeaderRail(state = state)
         Text(
-            "Basic Attack is always available. These slots define your skill build; Auto Battle follows your rules.",
-            style = MaterialTheme.typography.bodyMedium,
+            "Basic Attack is always available. Slots define the build; Auto Battle follows your rules.",
+            style = MaterialTheme.typography.bodySmall,
             color = TextSecondary
         )
 
@@ -181,8 +183,8 @@ private fun LoadoutSlotsPane(
         border = BorderStroke(1.dp, PanelHighlight.copy(alpha = 0.52f))
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -195,7 +197,7 @@ private fun LoadoutSlotsPane(
                 ) {
                     Text(
                         text = stringResource(R.string.loadout_equipped_slots),
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.titleMedium
                     )
                     Text(
                         text = stringResource(R.string.loadout_active_slots_hint),
@@ -261,7 +263,7 @@ private fun LoadoutSlotTile(
     GameCard(
         onClick = onClick,
         enabled = skill != null,
-        modifier = Modifier.width(104.dp),
+        modifier = Modifier.width(84.dp),
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(
             if (selected) 2.dp else 1.dp,
@@ -275,7 +277,7 @@ private fun LoadoutSlotTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(6.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -283,7 +285,7 @@ private fun LoadoutSlotTile(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .aspectRatio(1.05f)
                         .clip(RoundedCornerShape(9.dp))
                         .background(ObsidianSurface3.copy(alpha = 0.44f)),
                     contentAlignment = Alignment.Center
@@ -299,7 +301,7 @@ private fun LoadoutSlotTile(
                     skill.skillId,
                     Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
+                        .aspectRatio(1.05f)
                         .clip(RoundedCornerShape(9.dp))
                         .semantics {
                             contentDescription = skillTitle.orEmpty()
@@ -307,7 +309,7 @@ private fun LoadoutSlotTile(
                 )
                 Text(
                     text = stringResource(skill.titleStringKey.stringResId()),
-                    style = MaterialTheme.typography.labelSmall,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                     maxLines = 2,
                     overflow = TextOverflow.Clip
                 )
@@ -335,8 +337,8 @@ private fun SkillFocusPane(
         accent = ArcaneViolet
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                 val compact = maxWidth < 360.dp
@@ -351,7 +353,7 @@ private fun SkillFocusPane(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.Top
                     ) {
-                        FocusArtwork(skill, Modifier.width(132.dp))
+                        FocusArtwork(skill, Modifier.width(108.dp))
                         SkillSummary(skill, Modifier.weight(1f))
                     }
                 }
@@ -420,7 +422,7 @@ private fun SkillSummary(skill: SkillLoadoutSkillUiState, modifier: Modifier = M
     ) {
         Text(
             text = stringResource(skill.titleStringKey.stringResId()),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             maxLines = 2,
             overflow = TextOverflow.Clip
         )
@@ -514,28 +516,44 @@ private fun SkillInvestmentActions(
             color = TextSecondary
         )
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             GameOutlinedButton(
                 onClick = { onIntent(SkillLoadoutUiIntent.UpgradeRank(skill.skillId)) },
-                enabled = skill.canUpgradeRank
+                enabled = skill.canUpgradeRank,
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Rank +1 · " + skill.rankUpgradeCostDisplay, maxLines = 1)
+                Text(
+                    "Rank +1\n" + skill.rankUpgradeCostDisplay,
+                    maxLines = 2,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center
+                )
             }
             GameOutlinedButton(
                 onClick = { onIntent(SkillLoadoutUiIntent.UpgradeMastery(skill.skillId)) },
-                enabled = skill.canUpgradeMastery
+                enabled = skill.canUpgradeMastery,
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Mastery +1 · " + skill.masteryUpgradeCostDisplay, maxLines = 1)
+                Text(
+                    "Mastery +1\n" + skill.masteryUpgradeCostDisplay,
+                    maxLines = 2,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center
+                )
             }
             GameOutlinedButton(
                 onClick = { onIntent(SkillLoadoutUiIntent.Refine(skill.skillId)) },
-                enabled = skill.canRefine
+                enabled = skill.canRefine,
+                modifier = Modifier.weight(1f)
             ) {
-                Text("Refine +1 · " + skill.refinementCostDisplay, maxLines = 1)
+                Text(
+                    "Refine +1\n" + skill.refinementCostDisplay,
+                    maxLines = 2,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -628,11 +646,21 @@ private fun AvailableSkillsPane(
     onSelect: (ContentId) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        GameSectionHeader(
-            eyebrow = stringResource(R.string.loadout_title),
-            title = stringResource(R.string.loadout_available_skills),
-            subtitle = stringResource(R.string.loadout_capacity_format, state.equippedCount, state.capacity)
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = stringResource(R.string.loadout_available_skills),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = stringResource(
+                    R.string.loadout_capacity_format,
+                    state.equippedCount,
+                    state.capacity
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary
+            )
+        }
         if (state.availableSkills.isEmpty()) {
             EmptySkillsPane()
         } else {
@@ -660,7 +688,7 @@ private fun AvailableSkillRow(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 76.dp),
+            .heightIn(min = 68.dp),
         border = BorderStroke(
             if (selected) 2.dp else 1.dp,
             if (selected) ResourceGold else ObsidianOutline.copy(alpha = 0.48f)
@@ -673,14 +701,14 @@ private fun AvailableSkillRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             SkillArtwork(
                 skill.skillId,
                 Modifier
-                    .size(58.dp)
+                    .size(48.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .semantics {
                         contentDescription = skillTitle
@@ -692,7 +720,7 @@ private fun AvailableSkillRow(
             ) {
                 Text(
                     text = stringResource(skill.titleStringKey.stringResId()),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Clip
                 )
@@ -700,7 +728,7 @@ private fun AvailableSkillRow(
                     text = stringResource(skill.descriptionStringKey.stringResId()),
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Clip
                 )
                 Text(

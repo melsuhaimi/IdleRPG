@@ -83,4 +83,20 @@ class GameRuntime(
         activeSession = sessionFactory.loadedGame(result.engineResult.state)
         return result
     }
+
+    /**
+     * Restores the last migrated save without claiming its unresolved offline interval.
+     *
+     * This is an explicit recovery action for a failed resume/simulation. The restored state
+     * becomes the active session and a fresh checkpoint advances the wall-clock anchor so the
+     * same failing interval is not retried forever on the next launch.
+     */
+    fun restoreSavedGameWithoutOfflineProgress(): GameState? {
+        val coordinator = offlineSessionCoordinator
+            ?: error("GameRuntime has no OfflineSessionCoordinator")
+        val savedState = coordinator.loadSavedState() ?: return null
+        activeSession = sessionFactory.loadedGame(savedState)
+        autosaveCoordinator?.save(activeSession)
+        return activeSession.state()
+    }
 }

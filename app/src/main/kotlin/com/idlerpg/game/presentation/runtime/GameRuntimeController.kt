@@ -364,6 +364,55 @@ class GameRuntimeController(
         }
     }
 
+    /**
+     * Opens the last confirmed save after a failed initial load or foreground simulation.
+     *
+     * The failed wall-clock interval is intentionally discarded by the runtime recovery
+     * method. This is preferable to repeatedly showing the same error or replacing the save
+     * with a new game. Background-resume failures keep their existing checkpoint-specific
+     * action in [continueWithoutBackgroundProgress].
+     */
+    fun continueWithSavedGame() {
+        executor.execute {
+            val current = _state.value
+            val failureKind = current.failure?.kind ?: return@execute
+            if (failureKind != RuntimeFailureKind.INITIALIZATION &&
+                failureKind != RuntimeFailureKind.SIMULATION
+            ) {
+                return@execute
+            }
+
+            try {
+                val restored = runtime.restoreSavedGameWithoutOfflineProgress()
+                    ?: error("Save disappeared during recovery")
+                _state.value = current.copy(
+                    status = if (restored.meta.heroName.isNullOrBlank()) {
+                        RuntimeHostStatus.NAME_REQUIRED
+                    } else if (failureKind == RuntimeFailureKind.INITIALIZATION) {
+                        RuntimeHostStatus.MENU
+                    } else {
+                        RuntimeHostStatus.READY
+                    },
+                    snapshot = restored,
+                    hasExistingSave = true,
+                    offlineSummary = null,
+                    saveStatus = RuntimeSaveStatus.SAVED,
+                    failure = null,
+                    canRetryInitialization = false
+                )
+            } catch (error: Throwable) {
+                _state.value = current.copy(
+                    status = RuntimeHostStatus.ERROR,
+                    failure = RuntimeFailure(
+                        kind = failureKind,
+                        diagnosticMessage = error.toDiagnosticMessage()
+                    ),
+                    canRetryInitialization = failureKind == RuntimeFailureKind.INITIALIZATION
+                )
+            }
+        }
+    }
+
     /** Completes the naming gate for a migrated/legacy save without replacing it. */
     fun setHeroName(name: String) {
         executor.execute {
@@ -490,6 +539,7 @@ class GameRuntimeController(
             _state.value = GameRuntimeHostState(
                 status = RuntimeHostStatus.ERROR,
                 snapshot = null,
+                hasExistingSave = repository.exists(),
                 failure = RuntimeFailure(
                     kind = RuntimeFailureKind.INITIALIZATION,
                     diagnosticMessage = error.toDiagnosticMessage()

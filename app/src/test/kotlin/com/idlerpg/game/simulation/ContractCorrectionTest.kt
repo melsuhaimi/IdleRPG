@@ -3,6 +3,7 @@ package com.idlerpg.game.simulation
 import com.idlerpg.game.application.AutosaveCoordinator
 import com.idlerpg.game.application.GameRuntime
 import com.idlerpg.game.application.GameSessionFactory
+import com.idlerpg.game.application.OfflineSessionCoordinator
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.time.GameClock
 import com.idlerpg.game.data.local.SaveEnvelope
@@ -153,5 +154,27 @@ class ContractCorrectionTest {
         check(result.isFailure)
         check(runtime.state() == before)
         check(runtime.recentEvents().isEmpty())
+    }
+
+    @Test fun zeroElapsedResumeDoesNotExecuteAReadyEncounter() {
+        val factory = GameSessionFactory.default()
+        val startingState = factory.newPlayableGame(77L).state()
+        val savedAt = 5_000L
+        val repository = SimulationTestSupport.InMemoryGameRepository(
+            SaveEnvelope.create(
+                gameState = startingState,
+                contentVersion = SimulationTestSupport.CONTENT_VERSION,
+                writtenAtEpochMs = savedAt
+            )
+        )
+        val resumed = OfflineSessionCoordinator(
+            repository = repository,
+            clock = SimulationTestSupport.MutableClock(savedAt),
+            engineContext = factory.createEngineContext()
+        ).resume() ?: error("Expected saved game")
+
+        check(resumed.state == startingState)
+        check(resumed.events.isEmpty())
+        check(resumed.summary.simulatedElapsed.millis == 0L)
     }
 }

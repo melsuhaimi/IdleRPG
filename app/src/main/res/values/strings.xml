@@ -974,6 +974,8 @@
     <string name="runtime_retry_load">Retry</string>
     <string name="runtime_retry_offline_resume">Retry offline progress</string>
     <string name="runtime_retry_save">Retry Save</string>
+    <string name="runtime_continue_with_saved_game">Open last confirmed save</string>
+    <string name="runtime_continue_with_saved_game_warning">This skips the failed offline interval and opens your last confirmed save.</string>
     <string name="runtime_continue_without_offline">Continue without offline progress</string>
     <string name="runtime_continue_without_offline_warning">This only discards the unresolved offline interval. Your save is safe.</string>
     <string name="runtime_simulation_fault_recovery">The expedition paused after an error. Relaunch to resume your last save.</string>

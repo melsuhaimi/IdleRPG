@@ -96,6 +96,7 @@ fun IdleRpgApp(
     onRetrySave: () -> Unit,
     onClearOperationError: () -> Unit,
     onContinueGame: () -> Unit = {},
+    onContinueWithSavedGame: () -> Unit = {},
     onStartNewGame: (String) -> Unit = {},
     onSetHeroName: (String) -> Unit = {},
     onQuitGame: () -> Unit = {},
@@ -177,10 +178,12 @@ fun IdleRpgApp(
             )
             IdleRpgAppStatus.ERROR -> RuntimeErrorSurface(
                 failure = state.runtimeFailure,
+                hasExistingSave = state.hasExistingSave,
                 canRetryInitialization = state.canRetryInitialization,
                 onRetryInitialization = onRetryInitialization,
                 onRetryBackgroundResume = onRetryBackgroundResume,
-                onContinueWithoutBackgroundProgress = onContinueWithoutBackgroundProgress
+                onContinueWithoutBackgroundProgress = onContinueWithoutBackgroundProgress,
+                onContinueWithSavedGame = onContinueWithSavedGame
             )
             IdleRpgAppStatus.READY -> ReadyShell(
                 state = state,
@@ -839,10 +842,12 @@ private fun HeroNameDialog(
 @Composable
 private fun RuntimeErrorSurface(
     failure: RuntimeFailureUiState?,
+    hasExistingSave: Boolean,
     canRetryInitialization: Boolean,
     onRetryInitialization: () -> Unit,
     onRetryBackgroundResume: () -> Unit,
-    onContinueWithoutBackgroundProgress: () -> Unit
+    onContinueWithoutBackgroundProgress: () -> Unit,
+    onContinueWithSavedGame: () -> Unit
 ) {
     val kind = failure?.kind
     val title = when (kind) {
@@ -899,9 +904,23 @@ private fun RuntimeErrorSurface(
                 )
                 when (kind) {
                     IdleRpgRuntimeFailureKind.INITIALIZATION ->
-                        if (canRetryInitialization) {
-                            GameButton(onClick = onRetryInitialization) {
-                                Text(stringResource(R.string.runtime_retry_load))
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (canRetryInitialization) {
+                                GameButton(onClick = onRetryInitialization) {
+                                    Text(stringResource(R.string.runtime_retry_load))
+                                }
+                            }
+                            if (hasExistingSave) {
+                                TextButton(onClick = onContinueWithSavedGame) {
+                                    Text(stringResource(R.string.runtime_continue_with_saved_game))
+                                }
+                                Text(
+                                    text = stringResource(
+                                        R.string.runtime_continue_with_saved_game_warning
+                                    ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
                             }
                         }
                     IdleRpgRuntimeFailureKind.BACKGROUND_RESUME -> {
@@ -917,12 +936,26 @@ private fun RuntimeErrorSurface(
                             color = MaterialTheme.colorScheme.onErrorContainer
                         )
                     }
-                    IdleRpgRuntimeFailureKind.SIMULATION ->
-                        Text(
-                            text = stringResource(R.string.runtime_simulation_fault_recovery),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onErrorContainer
-                        )
+                    IdleRpgRuntimeFailureKind.SIMULATION -> {
+                        if (hasExistingSave) {
+                            GameButton(onClick = onContinueWithSavedGame) {
+                                Text(stringResource(R.string.runtime_continue_with_saved_game))
+                            }
+                            Text(
+                                text = stringResource(
+                                    R.string.runtime_continue_with_saved_game_warning
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.runtime_simulation_fault_recovery),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
                     else -> Unit
                 }
             }

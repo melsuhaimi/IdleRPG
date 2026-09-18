@@ -98,9 +98,6 @@ fun ProgressScreen(
         contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item {
-            ProgressHeader(destination)
-        }
         state.feedback?.let { feedback ->
             item {
                 ProgressFeedbackCard(
@@ -373,19 +370,6 @@ fun ProgressScreen(
             }
         )
     }
-}
-
-@Composable
-private fun ProgressHeader(destination: ProgressDestination) {
-    GameSectionHeader(
-        eyebrow = stringResource(R.string.nav_progress),
-        title = stringResource(destination.labelResId),
-        subtitle = if (destination == ProgressDestination.OVERVIEW) {
-            stringResource(R.string.progress_fui08_subtitle)
-        } else {
-            null
-        }
-    )
 }
 
 @Composable
