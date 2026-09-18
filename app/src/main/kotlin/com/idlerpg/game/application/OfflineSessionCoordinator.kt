@@ -23,7 +23,7 @@ import com.idlerpg.game.domain.event.GameEventEnvelope
 import com.idlerpg.game.domain.event.PlayerLeveledUp
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.model.combat.CombatState
-import CombatantState
+import com.idlerpg.game.domain.model.combat.CombatantState
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
 import com.idlerpg.game.domain.model.world.WorldAutomationMode
@@ -432,7 +432,6 @@ class OfflineSessionCoordinator(
                 )
             }
         )
-    }
 
     private fun isAllowedOfflineEvent(envelope: GameEventEnvelope): Boolean =
         when (val event = envelope.event) {
