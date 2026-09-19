@@ -68,8 +68,17 @@ object StrategyEcosystemScenarioTest {
             definitionId = TrainingHollowStrategyContent.FROSTBOUND_MITE_ID,
             combatant = original.combatant.copy(instanceId = miteId, currentHealth = GameNumber.of(100L))
         )
+        val originalEnemyDecisionAt =
+            started.run.combat.nextEnemyDecisionAt[original.instanceId]
+                ?: started.engine.simulationTime
         val protectedState = started.copy(
-            run = started.run.copy(combat = started.run.combat.copy(enemies = listOf(bulwark, mite)))
+            run = started.run.copy(
+                combat = started.run.combat.copy(
+                    enemies = listOf(bulwark, mite),
+                    nextEnemyDecisionAt = started.run.combat.nextEnemyDecisionAt +
+                        (miteId to originalEnemyDecisionAt)
+                )
+            )
         )
         check(TargetingSystem.firstWithRole(protectedState.run.combat, registry, setOf(EnemyRole.PROTECTOR))?.instanceId == bulwark.instanceId)
         val playerId = protectedState.run.combat.playerCombatant?.instanceId ?: error("Missing player")
@@ -86,7 +95,10 @@ object StrategyEcosystemScenarioTest {
         )
         val adaptedState = started.copy(
             run = started.run.copy(
-                combat = started.run.combat.copy(enemies = listOf(mimic)),
+                combat = started.run.combat.copy(
+                    enemies = listOf(mimic),
+                    nextEnemyDecisionAt = mapOf(miteId to originalEnemyDecisionAt)
+                ),
                 resonance = started.run.resonance.copy(
                     sequence = ResonanceSequenceState(listOf(Affinity.EMBER.id))
                 )
