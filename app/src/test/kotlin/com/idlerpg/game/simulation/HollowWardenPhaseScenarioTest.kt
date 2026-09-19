@@ -155,7 +155,7 @@ object HollowWardenPhaseScenarioTest {
                 ),
                 automationMode = WorldAutomationMode.FARM,
                 selectedFarmEncounterId = TrainingHollowWorldContent.stageId(29),
-                clearedEncounterIds = setOf(TrainingHollowWorldContent.stageId(29))
+                clearedEncounterIds = (1..29).map(TrainingHollowWorldContent::stageId).toSet()
             )
         )))
 
