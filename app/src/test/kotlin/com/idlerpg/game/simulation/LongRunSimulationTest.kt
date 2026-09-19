@@ -114,13 +114,13 @@ object BalanceSimulationHarness {
 
 /** Long-run reproducibility and balance-harness smoke test. */
 object LongRunSimulationTest {
-    fun run(): BalanceSimulationReport {
+    fun run(duration: GameDuration = GameDuration.ofHours(24L)): BalanceSimulationReport {
         fun scenario(): BalanceSimulationReport {
             val runtime = SimulationTestSupport.runtime(seed = 404L)
             SimulationTestSupport.startTraining(runtime)
             val simulation = BalanceSimulationHarness.simulate(
                 runtime = runtime,
-                duration = GameDuration.ofHours(24L)
+                duration = duration
             )
             val claim = runtime.dispatch(
                 ClaimQuestReward(DefaultGameContent.FIRST_HUNT_QUEST_ID)

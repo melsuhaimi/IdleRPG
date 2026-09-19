@@ -1,5 +1,6 @@
 package com.idlerpg.game.simulation
 
+import com.idlerpg.game.core.time.GameDuration
 import org.junit.Test
 
 /**
@@ -15,6 +16,6 @@ class IntegrationScenarioTest {
 
     @Test
     fun longRunBalanceSmokePasses() {
-        LongRunSimulationTest.run()
+        LongRunSimulationTest.run(duration = GameDuration.ofHours(2L))
     }
 }
