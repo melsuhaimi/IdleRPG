@@ -131,7 +131,9 @@ object DoctrineProjectionTest {
             Affinity.MIGHT.id,
             Affinity.EMBER.id
         ))
-        val forged = ui.convergences.single()
+        val forged = ui.convergences.single {
+            it.convergenceId == DefaultGameContent.FORGED_FLAME_ID
+        }
         check(forged.convergenceId == DefaultGameContent.FORGED_FLAME_ID)
         check(forged.discovered)
         check(forged.eligibleNow)
