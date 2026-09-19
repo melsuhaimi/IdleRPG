@@ -22,6 +22,7 @@ import com.idlerpg.game.domain.event.CombatStarted
 import com.idlerpg.game.domain.event.CurrencyGranted
 import com.idlerpg.game.domain.event.DamageDealt
 import com.idlerpg.game.domain.event.EncounterCleared
+import com.idlerpg.game.domain.event.EncounterStarted
 import com.idlerpg.game.domain.event.EncounterWaveStarted
 import com.idlerpg.game.domain.event.EnemyKilled
 import com.idlerpg.game.domain.event.ExperienceGranted
@@ -97,7 +98,12 @@ object MultiEnemyCombatScenarioTest {
                 DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID
         }
         check(bulwarkClearIndex >= 0)
-        val bulwarkEvents = allEvents.take(bulwarkClearIndex + 1)
+        val nextEncounterStartIndex = allEvents.withIndex()
+            .firstOrNull { (index, envelope) ->
+                index > bulwarkClearIndex && envelope.event is EncounterStarted
+            }
+            ?.index ?: allEvents.size
+        val bulwarkEvents = allEvents.take(nextEncounterStartIndex)
         check(bulwarkEvents.count { it.event is EnemyKilled } == 2)
         check(bulwarkEvents.count { it.event is CurrencyGranted } == 2)
         check(bulwarkEvents.count { it.event is ExperienceGranted } == 2)
