@@ -123,25 +123,33 @@ object StrategyEcosystemScenarioTest {
     private fun convergenceEffectsAreCanonical(started: GameState, factory: GameSessionFactory) {
         val playerId = started.run.combat.playerCombatant?.instanceId ?: error("Missing player")
         val enemyId = started.run.combat.enemies.single().instanceId
+        val flashfireState = started.withResonance(
+            mapOf(Affinity.TEMPO.id to GameNumber.ONE, Affinity.EMBER.id to GameNumber.of(2L)),
+            listOf(Affinity.TEMPO.id, Affinity.EMBER.id, Affinity.EMBER.id)
+        )
+        val flashfireContext = factory.createEngineContext().also {
+            it.beginExecution(flashfireState.engine)
+        }
         val flashfire = ConvergenceSystem.resolveFirstEligible(
-            started.withResonance(
-                mapOf(Affinity.TEMPO.id to GameNumber.ONE, Affinity.EMBER.id to GameNumber.of(2L)),
-                listOf(Affinity.TEMPO.id, Affinity.EMBER.id, Affinity.EMBER.id)
-            ),
-            DefaultGameContent.FLAME_BRAND_ID, playerId, enemyId, factory.createEngineContext()
+            flashfireState,
+            DefaultGameContent.FLAME_BRAND_ID, playerId, enemyId, flashfireContext
         )
         check(flashfire.triggeredConvergenceId == TrainingHollowStrategyContent.FLASHFIRE_ID)
         check(flashfire.events.filterIsInstance<ConvergenceTriggered>().size == 1)
         check(flashfire.events.filterIsInstance<DamageDealt>().isNotEmpty())
         check(TrainingHollowStrategyContent.FLASHFIRE_ID in flashfire.state.meta.discoveries.discoveredConvergenceIds)
 
+        val refrainState = started.withResonance(
+            mapOf(Affinity.ARCANE.id to GameNumber.of(2L), Affinity.TEMPO.id to GameNumber.of(2L)),
+            listOf(Affinity.ARCANE.id, Affinity.ARCANE.id, Affinity.TEMPO.id)
+        )
+        val refrainContext = factory.createEngineContext().also {
+            it.beginExecution(refrainState.engine)
+        }
         val refrain = ConvergenceSystem.resolveFirstEligible(
-            started.withResonance(
-                mapOf(Affinity.ARCANE.id to GameNumber.of(2L), Affinity.TEMPO.id to GameNumber.of(2L)),
-                listOf(Affinity.ARCANE.id, Affinity.ARCANE.id, Affinity.TEMPO.id)
-            ),
+            refrainState,
             TrainingHollowStrategyContent.RESONANCE_SHIFT_ID, playerId, enemyId,
-            factory.createEngineContext()
+            refrainContext
         )
         check(refrain.triggeredConvergenceId == TrainingHollowStrategyContent.ARCANE_REFRAIN_ID)
         check(refrain.events.none { it is DamageDealt })
