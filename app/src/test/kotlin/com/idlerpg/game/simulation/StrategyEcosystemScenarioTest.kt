@@ -208,6 +208,9 @@ object StrategyEcosystemScenarioTest {
         val prepared = state.copy(
             run = state.run.copy(combat = state.run.combat.copy(enemies = listOf(enemy)))
         )
+        val context = factory.createEngineContext().also {
+            it.beginExecution(prepared.engine)
+        }
         return CombatSystem.execute(
             prepared,
             ScheduledAction(
@@ -217,7 +220,7 @@ object StrategyEcosystemScenarioTest {
                 ownerInstanceId = enemy.instanceId,
                 sourceContentId = attackId
             ),
-            factory.createEngineContext()
+            context
         )
     }
 
