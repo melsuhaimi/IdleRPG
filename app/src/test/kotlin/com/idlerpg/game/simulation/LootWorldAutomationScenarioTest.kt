@@ -284,6 +284,8 @@ object LootWorldAutomationScenarioTest {
         val currentData = SaveData.fromGameState(current)
         val v3Fields = currentData.fields.filterKeys { key ->
             !key.startsWith("run.inventory.lootFilter.") &&
+                !key.startsWith("run.player.selectedSkillEvolutionBySkillId.") &&
+                !key.startsWith("run.player.selectedSkillEvolutionBySkillId.") &&
                 key != "run.world.automationMode" &&
                 !key.startsWith("run.world.selectedFarmEncounterId.") &&
                 key != "run.world.pushFailurePolicy" &&
@@ -321,7 +323,8 @@ object LootWorldAutomationScenarioTest {
                 highestClearedEncounterTier = 999L, normalClears = GameNumber.of(999L))),
             currentEncounter = EncounterState(region.encounterIds.last(), 30L, 77L, status = EncounterStatus.ACTIVE))))
         val hostileV4 = SaveData.fromGameState(hostile).fields.filterKeys { key ->
-            key != "run.world.automationMode" && !key.startsWith("run.world.selectedFarmEncounterId.") &&
+            !key.startsWith("run.player.selectedSkillEvolutionBySkillId.") &&
+                key != "run.world.automationMode" && !key.startsWith("run.world.selectedFarmEncounterId.") &&
                 key != "run.world.pushFailurePolicy" && !key.startsWith("run.world.clearedEncounterIds.")
         }
         val hostileMigrated = SaveMigrationRegistry().migrate(SaveEnvelope(
