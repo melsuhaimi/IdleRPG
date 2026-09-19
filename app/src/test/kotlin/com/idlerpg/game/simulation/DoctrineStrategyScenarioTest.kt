@@ -34,6 +34,19 @@ object DoctrineStrategyScenarioTest {
             check(runtime.state().engine.nextInstanceIdCounter == before + 3L)
         }
         val runtime = SimulationTestSupport.runtime(710L)
+        runtime.replaceLoadedState(
+            runtime.state().copy(
+                run = runtime.state().run.copy(
+                    player = runtime.state().run.player.copy(
+                        equippedSkillIds = listOf(
+                            DefaultGameContent.HEAVY_STRIKE_ID,
+                            DefaultGameContent.QUICK_SLASH_ID,
+                            DefaultGameContent.GUARD_MEND_ID
+                        )
+                    )
+                )
+            )
+        )
         SimulationTestSupport.checkAccepted(runtime.dispatch(ApplyDoctrinePreset(DoctrinePreset.BALANCED)))
         val extra = runtime.state().run.doctrine.rules.first().copy(condition = DoctrineCondition.All(listOf(
             DoctrineCondition.Predicate(DoctrinePredicate.EnemyCount(DoctrineComparison.GREATER_THAN_OR_EQUAL, GameNumber.of(3L))),
