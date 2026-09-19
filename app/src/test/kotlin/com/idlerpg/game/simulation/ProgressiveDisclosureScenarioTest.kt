@@ -71,10 +71,13 @@ object ProgressiveDisclosureScenarioTest {
             ProgressiveDisclosurePolicy.project(firstProgress).primaryDestinations)
 
         val firstClear = pristine.copy(run = pristine.run.copy(
-            world = pristine.run.world.copy(regionProgressById = mapOf(
-                DefaultGameContent.TRAINING_HOLLOW_REGION_ID to
-                    RegionProgressState(highestClearedEncounterTier = 1L)
-            ))
+            world = pristine.run.world.copy(
+                unlockedRegionIds = setOf(DefaultGameContent.TRAINING_HOLLOW_REGION_ID),
+                regionProgressById = mapOf(
+                    DefaultGameContent.TRAINING_HOLLOW_REGION_ID to
+                        RegionProgressState(highestClearedEncounterTier = 1L)
+                )
+            )
         ))
         val retainedAfterSpending = ProgressiveDisclosurePolicy.project(firstClear)
         check(GameDestination.GEAR in retainedAfterSpending.primaryDestinations)
@@ -139,6 +142,7 @@ object ProgressiveDisclosureScenarioTest {
 
         fun withTrainingProgress(progress: RegionProgressState): GameState = levelTwo.copy(
             run = levelTwo.run.copy(world = levelTwo.run.world.copy(
+                unlockedRegionIds = setOf(DefaultGameContent.TRAINING_HOLLOW_REGION_ID),
                 regionProgressById = mapOf(DefaultGameContent.TRAINING_HOLLOW_REGION_ID to progress)
             ))
         )
