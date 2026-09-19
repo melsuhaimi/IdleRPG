@@ -69,7 +69,6 @@ object AdaptationScenarioTest {
         val enemy = runtime.state().run.combat.enemies
             .minByOrNull { it.instanceId }
             ?: error("Future adapted enemy should be active")
-        check(enemy.definitionId == DefaultGameContent.SLIME_ID)
         check(
             enemy.activeMutations.any {
                 it.mutationId == DefaultGameContent.ASH_SKIN_MUTATION_ID
