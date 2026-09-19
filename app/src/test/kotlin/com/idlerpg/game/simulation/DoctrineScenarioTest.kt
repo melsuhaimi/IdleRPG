@@ -79,8 +79,10 @@ object DoctrineScenarioTest {
 
         val first = build()
         val second = build()
-        val firstEvents = first.advance(GameDuration.ofSeconds(8L)).events
-        val secondEvents = second.advance(GameDuration.ofSeconds(8L)).events
+        // Heavy Strike's cooldown deliberately inserts basic-attack decision slots between
+        // the authored skill uses; observe a full two-pattern window.
+        val firstEvents = first.advance(GameDuration.ofSeconds(12L)).events
+        val secondEvents = second.advance(GameDuration.ofSeconds(12L)).events
 
         val firstSkills = firstEvents.mapNotNull { (it.event as? SkillUsed)?.skillId }
         val secondSkills = secondEvents.mapNotNull { (it.event as? SkillUsed)?.skillId }
