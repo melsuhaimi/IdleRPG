@@ -293,7 +293,7 @@ object LootWorldAutomationScenarioTest {
                 !key.startsWith("run.world.selectedFarmEncounterId.") &&
                 key != "run.world.pushFailurePolicy" &&
                 !key.startsWith("run.world.clearedEncounterIds.")
-        )
+        }
         val migrated = SaveMigrationRegistry().migrate(
             SaveEnvelope(SaveVersion.V3, SimulationTestSupport.CONTENT_VERSION, 5_602_000L, SaveData(v3Fields))
         )
