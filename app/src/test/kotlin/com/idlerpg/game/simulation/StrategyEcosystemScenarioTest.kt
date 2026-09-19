@@ -110,9 +110,12 @@ object StrategyEcosystemScenarioTest {
         ).event.amount
         check(mirroredDamage == GameNumber.of(14L))
 
+        val chilledContext = factory.createEngineContext().also {
+            it.beginExecution(started.engine)
+        }
         val chilled = StatusEffectSystem.apply(
             started, original.instanceId, playerId,
-            registry.status(DefaultGameContent.CHILL_STATUS_ID), factory.createEngineContext()
+            registry.status(DefaultGameContent.CHILL_STATUS_ID), chilledContext
         ).state
         check(DerivedStatSystem.actionInterval(chilled, GameDuration.ofMillis(1_000L), registry) == GameDuration.ofMillis(1_250L))
     }
