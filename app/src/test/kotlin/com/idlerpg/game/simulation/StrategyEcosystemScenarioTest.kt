@@ -37,7 +37,7 @@ object StrategyEcosystemScenarioTest {
         val factory = SimulationTestSupport.factory()
         val registry = factory.contentRegistry
         check(registry.allSkills().size == 15)
-        check(registry.allEnemies().size == 8)
+        check(registry.allEnemies().size == 9)
         check(registry.allConvergences().size == 8)
         check(registry.allEncounters().size == TrainingHollowWorldContent.MAX_STAGE)
         check(registry.enemy(DefaultGameContent.HOLLOW_BULWARK_ID).role == EnemyRole.PROTECTOR)
