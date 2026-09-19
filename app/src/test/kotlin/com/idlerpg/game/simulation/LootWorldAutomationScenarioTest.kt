@@ -220,6 +220,7 @@ object LootWorldAutomationScenarioTest {
             worldRuntime.state().copy(
                 run = worldRuntime.state().run.copy(
                     world = worldRuntime.state().run.world.copy(
+                        selectedFarmEncounterId = null,
                         clearedEncounterIds = setOf(unknownFarmId)
                     )
                 )
