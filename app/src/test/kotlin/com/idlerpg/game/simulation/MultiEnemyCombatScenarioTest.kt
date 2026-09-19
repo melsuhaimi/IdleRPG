@@ -128,6 +128,11 @@ object MultiEnemyCombatScenarioTest {
                         unlockedRegionIds = initial.run.world.unlockedRegionIds +
                             DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
                         activeRegionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+                        clearedEncounterIds = setOf(
+                            DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
+                            DefaultGameContent.RIFTFANG_ENCOUNTER_ID,
+                            DefaultGameContent.CINDER_WISP_ENCOUNTER_ID
+                        ),
                         currentEncounter = EncounterState(
                             definitionId = DefaultGameContent.CINDER_WISP_ENCOUNTER_ID,
                             encounterIndex = 3L,
