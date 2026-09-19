@@ -85,7 +85,22 @@ object ProgressionRepairScenarioTest {
             registry
         ).state
         check(next.run.progression.playerLevel.level == 101L)
-        val maximum = PlayerProgressionSystem.grantExperience(next, GameNumber.of(1_000_000_000L), null, registry).state
+        val preMaximum = next.copy(
+            run = next.run.copy(
+                progression = next.run.progression.copy(
+                    playerLevel = next.run.progression.playerLevel.copy(
+                        level = 14_999L,
+                        currentExperience = GameNumber.ZERO
+                    )
+                )
+            )
+        )
+        val maximum = PlayerProgressionSystem.grantExperience(
+            preMaximum,
+            PlayerProgressionSystem.experienceToNextLevel(preMaximum, registry),
+            null,
+            registry
+        ).state
         check(maximum.run.progression.playerLevel.level == 15_000L)
         check(PlayerProgressionSystem.experienceToNextLevel(maximum, registry) == GameNumber.ZERO)
         check(SaveData.fromGameState(maximum).toGameState() == maximum)
