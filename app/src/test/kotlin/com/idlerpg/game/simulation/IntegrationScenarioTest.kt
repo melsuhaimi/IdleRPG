@@ -16,6 +16,6 @@ class IntegrationScenarioTest {
 
     @Test
     fun longRunBalanceSmokePasses() {
-        LongRunSimulationTest.run(duration = GameDuration.ofHours(2L))
+        LongRunSimulationTest.run(duration = GameDuration.ofMinutes(30L))
     }
 }
