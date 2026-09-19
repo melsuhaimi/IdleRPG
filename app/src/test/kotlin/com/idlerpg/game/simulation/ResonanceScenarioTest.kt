@@ -75,7 +75,10 @@ object ResonanceScenarioTest {
             )
         )
 
-        val result = runtime.advance(GameDuration.ofSeconds(4L))
+        // The starting combat decision is one second into the encounter; two Might
+        // emissions therefore need the full Heavy Strike recovery/cooldown window before
+        // Flame Brand can complete the authored Might, Might, Ember pattern.
+        val result = runtime.advance(GameDuration.ofSeconds(8L))
         val triggers = result.events.count {
             val event = it.event
             event is ConvergenceTriggered &&
