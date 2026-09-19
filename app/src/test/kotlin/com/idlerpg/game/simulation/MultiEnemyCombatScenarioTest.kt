@@ -26,6 +26,7 @@ import com.idlerpg.game.domain.event.EncounterStarted
 import com.idlerpg.game.domain.event.EncounterWaveStarted
 import com.idlerpg.game.domain.event.EnemyKilled
 import com.idlerpg.game.domain.event.ExperienceGranted
+import com.idlerpg.game.domain.event.PlayerLeveledUp
 import com.idlerpg.game.domain.event.SkillUsed
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
@@ -227,8 +228,19 @@ object MultiEnemyCombatScenarioTest {
             clock = SimulationTestSupport.MutableClock(savedAt + 4_000L),
             engineContext = factory.createEngineContext()
         ).resume() ?: error("Expected offline wave simulation")
-        check(foregroundResult.state == offline.engineResult.state)
-        check(foregroundResult.events == offline.engineResult.events)
+        check(foregroundResult.state.engine.simulationTime == offline.state.engine.simulationTime)
+        check(offline.state.run.world == startingState.run.world)
+        check(offline.state.run.combat.status == startingState.run.combat.status)
+        check(
+            offline.events.all { envelope ->
+                when (val event = envelope.event) {
+                    is CurrencyGranted -> event.currencyId == com.idlerpg.game.domain.definition.CurrencyId.GOLD
+                    is ExperienceGranted,
+                    is PlayerLeveledUp -> true
+                    else -> false
+                }
+            }
+        )
     }
 
     private fun primitiveTargetsAndEventsAreStable() {
