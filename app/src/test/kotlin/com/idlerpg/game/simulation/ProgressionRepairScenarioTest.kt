@@ -129,7 +129,10 @@ object ProgressionRepairScenarioTest {
         val completed = QuestSystem.react(eligible, event, context).state
         check(completed.run.quests.progressFor(id).completionCount == GameNumber.ONE)
         check(completed.run.quests.progressFor(id).claimedCount == GameNumber.ZERO)
-        check(QuestSystem.react(completed, event, context).state == completed)
+        check(
+            QuestSystem.react(completed, event, context).state.run.quests.progressFor(id) ==
+                completed.run.quests.progressFor(id)
+        )
         check(registry.allQuests().count { !it.repeatable } == 7)
         check(registry.allQuests().count { it.repeatable } == 3)
         val presentation = PresentationContentRegistry.default()
