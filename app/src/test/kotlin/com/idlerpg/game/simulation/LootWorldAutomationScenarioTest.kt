@@ -88,10 +88,10 @@ object LootWorldAutomationScenarioTest {
         ) { "Active build-defining traits must survive auto-salvage" }
 
         val runtime = SimulationTestSupport.runtime(seed = 5_601L)
-        val emptyOverflowSalvage = runtime.dispatch(SalvageOverflowItems(emptySet()))
-        check(emptyOverflowSalvage.commandResult is CommandResult.Rejected)
-        check((emptyOverflowSalvage.commandResult as CommandResult.Rejected).reason.code ==
-            com.idlerpg.game.domain.command.CommandRejectionCode.INVALID_ARGUMENT)
+        val emptyOverflowFailure = runCatching {
+            runtime.dispatch(SalvageOverflowItems(emptySet()))
+        }.exceptionOrNull()
+        check(emptyOverflowFailure is IllegalArgumentException)
         val first = InstanceId(51_001L)
         val second = InstanceId(51_002L)
         val items = mapOf(
