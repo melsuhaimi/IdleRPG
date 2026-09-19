@@ -117,7 +117,9 @@ object WorldProjectionTest {
         val activeUi = projector.project(active)
         val region = activeUi.regions.single()
         check(region.selected)
-        val encounter = region.encounters.single()
+        val encounter = region.encounters.single {
+            it.encounterId == DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID
+        }
         check(encounter.status == WorldEncounterStatusUi.ACTIVE)
         check(encounter.canRetreat)
         check(!encounter.canStart)
