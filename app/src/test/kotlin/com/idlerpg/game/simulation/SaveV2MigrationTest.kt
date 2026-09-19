@@ -44,7 +44,22 @@ object SaveV2MigrationTest {
             run = runtime.state().run.copy(
                 inventory = runtime.state().run.inventory.copy(itemsById = generated)
             )
-        )
+        ).let { candidate ->
+            val questId = DefaultGameContent.FIRST_HUNT_QUEST_ID
+            val progress = candidate.run.quests.progressFor(questId)
+            if (progress.completionCount == GameNumber.ONE) {
+                candidate
+            } else {
+                candidate.copy(
+                    run = candidate.run.copy(
+                        quests = candidate.run.quests.copy(
+                            progressByQuestId = candidate.run.quests.progressByQuestId +
+                                (questId to progress.copy(completionCount = GameNumber.ONE))
+                        )
+                    )
+                )
+            }
+        }
         check(base.run.inventory.itemsById.size > BalanceConfig.DEFAULT_BASE_INVENTORY_CAPACITY)
 
         val questProgress =
