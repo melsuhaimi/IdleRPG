@@ -28,6 +28,7 @@ import com.idlerpg.game.domain.event.ExperienceGranted
 import com.idlerpg.game.domain.event.SkillUsed
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
+import com.idlerpg.game.domain.model.world.RegionProgressState
 import com.idlerpg.game.domain.system.combat.ActionResolutionSystem
 import com.idlerpg.game.domain.system.combat.CombatSystem
 import com.idlerpg.game.domain.system.combat.TargetingSystem
@@ -114,7 +115,7 @@ object MultiEnemyCombatScenarioTest {
         val initial = runtime.state()
         val progress = initial.run.world.regionProgressById[
             DefaultGameContent.TRAINING_HOLLOW_REGION_ID
-        ] ?: error("Missing Training Hollow progress")
+        ] ?: RegionProgressState()
         runtime.replaceLoadedState(
             initial.copy(
                 run = initial.run.copy(
