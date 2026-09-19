@@ -1,6 +1,7 @@
 package com.idlerpg.game.simulation
 
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.data.content.DefaultGameContent
 import com.idlerpg.game.data.local.SaveData
 import com.idlerpg.game.domain.command.ApplyDoctrinePreset
 import com.idlerpg.game.domain.command.DoctrinePreset
@@ -13,6 +14,19 @@ object DoctrineStrategyScenarioTest {
     fun run() {
         DoctrinePreset.values().forEach { preset ->
             val runtime = SimulationTestSupport.runtime(701L + preset.ordinal)
+            runtime.replaceLoadedState(
+                runtime.state().copy(
+                    run = runtime.state().run.copy(
+                        player = runtime.state().run.player.copy(
+                            equippedSkillIds = listOf(
+                                DefaultGameContent.HEAVY_STRIKE_ID,
+                                DefaultGameContent.QUICK_SLASH_ID,
+                                DefaultGameContent.GUARD_MEND_ID
+                            )
+                        )
+                    )
+                )
+            )
             val before = runtime.state().engine.nextInstanceIdCounter
             SimulationTestSupport.checkAccepted(runtime.dispatch(ApplyDoctrinePreset(preset)))
             check(runtime.state().run.doctrine.rules.size == 3)
