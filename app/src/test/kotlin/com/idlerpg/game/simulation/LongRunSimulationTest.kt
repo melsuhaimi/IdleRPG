@@ -159,7 +159,8 @@ object LongRunSimulationTest {
 }
 
 /** Runs the executable scenario checks used by the application test suite. */
-fun runAllScenarioChecks(): BalanceSimulationReport {
+/** Runs every executable scenario check except the heavyweight balance smoke. */
+fun runScenarioInventory() {
     PrototypeParityTest.run()
     DeterminismTest.run()
     CommandRejectionTest.run()
@@ -229,11 +230,14 @@ fun runAllScenarioChecks(): BalanceSimulationReport {
     com.idlerpg.game.presentation.SkillLoadoutProjectionTest.main(emptyArray())
     com.idlerpg.game.presentation.WorldIntentMappingTest.main(emptyArray())
     com.idlerpg.game.presentation.WorldProjectionTest.main(emptyArray())
-    val longRun = LongRunSimulationTest.run()
-
-    return longRun
 }
 
+
+/** Runs the complete scenario suite, including the deterministic long-run smoke. */
+fun runAllScenarioChecks(): BalanceSimulationReport {
+    runScenarioInventory()
+    return LongRunSimulationTest.run()
+}
 fun main() {
     val longRun = runAllScenarioChecks()
     println("FBE05_INTEGRATION_PASS")

@@ -3,14 +3,18 @@ package com.idlerpg.game.simulation
 import org.junit.Test
 
 /**
- * Normal JUnit entry point for the complete executable scenario inventory.
- *
- * The inventory itself remains centralized in LongRunSimulationTest so the plain runner and
- * the command-line harness execute the same set of checks.
+ * Normal JUnit entry points for the executable scenario inventory and the heavyweight balance
+ * smoke. Keeping them separate prevents the long-run check from being duplicated by the inventory
+ * runner while ensuring both are discoverable by the normal test task.
  */
 class IntegrationScenarioTest {
     @Test
     fun completeScenarioInventoryPasses() {
-        runAllScenarioChecks()
+        runScenarioInventory()
+    }
+
+    @Test
+    fun longRunBalanceSmokePasses() {
+        LongRunSimulationTest.run()
     }
 }
