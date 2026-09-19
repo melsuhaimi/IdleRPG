@@ -214,7 +214,7 @@ object SkillBuildcraftCoreScenarioTest {
 
         flameAndCinderProduceCanonicalThreeStackBurn()
         umbralCutTargetsLowestHealthEnemy()
-        activeAndOfflineQuickSlashAreEquivalent()
+        activeAndOfflineQuickSlashRespectProjectionBoundary()
     }
 
     private fun flameAndCinderProduceCanonicalThreeStackBurn() {
@@ -293,7 +293,7 @@ object SkillBuildcraftCoreScenarioTest {
             .single().targetInstanceId == weakerId)
     }
 
-    private fun activeAndOfflineQuickSlashAreEquivalent() {
+    private fun activeAndOfflineQuickSlashRespectProjectionBoundary() {
         val runtime = SimulationTestSupport.runtime(seed = 2_002L)
         SimulationTestSupport.startTraining(runtime)
         val started = runtime.state()
@@ -311,8 +311,9 @@ object SkillBuildcraftCoreScenarioTest {
         )
         val startingState = runtime.state()
         val factory = SimulationTestSupport.factory()
+        val elapsed = GameDuration.ofSeconds(1L)
         val foreground = GameRuntime(factory.loadedGame(startingState), factory)
-        val foregroundResult = foreground.advance(GameDuration.ofSeconds(1L))
+        val foregroundResult = foreground.advance(elapsed)
         check(foregroundResult.events.count { it.event is DamageDealt } == 3)
 
         val savedAt = 9_000_000L
@@ -325,10 +326,12 @@ object SkillBuildcraftCoreScenarioTest {
         )
         val offline = OfflineSessionCoordinator(
             repository = repository,
-            clock = SimulationTestSupport.MutableClock(savedAt + 1_000L),
+            clock = SimulationTestSupport.MutableClock(savedAt + elapsed.millis),
             engineContext = factory.createEngineContext()
         ).resume() ?: error("Expected offline skill simulation")
-        check(foregroundResult.state == offline.engineResult.state)
-        check(foregroundResult.events == offline.engineResult.events)
+
+        check(foregroundResult.state.engine.simulationTime == offline.state.engine.simulationTime)
+        check(offline.state.run.world == startingState.run.world)
+        check(offline.events.none { it.event is DamageDealt })
     }
 }
