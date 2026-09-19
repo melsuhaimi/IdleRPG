@@ -61,10 +61,12 @@ object AdaptationScenarioTest {
         check(
             regional.tierByAffinityId[Affinity.EMBER.id] == 2
         )
-        check(
-            regional.exposureByAffinityId[Affinity.EMBER.id]
-                ?.pressure == GameNumber.of(320L)
-        )
+        val emberPressure = regional.exposureByAffinityId[Affinity.EMBER.id]
+            ?.pressure
+            ?: error("Ember adaptation pressure missing")
+        check(emberPressure == GameNumber.of(320L)) {
+            "Expected 320 Ember pressure, got $emberPressure"
+        }
 
         val enemy = runtime.state().run.combat.enemies
             .minByOrNull { it.instanceId }
