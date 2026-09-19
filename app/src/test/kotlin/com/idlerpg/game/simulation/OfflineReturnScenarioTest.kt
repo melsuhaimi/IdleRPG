@@ -10,6 +10,7 @@ import com.idlerpg.game.data.content.DefaultGameContent
 import com.idlerpg.game.data.content.HollowWardenContent
 import com.idlerpg.game.data.content.TrainingHollowLootContent
 import com.idlerpg.game.data.content.TrainingHollowWorldContent
+import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.domain.definition.CurrencyId
 import com.idlerpg.game.domain.definition.Rarity
@@ -36,6 +37,32 @@ import com.idlerpg.game.domain.model.world.WorldState
 object OfflineReturnScenarioTest {
     fun run() {
         val factory = SimulationTestSupport.factory()
+        val checkpointState = GameState.newGame(903L)
+        val checkpointSavedAt = 10_000L
+        val checkpointElapsed = GameDuration.ofSeconds(30L)
+        val checkpointRepository = SimulationTestSupport.InMemoryGameRepository(
+            SaveEnvelope.create(
+                gameState = checkpointState,
+                contentVersion = SimulationTestSupport.CONTENT_VERSION,
+                writtenAtEpochMs = checkpointSavedAt
+            )
+        )
+        val checkpointClock = SimulationTestSupport.MutableClock(
+            checkpointSavedAt + checkpointElapsed.millis
+        )
+        val checkpoint = OfflineSessionCoordinator(
+            repository = checkpointRepository,
+            clock = checkpointClock,
+            engineContext = factory.createEngineContext()
+        ).resume() ?: error("Expected checkpoint resume")
+
+        check(checkpoint.summary.simulatedElapsed == checkpointElapsed)
+        check(checkpoint.state.engine.simulationTime ==
+            checkpointState.engine.simulationTime + checkpointElapsed)
+        check(checkpoint.checkpointWrittenAtEpochMs == checkpointClock.epochMs)
+        check(checkpointRepository.envelope?.writtenAtEpochMs == checkpointClock.epochMs)
+        check(checkpointRepository.envelope?.gameState() == checkpoint.state)
+
         val coordinator = OfflineSessionCoordinator(
             repository = SimulationTestSupport.InMemoryGameRepository(),
             clock = SimulationTestSupport.MutableClock(1L),

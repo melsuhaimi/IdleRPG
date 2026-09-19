@@ -208,6 +208,7 @@ fun runAllScenarioChecks(): BalanceSimulationReport {
     LootDeterminismTest.run()
     SaveRoundTripTest.run()
     ActiveOfflineEquivalenceTest.run()
+    OfflineBoundaryScenarioTest.run()
     ChronicleResetTest.run()
     EchoShopScenarioTest.run()
     EchoTrainingScenarioTest.run()

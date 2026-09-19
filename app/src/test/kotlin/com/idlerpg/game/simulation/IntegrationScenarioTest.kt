@@ -1,42 +1,16 @@
 package com.idlerpg.game.simulation
 
-import com.idlerpg.game.presentation.OfflineProgressProjectionTest
 import org.junit.Test
 
-/** Runs focused PR #3 contract checks through Android unit tests. */
+/**
+ * Normal JUnit entry point for the complete executable scenario inventory.
+ *
+ * The inventory itself remains centralized in LongRunSimulationTest so the plain runner and
+ * the command-line harness execute the same set of checks.
+ */
 class IntegrationScenarioTest {
     @Test
-    fun rebirthContractPasses() {
-        RebirthScenarioTest.run()
-    }
-
-    @Test
-    fun offlineReturnContractPasses() {
-        OfflineReturnScenarioTest.run()
-    }
-
-    @Test
-    fun activeOfflineEquivalencePasses() {
-        ActiveOfflineEquivalenceTest.run()
-    }
-
-    @Test
-    fun worldProgressionContractPasses() {
-        WorldProgressionScenarioTest.run()
-    }
-
-    @Test
-    fun enemyCombatContractPasses() {
-        EnemyCombatVarietyScenarioTest.run()
-    }
-
-    @Test
-    fun prototypeParityContractPasses() {
-        PrototypeParityTest.run()
-    }
-
-    @Test
-    fun offlineProjectionContractPasses() {
-        OfflineProgressProjectionTest.main(emptyArray())
+    fun completeScenarioInventoryPasses() {
+        runAllScenarioChecks()
     }
 }
