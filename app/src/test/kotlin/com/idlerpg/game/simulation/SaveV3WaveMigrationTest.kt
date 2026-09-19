@@ -15,19 +15,7 @@ object SaveV3WaveMigrationTest {
         val v3Data = SaveData.fromGameState(current)
         check(v3Data.fields["run.world.currentEncounter.currentWave"] == "1")
 
-        val v2Fields = v3Data.fields.filterKeys { key ->
-            key != "run.world.currentEncounter.currentWave" &&
-                !key.startsWith("run.inventory.lootFilter.") &&
-                key != "run.world.automationMode" &&
-                !key.startsWith("run.world.selectedFarmEncounterId.") &&
-                key != "run.world.pushFailurePolicy" &&
-                !key.startsWith("run.world.clearedEncounterIds.") &&
-                !key.startsWith("run.player.selectedSkillEvolutionBySkillId.") &&
-                !key.startsWith("meta.heroName.") &&
-                !key.startsWith("meta.rebirth.") &&
-                !key.startsWith("run.progression.skillProgression.") &&
-                !key.endsWith(".enhancementFailstack")
-        }
+        val v2Fields = v3Data.fields.filterKeys(::isV2Field)
         val v2Envelope = SaveEnvelope(
             schemaVersion = SaveVersion.V2,
             contentVersion = SimulationTestSupport.CONTENT_VERSION,
@@ -45,7 +33,7 @@ object SaveV3WaveMigrationTest {
             )
         )
         val absentV3 = SaveData.fromGameState(noEncounter)
-        val absentV2 = SaveData(absentV3.fields - "run.world.currentEncounter.currentWave")
+        val absentV2 = SaveData(absentV3.fields.filterKeys(::isV2Field))
         val absentMigrated = SaveMigrationRegistry().migrate(
             SaveEnvelope(
                 schemaVersion = SaveVersion.V2,
@@ -61,4 +49,17 @@ object SaveV3WaveMigrationTest {
         check(roundTrip == current)
         check(SimulationTestSupport.gold(roundTrip) >= GameNumber.ZERO)
     }
+    private fun isV2Field(key: String): Boolean =
+        key != "run.world.currentEncounter.currentWave" &&
+            !key.startsWith("run.inventory.lootFilter.") &&
+            key != "run.world.automationMode" &&
+            !key.startsWith("run.world.selectedFarmEncounterId.") &&
+            key != "run.world.pushFailurePolicy" &&
+            !key.startsWith("run.world.clearedEncounterIds.") &&
+            !key.startsWith("run.player.selectedSkillEvolutionBySkillId.") &&
+            !key.startsWith("meta.heroName.") &&
+            !key.startsWith("meta.rebirth.") &&
+            !key.startsWith("run.progression.skillProgression.") &&
+            !key.endsWith(".enhancementFailstack")
+
 }
