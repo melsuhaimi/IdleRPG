@@ -125,6 +125,8 @@ object MultiEnemyCombatScenarioTest {
                         )
                     ),
                     world = initial.run.world.copy(
+                        unlockedRegionIds = initial.run.world.unlockedRegionIds +
+                            DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
                         activeRegionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
                         currentEncounter = EncounterState(
                             definitionId = DefaultGameContent.CINDER_WISP_ENCOUNTER_ID,
