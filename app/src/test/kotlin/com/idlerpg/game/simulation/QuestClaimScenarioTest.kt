@@ -9,10 +9,34 @@ import com.idlerpg.game.domain.engine.CommandResult
 import com.idlerpg.game.domain.event.CurrencyGranted
 import com.idlerpg.game.domain.event.QuestCompleted
 import com.idlerpg.game.domain.event.QuestRewardClaimed
+import com.idlerpg.game.domain.model.world.RegionProgressState
+import com.idlerpg.game.domain.model.world.WorldAutomationMode
 
 object QuestClaimScenarioTest {
     fun run() {
         val runtime = SimulationTestSupport.runtime(seed = 801L)
+        runtime.replaceLoadedState(
+            runtime.state().copy(
+                run = runtime.state().run.copy(
+                    world = runtime.state().run.world.copy(
+                        activeRegionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+                        unlockedRegionIds = setOf(DefaultGameContent.TRAINING_HOLLOW_REGION_ID),
+                        regionProgressById = mapOf(
+                            DefaultGameContent.TRAINING_HOLLOW_REGION_ID to
+                                RegionProgressState(
+                                    highestClearedEncounterTier = 1L,
+                                    normalClears = GameNumber.ONE
+                                )
+                        ),
+                        automationMode = WorldAutomationMode.FARM,
+                        selectedFarmEncounterId = DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID,
+                        clearedEncounterIds = setOf(
+                            DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID
+                        )
+                    )
+                )
+            )
+        )
         val early = runtime.dispatch(ClaimQuestReward(DefaultGameContent.FIRST_HUNT_QUEST_ID))
         check((early.commandResult as CommandResult.Rejected).reason.code == CommandRejectionCode.NOT_READY)
         SimulationTestSupport.startTraining(runtime)
