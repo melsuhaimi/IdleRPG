@@ -309,6 +309,6 @@ object MultiEnemyCombatScenarioTest {
                 context = EngineContext(contentRegistry = SimulationTestSupport.factory().contentRegistry)
             )
         }.exceptionOrNull()
-        check(failure is IllegalStateException)
+        check(failure is IllegalArgumentException)
     }
 }
