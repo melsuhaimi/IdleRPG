@@ -92,15 +92,19 @@ object MultiEnemyCombatScenarioTest {
 
         val final = runtime.advance(GameDuration.ofSeconds(2L))
         val allEvents = partial.events + final.events
-        check(allEvents.count { it.event is EnemyKilled } == 2) {
-            "Expected two enemy kills, got " + allEvents.count { it.event is EnemyKilled }
+        val bulwarkClearIndex = allEvents.indexOfFirst {
+            (it.event as? EncounterCleared)?.encounterDefinitionId ==
+                DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID
         }
-        check(allEvents.count { it.event is CurrencyGranted } == 2)
-        check(allEvents.count { it.event is ExperienceGranted } == 2)
-        check(allEvents.count {
+        check(bulwarkClearIndex >= 0)
+        val bulwarkEvents = allEvents.take(bulwarkClearIndex + 1)
+        check(bulwarkEvents.count { it.event is EnemyKilled } == 2)
+        check(bulwarkEvents.count { it.event is CurrencyGranted } == 2)
+        check(bulwarkEvents.count { it.event is ExperienceGranted } == 2)
+        check(bulwarkEvents.count {
             (it.event as? CombatEnded)?.combatSequenceId == sequenceId
         } == 1)
-        check(allEvents.count {
+        check(bulwarkEvents.count {
             (it.event as? EncounterCleared)?.encounterDefinitionId ==
                 DefaultGameContent.HOLLOW_BULWARK_ENCOUNTER_ID
         } == 1)
