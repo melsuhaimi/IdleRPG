@@ -173,7 +173,9 @@ object WorldProjectionTest {
         queries.blocked = true
         val blockedUi = projector.project(blocked)
         check(blockedUi.inventory.blocked)
-        check(!blockedUi.regions.single().encounters.single().canStart)
+        check(!blockedUi.regions.single().encounters.single {
+            it.encounterId == DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID
+        }.canStart)
 
         println("FUI05_WORLD_PROJECTION_PASS")
     }
