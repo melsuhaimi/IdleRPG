@@ -126,9 +126,11 @@ object MultiEnemyCombatScenarioTest {
         } == 1)
         // Push automation may begin the next encounter immediately after the clear.
         check(
-            runtime.state().run.world.regionProgressById[
-                DefaultGameContent.TRAINING_HOLLOW_REGION_ID
-            ]?.highestClearedEncounterTier ?: 0L >= 4L
+            (
+                runtime.state().run.world.regionProgressById[
+                    DefaultGameContent.TRAINING_HOLLOW_REGION_ID
+                ]?.highestClearedEncounterTier ?: 0L
+            ) >= 4L
         )
         check(emberExposure(runtime).pressure > GameNumber.ZERO)
     }
