@@ -92,7 +92,9 @@ object MultiEnemyCombatScenarioTest {
 
         val final = runtime.advance(GameDuration.ofSeconds(2L))
         val allEvents = partial.events + final.events
-        check(allEvents.count { it.event is EnemyKilled } == 2)
+        check(allEvents.count { it.event is EnemyKilled } == 2) {
+            "Expected two enemy kills, got " + allEvents.count { it.event is EnemyKilled }
+        }
         check(allEvents.count { it.event is CurrencyGranted } == 2)
         check(allEvents.count { it.event is ExperienceGranted } == 2)
         check(allEvents.count {
