@@ -20,7 +20,6 @@ import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.model.combat.CombatState
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
-import com.idlerpg.game.domain.model.world.RegionProgressState
 import com.idlerpg.game.domain.model.world.WorldAutomationMode
 
 /**
@@ -38,33 +37,8 @@ object OfflineBoundaryScenarioTest {
 
     private fun twelveHourCapAdvancesAndReanchorsCheckpoint() {
         val factory = SimulationTestSupport.factory()
+        val savedState = GameState.newGame(601L)
         val savedAt = 10_000L
-        val regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID
-        val farmEncounterId = DefaultGameContent.TRAINING_SLIME_ENCOUNTER_ID
-        val savedState = factory.newGame(601L).state().copy(
-            run = factory.newGame(601L).state().run.copy(
-                world = factory.newGame(601L).state().run.world.copy(
-                    activeRegionId = regionId,
-                    unlockedRegionIds = setOf(regionId),
-                    regionProgressById = mapOf(
-                        regionId to RegionProgressState(
-                            highestClearedEncounterTier = 1L,
-                            normalClears = com.idlerpg.game.core.number.GameNumber.ONE
-                        )
-                    ),
-                    currentEncounter = EncounterState(
-                        definitionId = farmEncounterId,
-                        encounterIndex = 1L,
-                        encounterSeed = 0L,
-                        status = EncounterStatus.CLEARED
-                    ),
-                    automationMode = WorldAutomationMode.FARM,
-                    selectedFarmEncounterId = farmEncounterId,
-                    clearedEncounterIds = setOf(farmEncounterId)
-                ),
-                combat = CombatState()
-            )
-        )
         val requested = GameDuration.ofHours(24L)
         val repository = SimulationTestSupport.InMemoryGameRepository(
             SaveEnvelope.create(
@@ -85,7 +59,7 @@ object OfflineBoundaryScenarioTest {
         check(result.summary.requestedElapsed == requested)
         check(result.summary.simulatedElapsed == capped)
         check(result.summary.durationClamped)
-        check(result.summary.stoppingReason == OfflineStoppingReason.CLAIM_WINDOW_CAPPED)
+        check(result.summary.stoppingReason == OfflineStoppingReason.NO_ELIGIBLE_FARM_STAGE)
         check(result.sourceWrittenAtEpochMs == savedAt)
         check(result.checkpointWrittenAtEpochMs == clock.epochMs)
         check(repository.envelope?.writtenAtEpochMs == clock.epochMs)
