@@ -727,6 +727,10 @@
     <string name="gear_inspection_eyebrow">Inspection</string>
     <string name="gear_effect_comparison_title">Effect comparison</string>
     <string name="gear_affixes_title">Affixes</string>
+    <string name="gear_refine_current_roll">Current roll: %1$d</string>
+    <string name="gear_refine_possible_result">Possible result: %1$d–%2$d. The new value can be lower, equal, or higher.</string>
+    <string name="gear_refine_cost">Cost: %1$s refinement material. Enhancement and other stat lines stay unchanged.</string>
+    <string name="gear_refine_confirm">Spend material and reroll</string>
     <string name="gear_inspecting">Inspecting</string>
     <string name="gear_tap_inspect">Tap to inspect</string>
     <string name="gear_tap_inspect_comparison">Tap to inspect comparison</string>
