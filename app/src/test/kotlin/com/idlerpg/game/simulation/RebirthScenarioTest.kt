@@ -26,7 +26,7 @@ import com.idlerpg.game.domain.model.player.BaseStats
 import com.idlerpg.game.domain.model.progression.PlayerLevelState
 import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
-import com.idlerpg.game.domain.system.chronicle.EchoTrainingContent
+import com.idlerpg.game.data.content.EchoTrainingContent
 import com.idlerpg.game.domain.system.rebirth.RebirthSystem
 import com.idlerpg.game.domain.command.PurchaseEchoOffer
 import com.idlerpg.game.domain.system.stats.DerivedStatSystem
