@@ -173,7 +173,7 @@ object RebirthSystem : GameCommandHandler {
             nextRebirth
         )
         val resetUpgrades = UpgradeProgressState(
-            levelByUpgradeId = EchoTrainingSystem.startingLevels(nextRebirth)
+            levelByUpgradeId = EchoTrainingSystem.startingLevels(state.meta.copy(rebirth = nextRebirth))
         )
         val resetRun = state.run.copy(
             player = state.run.player.copy(
