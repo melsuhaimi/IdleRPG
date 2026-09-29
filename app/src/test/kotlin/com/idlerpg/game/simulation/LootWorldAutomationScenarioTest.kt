@@ -28,6 +28,7 @@ import com.idlerpg.game.data.content.TrainingHollowWorldContent
 import com.idlerpg.game.domain.model.world.WorldAutomationMode
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
+import com.idlerpg.game.domain.system.loot.AffixRollSystem
 import com.idlerpg.game.domain.system.loot.LootTableSystem
 import com.idlerpg.game.domain.system.loot.LootSystem
 import com.idlerpg.game.domain.model.inventory.LootFilterState
@@ -45,6 +46,37 @@ object LootWorldAutomationScenarioTest {
         check(region.encounterIds.toSet().size == TrainingHollowWorldContent.MAX_STAGE)
         region.encounterIds.zipWithNext().forEach { (current, next) ->
             check(registry.encounter(current).nextEncounterId == next)
+        }
+
+        val affixRandom = SeededGameRandom(5_599L)
+        listOf(
+            EquipmentSlot.ARMOR,
+            EquipmentSlot.HELM,
+            EquipmentSlot.BOOTS
+        ).forEach { slot ->
+            val item = TrainingHollowLootContent.items.first {
+                registry.equipment(registry.item(it.id).equipmentDefinitionId!!).slot == slot
+            }
+            check(TrainingHollowLootContent.allowedAffixIdsFor(slot).size >= 5) {
+                "${slot} must have enough legal affix candidates for four substats after main-stat exclusion"
+            }
+            val main = AffixRollSystem.rollMainStat(
+                registry.item(item.id),
+                registry,
+                affixRandom,
+                Rarity.EPIC
+            )
+            val rolled = AffixRollSystem.roll(
+                registry.item(item.id),
+                Rarity.EPIC,
+                registry,
+                affixRandom,
+                main?.let { setOf(it.affixId) }.orEmpty()
+            )
+            check(rolled.size == 4) {
+                "${slot} Epic gear must roll four distinct substats; got ${rolled.size}"
+            }
+            check(rolled.map { it.affixId }.toSet().size == rolled.size)
         }
 
         val random = SeededGameRandom(5_600L)
