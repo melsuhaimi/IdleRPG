@@ -30,6 +30,7 @@ import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
 import com.idlerpg.game.domain.model.rebirth.RebirthState
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
 import com.idlerpg.game.domain.model.world.WorldState
+import com.idlerpg.game.domain.system.chronicle.EchoTrainingSystem
 import com.idlerpg.game.domain.system.economy.TransactionSystem
 import com.idlerpg.game.domain.system.stats.PlayerScalingSystem
 
@@ -171,6 +172,9 @@ object RebirthSystem : GameCommandHandler {
             ),
             nextRebirth
         )
+        val resetUpgrades = UpgradeProgressState(
+            levelByUpgradeId = EchoTrainingSystem.startingLevels(nextRebirth)
+        )
         val resetRun = state.run.copy(
             player = state.run.player.copy(
                 currentHealth = nextBaseStats.maxHealth,
@@ -181,7 +185,7 @@ object RebirthSystem : GameCommandHandler {
             world = WorldState(),
             economy = state.run.economy.copy(
                 wallet = economyAfterReward.wallet,
-                upgrades = UpgradeProgressState()
+                upgrades = resetUpgrades
             ),
             progression = resetProgression,
             doctrine = state.run.doctrine.copy(rules = emptyList()),
