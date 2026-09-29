@@ -1341,58 +1341,58 @@ private fun RebirthPanel(
     val poolLabel = if (legacySelected) "Legacy" else "Normal"
     GameCard(modifier = Modifier.fillMaxWidth(), accent = ResourceGold) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("REBIRTH / LIFE ${rebirth.nextRebirthNumber}", style = MaterialTheme.typography.labelLarge, color = ResourceGold)
-            Text("Choose when to start again", style = MaterialTheme.typography.titleLarge)
-            Text("Keep your equipment and permanent growth. Reset this life for points you choose how to spend.", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.progress_rebirth_life_title, rebirth.nextRebirthNumber), style = MaterialTheme.typography.labelLarge, color = ResourceGold)
+            Text(stringResource(R.string.progress_rebirth_choose), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.progress_rebirth_summary), style = MaterialTheme.typography.bodyMedium)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 GameMetricChip("GOLD COST", rebirth.goldCostDisplay, ResourceGold, Modifier.weight(1f))
                 GameMetricChip("AVAILABLE", rebirth.goldAvailableDisplay, ResonanceTeal, Modifier.weight(1f))
             }
             Text("+${rebirth.normalPointsGranted} Normal  ·  +${rebirth.legacyPointsGranted} Legacy", style = MaterialTheme.typography.titleMedium, color = ResourceGold)
             Text(
-                if (rebirth.deepLevelRewardDisplay == "—") "At level 15,000: an additional material reward, with the same point grant."
-                else "Also receive ${rebirth.deepLevelRewardDisplay}",
+                if (rebirth.deepLevelRewardDisplay == "—") stringResource(R.string.progress_rebirth_deep_reward_none)
+                else stringResource(R.string.progress_rebirth_deep_reward, rebirth.deepLevelRewardDisplay),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            if (!rebirth.eligible) Text("Requires level ${rebirth.minimumLevel}, enough Gold, and leaving combat.", style = MaterialTheme.typography.bodyMedium)
+            if (!rebirth.eligible) Text(stringResource(R.string.progress_rebirth_requirement, rebirth.minimumLevel), style = MaterialTheme.typography.bodyMedium)
             GameButton(onClick = onRequestRebirth, enabled = rebirth.eligible, modifier = Modifier.fillMaxWidth()) {
-                Text("Review reset and rewards")
+                Text(stringResource(R.string.progress_rebirth_review))
             }
             GameDivider()
             GameOutlinedButton(onClick = { showAllocation = !showAllocation }, modifier = Modifier.fillMaxWidth()) {
-                Text(if (showAllocation) "Close permanent growth" else "Allocate points · ${rebirth.normalUnspent} Normal / ${rebirth.legacyUnspent} Legacy")
+                Text(if (showAllocation) stringResource(R.string.progress_rebirth_close_growth) else stringResource(R.string.progress_rebirth_allocate_growth, rebirth.normalUnspent, rebirth.legacyUnspent))
             }
             if (showAllocation) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     com.idlerpg.game.ui.component.premium.GameChoiceButton(selected = !legacySelected, onClick = { legacySelected = false }, modifier = Modifier.weight(1f)) { Text("Normal") }
                     com.idlerpg.game.ui.component.premium.GameChoiceButton(selected = legacySelected, onClick = { legacySelected = true }, modifier = Modifier.weight(1f)) { Text("Legacy") }
                 }
-                Text("$unspent $poolLabel points available", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.progress_rebirth_points_available, unspent, poolLabel), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    if (legacySelected) "Improves Legendary loot weighting. The additive bonus is capped; drops are never guaranteed."
-                    else "Permanent combat growth. These investments survive Rebirth.",
+                    if (legacySelected) stringResource(R.string.progress_rebirth_legacy_description)
+                    else stringResource(R.string.progress_rebirth_normal_description),
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 rebirth.stats.filter { it.stat.supports(pool) }.forEach { stat ->
                     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             Text(stat.label, style = MaterialTheme.typography.titleMedium)
-                            Text("${if (legacySelected) stat.legacyAllocated else stat.normalAllocated} invested", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.progress_rebirth_invested, if (legacySelected) stat.legacyAllocated else stat.normalAllocated), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         GameOutlinedButton(onClick = { onAllocate(pool, stat.stat) }, enabled = unspent > 0) { Text("+1") }
                     }
                 }
                 GameOutlinedButton(onClick = { confirmReset = true }, enabled = canReset, modifier = Modifier.fillMaxWidth()) {
-                    Text("Reset $poolLabel allocation · ${rebirth.respecGemCostDisplay} Gems")
+                    Text(stringResource(R.string.progress_rebirth_reset_allocation, poolLabel, rebirth.respecGemCostDisplay))
                 }
             }
         }
     }
     if (confirmReset) AlertDialog(
         onDismissRequest = { confirmReset = false },
-        title = { Text("Reset $poolLabel allocation?") },
-        text = { Text("Spend ${rebirth.respecGemCostDisplay} Gems to return the invested $poolLabel points to this pool. You can allocate them again.") },
-        confirmButton = { GameButton(onClick = { confirmReset = false; onReset(pool) }, enabled = canReset) { Text("Spend Gems and reset") } },
+        title = { Text(stringResource(R.string.progress_rebirth_reset_title, poolLabel)) },
+        text = { Text(stringResource(R.string.progress_rebirth_reset_message, rebirth.respecGemCostDisplay, poolLabel)) },
+        confirmButton = { GameButton(onClick = { confirmReset = false; onReset(pool) }, enabled = canReset) { Text(stringResource(R.string.progress_rebirth_spend_reset)) } },
         dismissButton = { TextButton(onClick = { confirmReset = false }) { Text("Cancel") } }
     )
 }
@@ -1405,7 +1405,7 @@ private fun RebirthConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Confirm Rebirth ${rebirth.nextRebirthNumber}") },
+        title = { Text(stringResource(R.string.progress_rebirth_confirm_title, rebirth.nextRebirthNumber)) },
         text = {
             Column(
                 modifier = Modifier
@@ -1413,18 +1413,18 @@ private fun RebirthConfirmationDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Spend ${rebirth.goldCostDisplay} Gold from ${rebirth.goldAvailableDisplay} available.")
-                Text("You receive ${rebirth.normalPointsGranted} Normal and ${rebirth.legacyPointsGranted} Legacy points.")
+                Text(stringResource(R.string.progress_rebirth_confirm_spend, rebirth.goldCostDisplay, rebirth.goldAvailableDisplay))
+                Text(stringResource(R.string.progress_rebirth_confirm_points, rebirth.normalPointsGranted, rebirth.legacyPointsGranted))
                 Text(
                     if (rebirth.deepLevelRewardDisplay == "—") {
-                        "Reach level 15,000 for the modest deep-push reward; that reward is in addition to the usual point grant."
+                        stringResource(R.string.progress_rebirth_confirm_deep_none)
                     } else {
-                        "Deep-push reward: ${rebirth.deepLevelRewardDisplay}"
+                        stringResource(R.string.progress_rebirth_confirm_deep, rebirth.deepLevelRewardDisplay)
                     }
                 )
-                Text("Reset now: level and XP, normal stat purchases, skill unlocks/loadout/rank/mastery/evolution/refinement, Doctrine rules, quests, and stage progress.")
-                Text("Keep: Gold remaining after the cost, gear and enhancement levels, main and substat rolls, all materials, inventory and overflow, Gems, Rebirth count and allocations, Legacy allocations, lifetime statistics and permanent achievements.")
-                Text("Rebirth is optional. You can continue leveling beyond the threshold when you are not ready.")
+                Text(stringResource(R.string.progress_rebirth_confirm_reset))
+                Text(stringResource(R.string.progress_rebirth_confirm_keep))
+                Text(stringResource(R.string.progress_rebirth_optional))
             }
         },
         confirmButton = {
