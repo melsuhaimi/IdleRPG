@@ -16,6 +16,11 @@ sealed interface AffixEffectDefinition {
         val amountPerRollUnit: GameNumber = GameNumber.ONE
     ) : AffixEffectDefinition
 
+    /** additive action-speed ratio units contributed by each rolled value */
+    data class ActionSpeedPerRollUnit(
+        val ratioUnitsPerRollUnit: Long
+    ) : AffixEffectDefinition
+
     data class ResonanceChargeBonus(
         val affinity: Affinity,
         val amountPerEmission: GameNumber = GameNumber.ONE
@@ -59,6 +64,8 @@ data class AffixDefinition(
                 }
             is AffixEffectDefinition.FlatArmorPerRollUnit ->
                 require(authoredEffect.amountPerRollUnit > GameNumber.ZERO)
+            is AffixEffectDefinition.ActionSpeedPerRollUnit ->
+                require(authoredEffect.ratioUnitsPerRollUnit > 0L)
             is AffixEffectDefinition.ResonanceChargeBonus ->
                 require(authoredEffect.amountPerEmission > GameNumber.ZERO)
             null -> Unit
