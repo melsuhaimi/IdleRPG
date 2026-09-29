@@ -28,6 +28,7 @@ SESSION_COMPLETE_AT=0
 GAME_STARTED=0
 COMBAT_ACTIVE=0
 FINAL_COMBAT_ACTIVE=0
+QA_EXIT=0
 
 mkdir -p "$OUT"
 : > "$EVENT_LOG"
@@ -793,6 +794,7 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
     PLAYTEST_STATE="feature_pass_started"
   else
     PLAYTEST_STATE="feature_pass_not_reached"
+    QA_EXIT=1
   fi
   SESSION_START="$(date +%s)"
   SESSION_DEADLINE=$((SESSION_START + SESSION_SECONDS))
@@ -805,13 +807,15 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   PERFETTO_HOST_PID=$!
   sleep 1
 
-  feature_battle_controls
-  feature_adventure
-  feature_build
-  feature_doctrine
-  feature_progress
-  return_to_battle
-  PLAYTEST_STATE="endurance_running"
+  if [ "$GAME_STARTED" -eq 1 ]; then
+    feature_battle_controls
+    feature_adventure
+    feature_build
+    feature_doctrine
+    feature_progress
+    return_to_battle
+    PLAYTEST_STATE="endurance_running"
+  fi
   capture_checkpoint "99-feature-pass-complete"
 
   NEXT_CAPTURE=$((SESSION_START + 300))
@@ -944,8 +948,15 @@ SCREENSHOT_COUNT="$(find "$OUT" -name '*.png' | wc -l | tr -d ' ')"
   printf 'screenshot_count=%s\n' "$SCREENSHOT_COUNT"
 } > "$OUT/verdict.txt"
 
-printf 'scenario=%s launch_verdict=%s playtest_state=%s elapsed=%ss checkpoints=%s screenshots=%s\n' \
-  "$SCENARIO" "$LAUNCH_VERDICT" "$PLAYTEST_STATE" "$SESSION_ELAPSED" "$CHECKPOINT_COUNT" "$SCREENSHOT_COUNT"
+if [ "$LAUNCH_VERDICT" != "launch_did_not_crash" ]; then
+  QA_EXIT=1
+fi
+if [ "$GAME_STARTED" -ne 1 ]; then
+  QA_EXIT=1
+fi
+
+printf 'scenario=%s launch_verdict=%s playtest_state=%s elapsed=%ss checkpoints=%s screenshots=%s exit=%s\n' \
+  "$SCENARIO" "$LAUNCH_VERDICT" "$PLAYTEST_STATE" "$SESSION_ELAPSED" "$CHECKPOINT_COUNT" "$SCREENSHOT_COUNT" "$QA_EXIT"
 
 if [ -n "$GITHUB_STEP_SUMMARY" ]; then
   {
@@ -965,4 +976,4 @@ if [ -n "$GITHUB_STEP_SUMMARY" ]; then
   } >> "$GITHUB_STEP_SUMMARY"
 fi
 
-exit 0
+exit "$QA_EXIT"
