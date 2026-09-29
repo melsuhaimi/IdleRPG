@@ -120,10 +120,21 @@ object ModifierSystem {
         return result
     }
 
-    fun actionSpeed(state: GameState, base: Ratio, contentRegistry: ContentRegistry): Ratio =
-        ratioStat(state, base, contentRegistry) { effect ->
+    fun actionSpeed(state: GameState, base: Ratio, contentRegistry: ContentRegistry): Ratio {
+        var result = ratioStat(state, base, contentRegistry) { effect ->
             (effect as? UpgradeEffectDefinition.ActionSpeedPerLevel)?.ratioPerLevel
         }
+        forEachEquippedAffix(state, contentRegistry) { rolledValue, effect ->
+            if (effect is AffixEffectDefinition.ActionSpeedPerRollUnit) {
+                result = GameMath.ratioAfterSteps(
+                    base = result,
+                    growthPerStep = Ratio.ofUnits(effect.ratioUnitsPerRollUnit),
+                    steps = rolledValue
+                )
+            }
+        }
+        return result
+    }
 
     fun criticalChance(state: GameState, base: Ratio, contentRegistry: ContentRegistry): Ratio =
         ratioStat(state, base, contentRegistry) { effect ->
