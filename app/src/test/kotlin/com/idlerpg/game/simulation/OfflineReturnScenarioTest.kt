@@ -59,6 +59,11 @@ object OfflineReturnScenarioTest {
         check(checkpoint.summary.simulatedElapsed == checkpointElapsed)
         check(checkpoint.state.engine.simulationTime ==
             checkpointState.engine.simulationTime + checkpointElapsed)
+        check(checkpoint.state.engine.randomState == checkpointState.engine.randomState)
+        check(checkpoint.state.engine.nextEventSequenceNumber ==
+            checkpointState.engine.nextEventSequenceNumber)
+        check(checkpoint.state.engine.nextInstanceIdCounter ==
+            checkpointState.engine.nextInstanceIdCounter)
         check(checkpoint.checkpointWrittenAtEpochMs == checkpointClock.epochMs)
         check(checkpointRepository.envelope?.writtenAtEpochMs == checkpointClock.epochMs)
         check(checkpointRepository.envelope?.gameState() == checkpoint.state)
