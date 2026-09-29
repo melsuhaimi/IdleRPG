@@ -395,8 +395,18 @@ class OfflineSessionCoordinator(
                 featureUnlocks = canonicalResult.state.run.progression.featureUnlocks
             )
         )
+        // Offline loot/combat outcomes are intentionally discarded. Restore the pre-offline
+        // deterministic cursors so discarded RNG rolls, event sequence numbers, and generated
+        // instance IDs cannot perturb later active gameplay.
+        val retainedEngine = canonicalResult.state.engine.copy(
+            randomState = before.engine.randomState,
+            nextEventSequenceNumber = before.engine.nextEventSequenceNumber,
+            nextInstanceIdCounter = before.engine.nextInstanceIdCounter
+        )
         val projectedState = timestampConsistentBefore.copy(
-            engine = canonicalResult.state.engine,
+            engine = retainedEngine.copy(
+                simulationTime = canonicalResult.state.engine.simulationTime
+            ),
             run = projectedRun,
             meta = timestampConsistentBefore.meta
         )
