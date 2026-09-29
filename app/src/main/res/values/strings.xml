@@ -70,7 +70,31 @@
     <string name="progress_achievements">Achievements</string>
     <string name="progress_discoveries">Codex</string>
     <string name="progress_echo">Echo Shards</string>
-    <string name="progress_chronicle">Chronicle</string>
+    <string name="progress_chronicle">Chronicle</string>\n    <string name="progress_rebirth_life_title">REBIRTH / LIFE %1$d</string>
+    <string name="progress_rebirth_choose">Choose when to start again</string>
+    <string name="progress_rebirth_summary">Keep your equipment and permanent growth. Reset this life for points you choose how to spend.</string>
+    <string name="progress_rebirth_deep_reward_none">At level 15,000: an additional material reward, with the same point grant.</string>
+    <string name="progress_rebirth_deep_reward">Also receive %1$s</string>
+    <string name="progress_rebirth_requirement">Requires level %1$d, enough Gold, and leaving combat.</string>
+    <string name="progress_rebirth_review">Review reset and rewards</string>
+    <string name="progress_rebirth_close_growth">Close permanent growth</string>
+    <string name="progress_rebirth_allocate_growth">Allocate points · %1$d Normal / %2$d Legacy</string>
+    <string name="progress_rebirth_points_available">%1$d %2$s points available</string>
+    <string name="progress_rebirth_legacy_description">Improves Legendary loot weighting. The additive bonus is capped; drops are never guaranteed.</string>
+    <string name="progress_rebirth_normal_description">Permanent combat growth. These investments survive Rebirth.</string>
+    <string name="progress_rebirth_invested">%1$d invested</string>
+    <string name="progress_rebirth_reset_allocation">Reset %1$s allocation · %2$s Gems</string>
+    <string name="progress_rebirth_reset_title">Reset %1$s allocation?</string>
+    <string name="progress_rebirth_reset_message">Spend %1$s Gems to return the invested %2$s points to this pool. You can allocate them again.</string>
+    <string name="progress_rebirth_spend_reset">Spend Gems and reset</string>
+    <string name="progress_rebirth_confirm_title">Confirm Rebirth %1$d</string>
+    <string name="progress_rebirth_confirm_spend">Spend %1$s Gold from %2$s available.</string>
+    <string name="progress_rebirth_confirm_points">You receive %1$d Normal and %2$d Legacy points.</string>
+    <string name="progress_rebirth_confirm_deep_none">Reach level 15,000 for the modest deep-push reward; that reward is in addition to the usual point grant.</string>
+    <string name="progress_rebirth_confirm_deep">Deep-push reward: %1$s</string>
+    <string name="progress_rebirth_confirm_reset">Reset now: level and XP, normal stat purchases, skill unlocks/loadout/rank/mastery/evolution/refinement, Doctrine rules, quests, and stage progress.</string>
+    <string name="progress_rebirth_confirm_keep">Keep: Gold remaining after the cost, gear and enhancement levels, main and substat rolls, all materials, inventory and overflow, Gems, Rebirth count and allocations, Legacy allocations, lifetime statistics and permanent achievements.</string>
+    <string name="progress_rebirth_optional">Rebirth is optional. You can continue leveling beyond the threshold when you are not ready.</string>
 
     <string name="hud_no_region">No area selected</string>
     <string name="hud_expedition_label">ADVENTURE</string>
