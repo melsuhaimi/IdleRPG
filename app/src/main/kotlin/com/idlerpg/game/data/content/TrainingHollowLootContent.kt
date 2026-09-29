@@ -45,7 +45,7 @@ object TrainingHollowLootContent {
         AffixDefinition(
             id = ContentId("affix.resonant.${affinity.id.value.substringAfterLast('.') }"),
             displayName = "${affinityLabel(affinity)} Charge",
-            compatibleSlots = setOf(EquipmentSlot.ACCESSORY, EquipmentSlot.CATALYST),
+            compatibleSlots = allSlots,
             selectionWeight = 45L,
             minimumRollValue = 1L,
             maximumRollValue = 1L,
@@ -70,10 +70,33 @@ object TrainingHollowLootContent {
         AffixDefinition(ContentId(id), name, slots, weight, 1L, 4L,
             AffixEffectDefinition.FlatArmorPerRollUnit(GameNumber.ONE))
 
+    private fun actionSpeedAffix(
+        id: String,
+        name: String,
+        slots: Set<EquipmentSlot>,
+        weight: Long
+    ) = AffixDefinition(
+        ContentId(id),
+        name,
+        slots,
+        weight,
+        1L,
+        4L,
+        AffixEffectDefinition.ActionSpeedPerRollUnit(ratioUnitsPerRollUnit = 25L)
+    )
+
     val affixes = listOf(
         attackAffix("affix.brutal", "Brutal", setOf(EquipmentSlot.WEAPON), 80L),
-        attackAffix("affix.relentless", "Relentless", setOf(EquipmentSlot.WEAPON, EquipmentSlot.BOOTS), 65L),
-        attackAffix("affix.hollow_tuned", "Hollow-Tuned", allSlots, 40L),
+        actionSpeedAffix("affix.relentless", "Relentless", setOf(EquipmentSlot.WEAPON, EquipmentSlot.BOOTS), 65L),
+        AffixDefinition(
+            ContentId("affix.hollow_tuned"),
+            "Hollow-Tuned",
+            allSlots,
+            40L,
+            1L,
+            3L,
+            AffixEffectDefinition.ResonanceChargeBonus(Affinity.ARCANE)
+        ),
         attackAffix("affix.executioner", "Executioner", setOf(EquipmentSlot.WEAPON, EquipmentSlot.ACCESSORY), 45L),
         armorAffix("affix.reinforced", "Reinforced", setOf(EquipmentSlot.ARMOR, EquipmentSlot.HELM), 85L),
         armorAffix("affix.warded", "Warded", setOf(EquipmentSlot.ARMOR, EquipmentSlot.CATALYST), 65L),
