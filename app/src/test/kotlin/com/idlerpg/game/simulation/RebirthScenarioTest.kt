@@ -26,7 +26,9 @@ import com.idlerpg.game.domain.model.player.BaseStats
 import com.idlerpg.game.domain.model.progression.PlayerLevelState
 import com.idlerpg.game.domain.model.rebirth.RebirthPointPool
 import com.idlerpg.game.domain.model.rebirth.RebirthStat
+import com.idlerpg.game.domain.system.chronicle.EchoTrainingContent
 import com.idlerpg.game.domain.system.rebirth.RebirthSystem
+import com.idlerpg.game.domain.command.PurchaseEchoOffer
 import com.idlerpg.game.domain.system.stats.DerivedStatSystem
 
 /** Rebirth is an atomic soft reset with permanent point progression. */
@@ -36,6 +38,7 @@ object RebirthScenarioTest {
         rejectedDuringActiveCombatIsAtomic()
         resetPreservesLongLivedStateAndClearsRunProgression()
         allocationAndGemRespecArePersistent()
+        permanentEchoTrainingSurvivesRebirth()
         deepRebirthRetainsPointsAndGrantsModestReward()
     }
 
@@ -159,6 +162,39 @@ object RebirthScenarioTest {
         check(!after.run.doctrine.enabled)
         check(after.run.doctrine.rules.isEmpty())
         check(after.run.adaptation == preservedAdaptation)
+    }
+
+    private fun permanentEchoTrainingSurvivesRebirth() {
+        val runtime = SimulationTestSupport.runtime(seed = 9_006L)
+        val upgradeId = EchoTrainingContent.upgradeIds.first()
+        val offerId = EchoTrainingContent.offerId(upgradeId)
+        SimulationTestSupport.checkAccepted(runtime.dispatch(PurchaseEchoOffer(offerId)))
+        check(
+            runtime.state().run.economy.upgrades.levelByUpgradeId[upgradeId] ==
+                EchoTrainingContent.STARTING_LEVEL
+        )
+
+        val mature = runtime.state().copy(
+            run = runtime.state().run.copy(
+                combat = com.idlerpg.game.domain.model.combat.CombatState(),
+                economy = runtime.state().run.economy.copy(
+                    wallet = CurrencyWallet(
+                        amountsByCurrencyId = mapOf(
+                            CurrencyId.GOLD to GameNumber.of(RebirthSystem.FIRST_REBIRTH_GOLD_COST)
+                        )
+                    )
+                ),
+                progression = runtime.state().run.progression.copy(
+                    playerLevel = PlayerLevelState(RebirthSystem.MINIMUM_REBIRTH_LEVEL)
+                )
+            )
+        )
+        runtime.replaceLoadedState(mature)
+        SimulationTestSupport.checkAccepted(runtime.dispatch(PerformRebirth()))
+        check(
+            runtime.state().run.economy.upgrades.levelByUpgradeId[upgradeId] ==
+                EchoTrainingContent.STARTING_LEVEL
+        )
     }
 
     private fun deepRebirthRetainsPointsAndGrantsModestReward() {
