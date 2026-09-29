@@ -829,14 +829,14 @@ private fun AffixList(item: GearItemUiState, onIntent: (GearUiIntent) -> Unit) {
             onDismissRequest = { pendingAffixId = null },
             title = { Text("Reroll ${stringResource(affix.titleStringKey.stringResId())}?") },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Current roll: ${affix.rolledValue}")
-                Text("Possible result: ${affix.minimumRoll}–${affix.maximumRoll}. The new value can be lower, equal, or higher.")
-                Text("Cost: ${item.refinementMaterialCostDisplay} refinement material. Enhancement and other stat lines stay unchanged.")
+                Text(stringResource(R.string.gear_refine_current_roll, affix.rolledValue))
+                Text(stringResource(R.string.gear_refine_possible_result, affix.minimumRoll, affix.maximumRoll))
+                Text(stringResource(R.string.gear_refine_cost, item.refinementMaterialCostDisplay))
             } },
             confirmButton = { GameButton(onClick = {
                 pendingAffixId = null
                 onIntent(GearUiIntent.Refine(item.instanceId, affix.affixId))
-            }, enabled = item.canRefine) { Text("Spend material and reroll") } },
+            }, enabled = item.canRefine) { Text(stringResource(R.string.gear_refine_confirm)) } },
             dismissButton = { TextButton(onClick = { pendingAffixId = null }) { Text("Cancel") } }
         )
     }
