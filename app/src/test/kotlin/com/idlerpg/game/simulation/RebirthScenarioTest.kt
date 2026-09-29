@@ -168,6 +168,15 @@ object RebirthScenarioTest {
         val runtime = SimulationTestSupport.runtime(seed = 9_006L)
         val upgradeId = EchoTrainingContent.upgradeIds.first()
         val offerId = EchoTrainingContent.offerId(upgradeId)
+        runtime.replaceLoadedState(
+            runtime.state().copy(
+                meta = runtime.state().meta.copy(
+                    echoes = runtime.state().meta.echoes.copy(
+                        available = GameNumber.of(8L)
+                    )
+                )
+            )
+        )
         SimulationTestSupport.checkAccepted(runtime.dispatch(PurchaseEchoOffer(offerId)))
         check(
             runtime.state().run.economy.upgrades.levelByUpgradeId[upgradeId] ==
