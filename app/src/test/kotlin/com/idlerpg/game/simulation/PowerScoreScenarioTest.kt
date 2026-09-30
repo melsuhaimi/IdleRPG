@@ -40,8 +40,8 @@ object PowerScoreScenarioTest {
         val guarded = initial.copy(
             meta = initial.meta.copy(
                 rebirth = RebirthState(
-                    normalPointsEarned = 1L,
-                    normalAllocations = mapOf(RebirthStat.DEFENSE to 1L)
+                    normalPointsEarned = 10L,
+                    normalAllocations = mapOf(RebirthStat.DEFENSE to 10L)
                 )
             )
         )

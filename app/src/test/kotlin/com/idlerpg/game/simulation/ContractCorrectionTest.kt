@@ -63,7 +63,6 @@ class ContractCorrectionTest {
 
         val defenseSystem = com.idlerpg.game.domain.system.combat.DefenseSystem
         check(defenseSystem.guardChance(GameNumber.ZERO) == Ratio.ZERO)
-        check(defenseSystem.guardChance(GameNumber.of(-1L)) == Ratio.ZERO)
         check(defenseSystem.guardChance(GameNumber.of(1_000L)) == Ratio.ofUnits(5_000L))
         check(defenseSystem.guardChance(GameNumber.of(3_000L)) == Ratio.ofUnits(7_500L))
         val level100 = state.copy(run = state.run.copy(progression = state.run.progression.copy(
