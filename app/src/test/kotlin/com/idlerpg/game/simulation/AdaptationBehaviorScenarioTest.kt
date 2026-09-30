@@ -238,6 +238,9 @@ object AdaptationBehaviorScenarioTest {
         val prepared = state.copy(run = state.run.copy(combat = state.run.combat.copy(
             enemies = (otherEnemies + enemy).sortedBy { it.instanceId }
         )))
+        val context = factory.createEngineContext().also {
+            it.beginExecution(prepared.engine)
+        }
         return CombatSystem.execute(
             prepared,
             ScheduledAction(
@@ -247,7 +250,7 @@ object AdaptationBehaviorScenarioTest {
                 ownerInstanceId = enemy.instanceId,
                 sourceContentId = attackId
             ),
-            factory.createEngineContext()
+            context
         )
     }
 }
