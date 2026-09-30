@@ -389,6 +389,7 @@ private object SaveDataMapper {
         writer.gameNumber("$path.attackPower", state.attackPower)
         writer.gameNumber("$path.maxHealth", state.maxHealth)
         writer.gameNumber("$path.armor", state.armor)
+        writer.gameNumber("$path.defense", state.defense)
         writer.ratio("$path.actionSpeed", state.actionSpeed)
         writer.ratio("$path.criticalChance", state.criticalChance)
         writer.ratio(
@@ -407,6 +408,7 @@ private object SaveDataMapper {
             attackPower = reader.gameNumber("$path.attackPower"),
             maxHealth = reader.gameNumber("$path.maxHealth"),
             armor = reader.gameNumber("$path.armor"),
+            defense = reader.optionalGameNumber("$path.defense", GameNumber.ZERO),
             actionSpeed = reader.ratio("$path.actionSpeed"),
             criticalChance = reader.ratio("$path.criticalChance"),
             criticalMultiplier = reader.ratio(
@@ -2846,6 +2848,16 @@ private class FieldReader(
 
     fun gameNumber(path: String): GameNumber =
         parse(path) { GameNumber.parse(it) }
+
+    fun optionalGameNumber(path: String, default: GameNumber): GameNumber {
+        val value = values[path] ?: return default
+        consumed += path
+        return try {
+            GameNumber.parse(value)
+        } catch (error: Throwable) {
+            throw SaveDataException("Invalid game number '$value' at $path", error)
+        }
+    }
 
     fun ratio(path: String): Ratio =
         Ratio.ofUnits(long(path))

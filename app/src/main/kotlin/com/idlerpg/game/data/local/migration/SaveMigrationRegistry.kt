@@ -93,7 +93,8 @@ class SaveMigrationRegistry(
                 V7ToV8SaveMigration(),
                 V8ToV9SaveMigration(),
                 V9ToV10SaveMigration(),
-                V10ToV11SaveMigration()
+                V10ToV11SaveMigration(),
+                V11ToV12SaveMigration()
             )
     }
 }

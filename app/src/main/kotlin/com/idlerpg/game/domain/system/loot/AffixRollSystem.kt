@@ -35,18 +35,27 @@ object AffixRollSystem {
         excludedAffixIds: Set<ContentId> = emptySet()
     ): List<RolledAffix> {
         val requestedCount = affixCountFor(rarity)
-        val candidates = candidatesFor(itemDefinition, contentRegistry)
+        val eligible = candidatesFor(itemDefinition, contentRegistry)
+        val excludedEffectKeys = eligible
+            .filter { it.id in excludedAffixIds }
+            .map(::mechanicalEffectKey)
+            .toSet()
+        val candidates = eligible
             .filterNot { it.id in excludedAffixIds }
+            .filterNot { mechanicalEffectKey(it) in excludedEffectKeys }
             .toMutableList()
-        if (requestedCount == 0 || candidates.isEmpty()) {
-            return emptyList()
+        if (requestedCount == 0) return emptyList()
+        val availableMechanics = candidates.map(::mechanicalEffectKey).toSet().size
+        require(availableMechanics >= requestedCount) {
+            "${itemDefinition.id} has $availableMechanics distinct eligible affixes after exclusions; " +
+                "rarity $rarity requires $requestedCount distinct substats"
         }
 
-        val count = minOf(requestedCount, candidates.size)
         val result = mutableListOf<RolledAffix>()
-        repeat(count) {
+        repeat(requestedCount) {
             val selected = chooseAffix(candidates, random)
-            candidates.remove(selected)
+            val selectedEffectKey = mechanicalEffectKey(selected)
+            candidates.removeAll { mechanicalEffectKey(it) == selectedEffectKey }
             result += RolledAffix(
                 affixId = selected.id,
                 value = rollValue(selected, random, rarity)
@@ -93,6 +102,10 @@ object AffixRollSystem {
                     )
                 }
         )
+
+    /** Different affix IDs may represent the same actual stat and cannot both be rolled. */
+    private fun mechanicalEffectKey(definition: AffixDefinition): Any =
+        definition.effect ?: definition.id
 
     private fun rollValue(
         definition: AffixDefinition,

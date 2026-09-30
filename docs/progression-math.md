@@ -17,6 +17,8 @@ The previous branch baseline used:
 
 Those values remain useful as implementation evidence for the existing runtime, but they are not the new design target where they conflict with the PR #3 contract.
 
+The current route continues through Stage 240. Stage 120 links to Stage 121, with Stage 240 as the terminal encounter and recurring boss milestones through that boundary.
+
 ## PR #3 target changes
 
 - Maximum level is 15,000.

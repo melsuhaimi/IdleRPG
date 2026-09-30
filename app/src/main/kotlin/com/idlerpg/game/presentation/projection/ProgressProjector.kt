@@ -165,6 +165,7 @@ class ProgressProjector(
                         RebirthStat.ATTACK_POWER -> "Attack"
                         RebirthStat.MAX_HEALTH -> "Max HP"
                         RebirthStat.ARMOR -> "Armor"
+                        RebirthStat.DEFENSE -> "Defense"
                         RebirthStat.ACTION_SPEED -> "Speed"
                         RebirthStat.CRITICAL_CHANCE -> "Critical Chance"
                         RebirthStat.CRITICAL_MULTIPLIER -> "Critical Damage"
@@ -283,6 +284,14 @@ class ProgressProjector(
                 formula = "Damage reduction = Armor / (100 + Armor)"
             ),
             StatOverviewUiState(
+                id = "defense",
+                label = "DEFENSE",
+                valueDisplay = GameNumberFormatter.full(readQueries.defense(state)) +
+                    " · " + formatRatioPercent(readQueries.guardChance(state)) + " Guard",
+                description = "Guard reduces physical and nonphysical damage after Armor.",
+                formula = "Guard chance = min(75%, Defense / (1,000 + Defense)); Guard blocks 50%"
+            ),
+            StatOverviewUiState(
                 id = "crit-chance",
                 label = "CRIT CHANCE",
                 valueDisplay = formatRatioPercent(readQueries.criticalChance(state)),
@@ -357,7 +366,7 @@ class ProgressProjector(
                         id = "defense",
                         label = "DEFENSE",
                         valueDisplay = GameNumberFormatter.full(powerScore.defense),
-                        formula = "Max Health + Armor × 10"
+                        formula = "Max Health + Armor × 10 + Defense × 10"
                     ),
                     PowerScoreComponentUiState(
                         id = "gear",

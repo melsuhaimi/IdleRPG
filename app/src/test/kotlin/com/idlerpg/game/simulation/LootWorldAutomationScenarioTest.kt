@@ -20,7 +20,9 @@ import com.idlerpg.game.domain.model.inventory.EquipmentLoadoutState
 import com.idlerpg.game.domain.model.world.RegionProgressState
 import com.idlerpg.game.domain.system.stats.ModifierSystem
 import com.idlerpg.game.domain.system.world.RegionSystem
+import com.idlerpg.game.domain.system.world.BossSystem
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.data.content.TrainingHollowLootContent
 import com.idlerpg.game.data.content.TrainingHollowStrategyContent
@@ -33,7 +35,7 @@ import com.idlerpg.game.domain.system.loot.LootTableSystem
 import com.idlerpg.game.domain.system.loot.LootSystem
 import com.idlerpg.game.domain.model.inventory.LootFilterState
 
-/** Gate 5–6 acceptance: sane loot, atomic bulk QoL, 30 stages, and Push/Farm persistence. */
+/** Gate 5–6 acceptance: sane loot, atomic bulk QoL, a 240-stage route, and Push/Farm persistence. */
 object LootWorldAutomationScenarioTest {
     fun run() {
         val factory = SimulationTestSupport.factory()
@@ -48,35 +50,65 @@ object LootWorldAutomationScenarioTest {
             check(registry.encounter(current).nextEncounterId == next)
         }
 
-        val affixRandom = SeededGameRandom(5_599L)
-        listOf(
-            EquipmentSlot.ARMOR,
-            EquipmentSlot.HELM,
-            EquipmentSlot.BOOTS
-        ).forEach { slot ->
-            val item = TrainingHollowLootContent.items.first {
-                registry.equipment(registry.item(it.id).equipmentDefinitionId!!).slot == slot
+        check(TrainingHollowWorldContent.MAX_STAGE == 240)
+        check(registry.encounter(TrainingHollowWorldContent.stageId(120)).nextEncounterId ==
+            TrainingHollowWorldContent.stageId(121))
+        check(registry.encounter(TrainingHollowWorldContent.stageId(240)).nextEncounterId == null)
+        check(registry.encounter(TrainingHollowWorldContent.stageId(240)).rewardMultiplier ==
+            Ratio.ofUnits(36_250L))
+
+        region.bossIds.map(registry::boss).forEach { boss ->
+            val encounter = registry.encounter(boss.encounterDefinitionId)
+            val normalEncountersBefore = region.encounterIds
+                .takeWhile { it != encounter.id }
+                .count {
+                    registry.encounter(it).type ==
+                        com.idlerpg.game.domain.definition.world.EncounterType.NORMAL
+                }
+            check(boss.requiredNormalClears == normalEncountersBefore.toLong()) {
+                "${boss.id} should unlock after the normal encounters before ${encounter.displayName}"
             }
-            check(TrainingHollowLootContent.allowedAffixIdsFor(slot).size >= 5) {
-                "${slot} must have enough legal affix candidates for four substats after main-stat exclusion"
-            }
-            val main = AffixRollSystem.rollMainStat(
-                registry.item(item.id),
-                registry,
-                affixRandom,
-                Rarity.EPIC
+            val beforeThreshold = RegionProgressState(
+                normalClears = GameNumber.of(normalEncountersBefore.toLong() - 1L)
             )
-            val rolled = AffixRollSystem.roll(
-                registry.item(item.id),
-                Rarity.EPIC,
-                registry,
-                affixRandom,
-                main?.let { setOf(it.affixId) }.orEmpty()
+            val atThreshold = beforeThreshold.copy(
+                normalClears = GameNumber.of(normalEncountersBefore.toLong())
             )
-            check(rolled.size == 4) {
-                "${slot} Epic gear must roll four distinct substats; got ${rolled.size}"
+            check(!BossSystem.isUnlocked(beforeThreshold, boss))
+            check(BossSystem.isUnlocked(atThreshold, boss))
+        }
+
+        registry.allItems().filter { it.equipmentDefinitionId != null }.forEachIndexed { itemIndex, item ->
+            val equipment = registry.equipment(item.equipmentDefinitionId!!)
+            val candidates = item.allowedAffixIds
+                .map(registry::affix)
+                .filter { equipment.slot in it.compatibleSlots }
+            check(candidates.map { it.effect ?: it.id }.toSet().size >= 5) {
+                "${item.id} needs one main stat and four distinct Legendary substat mechanics"
             }
-            check(rolled.map { it.affixId }.toSet().size == rolled.size)
+            Rarity.ordered().forEach { rarity ->
+                val randomForItem = SeededGameRandom(6_000L + itemIndex * 10L + rarity.rank)
+                val main = AffixRollSystem.rollMainStat(item, registry, randomForItem, rarity)
+                    ?: error("${item.id} has no main-stat candidate")
+                val substats = AffixRollSystem.roll(
+                    itemDefinition = item,
+                    rarity = rarity,
+                    contentRegistry = registry,
+                    random = randomForItem,
+                    excludedAffixIds = setOf(main.affixId)
+                )
+                check(substats.size == AffixRollSystem.affixCountFor(rarity))
+                check(substats.map { it.affixId }.toSet().size == substats.size)
+                check(substats.none { it.affixId == main.affixId })
+                val mainEffect = registry.affix(main.affixId).let { it.effect ?: it.id }
+                val substatEffects = substats.map { rolled ->
+                    registry.affix(rolled.affixId).let { it.effect ?: it.id }
+                }
+                check(substatEffects.toSet().size == substatEffects.size)
+                check(mainEffect !in substatEffects) {
+                    "${item.id} duplicated a stat between its main affix and substats"
+                }
+            }
         }
 
         val random = SeededGameRandom(5_600L)

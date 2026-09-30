@@ -29,6 +29,9 @@ import com.idlerpg.game.domain.event.ItemDropped
 import com.idlerpg.game.domain.event.ItemSentToOverflow
 import com.idlerpg.game.domain.event.MasteryIncreased
 import com.idlerpg.game.domain.model.GameState
+import com.idlerpg.game.domain.model.world.WorldAutomationMode
+import com.idlerpg.game.domain.model.world.RegionProgressState
+import com.idlerpg.game.domain.model.combat.CombatState
 import com.idlerpg.game.domain.model.world.EncounterState
 import com.idlerpg.game.domain.model.world.EncounterStatus
 import com.idlerpg.game.domain.model.world.WorldState
@@ -67,6 +70,50 @@ object OfflineReturnScenarioTest {
         check(checkpoint.checkpointWrittenAtEpochMs == checkpointClock.epochMs)
         check(checkpointRepository.envelope?.writtenAtEpochMs == checkpointClock.epochMs)
         check(checkpointRepository.envelope?.gameState() == checkpoint.state)
+
+        val farmRegionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID
+        val farmTarget = TrainingHollowWorldContent.stageId(9)
+        val farmBase = factory.newGame(904L).state()
+        val farmBefore = farmBase.copy(
+            run = farmBase.run.copy(
+                combat = CombatState(),
+                world = WorldState(
+                    activeRegionId = farmRegionId,
+                    unlockedRegionIds = setOf(farmRegionId),
+                    clearedEncounterIds = setOf(farmTarget),
+                    regionProgressById = mapOf(
+                        farmRegionId to RegionProgressState(
+                            highestClearedEncounterTier = 9L,
+                            normalClears = GameNumber.ONE
+                        )
+                    ),
+                    automationMode = WorldAutomationMode.FARM,
+                    selectedFarmEncounterId = farmTarget
+                )
+            )
+        )
+        val farmSavedAt = 20_000L
+        val farmRepository = SimulationTestSupport.InMemoryGameRepository(
+            SaveEnvelope.create(
+                gameState = farmBefore,
+                contentVersion = SimulationTestSupport.CONTENT_VERSION,
+                writtenAtEpochMs = farmSavedAt
+            )
+        )
+        val farmResume = OfflineSessionCoordinator(
+            repository = farmRepository,
+            clock = SimulationTestSupport.MutableClock(farmSavedAt + 60_000L),
+            engineContext = factory.createEngineContext()
+        ).resume() ?: error("Expected farming checkpoint resume")
+        check(farmResume.summary.enemiesDefeated > GameNumber.ZERO)
+        check(farmResume.state.engine.randomState == farmBefore.engine.randomState)
+        check(farmResume.state.engine.nextEventSequenceNumber ==
+            farmBefore.engine.nextEventSequenceNumber)
+        check(farmResume.state.engine.nextInstanceIdCounter ==
+            farmBefore.engine.nextInstanceIdCounter) {
+            "Temporary offline combat and discarded loot must not consume persistent instance IDs"
+        }
+        check(farmResume.events.none { it.event is ItemDropped })
 
         val coordinator = OfflineSessionCoordinator(
             repository = SimulationTestSupport.InMemoryGameRepository(),

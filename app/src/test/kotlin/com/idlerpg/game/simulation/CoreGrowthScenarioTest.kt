@@ -3,6 +3,7 @@ package com.idlerpg.game.simulation
 import com.idlerpg.game.application.GameRuntime
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.number.Ratio
+import com.idlerpg.game.core.random.SeededGameRandom
 import com.idlerpg.game.core.time.GameDuration
 import com.idlerpg.game.data.content.DefaultGameContent
 import com.idlerpg.game.data.local.SaveData
@@ -154,11 +155,12 @@ object CoreGrowthScenarioTest {
         val source = unarmored.run.combat.enemies.single().instanceId
         val damageKindId = DamageKind.PHYSICAL.id
         val unarmoredDamage = DamageSystem.dealToPlayer(
-            unarmored, source, GameNumber.of(50L), GameNumber.ZERO, damageKindId, registry
+            unarmored, source, GameNumber.of(50L), GameNumber.ZERO, damageKindId, registry,
+            SeededGameRandom(0L)
         ).event.amount
         val armoredDamage = DamageSystem.dealToPlayer(
             armored, armored.run.combat.enemies.single().instanceId,
-            GameNumber.of(50L), GameNumber.ZERO, damageKindId, registry
+            GameNumber.of(50L), GameNumber.ZERO, damageKindId, registry, SeededGameRandom(0L)
         ).event.amount
         check(armoredDamage < unarmoredDamage)
 

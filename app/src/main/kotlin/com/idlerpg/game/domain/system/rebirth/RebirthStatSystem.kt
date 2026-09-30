@@ -13,6 +13,7 @@ object RebirthStatSystem {
     const val ATTACK_POWER_PER_POINT: Long = 1L
     const val MAX_HEALTH_PER_POINT: Long = 10L
     const val ARMOR_PER_POINT: Long = 1L
+    const val DEFENSE_PER_POINT: Long = 10L
     const val ACTION_SPEED_UNITS_PER_POINT: Long = 25L
     const val CRITICAL_CHANCE_UNITS_PER_POINT: Long = 10L
     const val CRITICAL_MULTIPLIER_UNITS_PER_POINT: Long = 25L
@@ -56,6 +57,10 @@ object RebirthStatSystem {
             armor = result.armor + pointsAsGameNumber(
                 allocations[RebirthStat.ARMOR],
                 ARMOR_PER_POINT
+            ),
+            defense = result.defense + pointsAsGameNumber(
+                allocations[RebirthStat.DEFENSE],
+                DEFENSE_PER_POINT
             ),
             actionSpeed = GameMath.ratioAfterSteps(
                 result.actionSpeed,

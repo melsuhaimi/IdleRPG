@@ -28,6 +28,16 @@ object DerivedStatSystem {
             contentRegistry = contentRegistry
         )
 
+    fun defense(
+        state: GameState,
+        @Suppress("UNUSED_PARAMETER") contentRegistry: ContentRegistry
+    ): GameNumber = baseStats(state).defense
+
+    fun guardChance(state: GameState, contentRegistry: ContentRegistry): Ratio =
+        com.idlerpg.game.domain.system.combat.DefenseSystem.guardChance(
+            defense(state, contentRegistry)
+        )
+
     fun basicAttackInterval(
         state: GameState,
         definition: BasicAttackDefinition,

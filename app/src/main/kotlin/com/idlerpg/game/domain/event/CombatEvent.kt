@@ -46,7 +46,8 @@ data class DamageDealt(
     val targetInstanceId: InstanceId,
     val amount: GameNumber,
     val damageKindId: ContentId? = null,
-    val critical: Boolean = false
+    val critical: Boolean = false,
+    val guarded: Boolean = false
 ) : CombatEvent
 
 data class HealingApplied(

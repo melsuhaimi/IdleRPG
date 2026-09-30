@@ -34,6 +34,12 @@ class DefaultGameReadQueries(
     override fun armor(state: GameState): GameNumber =
         DerivedStatSystem.armor(state, contentRegistry)
 
+    override fun defense(state: GameState): GameNumber =
+        DerivedStatSystem.defense(state, contentRegistry)
+
+    override fun guardChance(state: GameState): Ratio =
+        DerivedStatSystem.guardChance(state, contentRegistry)
+
     override fun maximumHealth(state: GameState): GameNumber =
         DerivedStatSystem.maximumHealth(state, contentRegistry)
 

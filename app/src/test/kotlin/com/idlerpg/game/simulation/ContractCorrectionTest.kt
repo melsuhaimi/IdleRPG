@@ -5,6 +5,10 @@ import com.idlerpg.game.application.GameRuntime
 import com.idlerpg.game.application.GameSessionFactory
 import com.idlerpg.game.application.OfflineSessionCoordinator
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
+import com.idlerpg.game.core.random.GameRandom
+import com.idlerpg.game.core.random.RandomState
+import com.idlerpg.game.core.random.WeightedValue
 import com.idlerpg.game.core.time.GameClock
 import com.idlerpg.game.data.local.SaveEnvelope
 import com.idlerpg.game.data.repository.GameRepository
@@ -26,10 +30,48 @@ class ContractCorrectionTest {
         val source = state.run.combat.enemies.first().instanceId
         fun damage(kind: com.idlerpg.game.domain.definition.DamageKind) =
             com.idlerpg.game.domain.system.combat.DamageSystem.dealToPlayer(
-                state, source, GameNumber.of(80), GameNumber.ZERO, kind.id, factory.contentRegistry
+                state, source, GameNumber.of(80), GameNumber.ZERO, kind.id,
+                factory.contentRegistry, FixedRollRandom(9_999L)
             ).event.amount
         check(damage(com.idlerpg.game.domain.definition.DamageKind.PHYSICAL) == GameNumber.of(40))
         check(damage(com.idlerpg.game.domain.definition.DamageKind.ELEMENTAL) == GameNumber.of(80))
+    }
+    @Test fun defenseUsesCappedGuardAfterPhysicalArmor() {
+        val factory = GameSessionFactory.default()
+        val initial = factory.newPlayableGame().state()
+        val state = initial.copy(run = initial.run.copy(player = initial.run.player.copy(
+            baseStats = initial.run.player.baseStats.copy(
+                armor = GameNumber.of(100),
+                defense = GameNumber.of(1_000)
+            )
+        )))
+        val source = state.run.combat.enemies.first().instanceId
+        fun damage(kind: com.idlerpg.game.domain.definition.DamageKind, roll: Long) =
+            com.idlerpg.game.domain.system.combat.DamageSystem.dealToPlayer(
+                state, source, GameNumber.of(80), GameNumber.ZERO, kind.id,
+                factory.contentRegistry, FixedRollRandom(roll)
+            ).event
+
+        val guardedPhysical = damage(com.idlerpg.game.domain.definition.DamageKind.PHYSICAL, 0L)
+        val unguardedPhysical = damage(com.idlerpg.game.domain.definition.DamageKind.PHYSICAL, 5_000L)
+        val guardedElemental = damage(com.idlerpg.game.domain.definition.DamageKind.ELEMENTAL, 0L)
+        val unguardedElemental = damage(com.idlerpg.game.domain.definition.DamageKind.ELEMENTAL, 5_000L)
+        check(guardedPhysical.amount == GameNumber.of(20L) && guardedPhysical.guarded)
+        check(unguardedPhysical.amount == GameNumber.of(40L) && !unguardedPhysical.guarded)
+        check(guardedElemental.amount == GameNumber.of(40L) && guardedElemental.guarded)
+        check(unguardedElemental.amount == GameNumber.of(80L) && !unguardedElemental.guarded)
+
+        val defenseSystem = com.idlerpg.game.domain.system.combat.DefenseSystem
+        check(defenseSystem.guardChance(GameNumber.ZERO) == Ratio.ZERO)
+        check(defenseSystem.guardChance(GameNumber.of(-1L)) == Ratio.ZERO)
+        check(defenseSystem.guardChance(GameNumber.of(1_000L)) == Ratio.ofUnits(5_000L))
+        check(defenseSystem.guardChance(GameNumber.of(3_000L)) == Ratio.ofUnits(7_500L))
+        val level100 = state.copy(run = state.run.copy(progression = state.run.progression.copy(
+            playerLevel = state.run.progression.playerLevel.copy(level = 100L)
+        )))
+        check(com.idlerpg.game.domain.system.stats.DerivedStatSystem.defense(
+            level100, factory.contentRegistry
+        ) == GameNumber.of(1_099L))
     }
     @Test fun levelCurve() = IncrementalProgressionContractTest.run()
     @Test fun enhancementAndRefinement() = GearEnhancementScenarioTest.run()
@@ -46,6 +88,25 @@ class ContractCorrectionTest {
             baseStats = state.run.player.baseStats.copy(maxHealth = GameNumber.of(200), armor = GameNumber.of(100))
         )))
         check(com.idlerpg.game.domain.system.stats.PowerScoreSystem.calculate(armored, factory.contentRegistry).effectiveHealth == GameNumber.of(400))
+    }
+    @Test fun v11SaveGainsZeroDefenseRating() {
+        val factory = GameSessionFactory.default()
+        val state = factory.newGame(12L).state()
+        val defensePath = "run.player.baseStats.defense"
+        val v11Data = com.idlerpg.game.data.local.SaveData(
+            com.idlerpg.game.data.local.SaveData.fromGameState(state).fields - defensePath
+        )
+        val migrated = com.idlerpg.game.data.local.migration.SaveMigrationRegistry().migrate(
+            com.idlerpg.game.data.local.SaveEnvelope(
+                schemaVersion = com.idlerpg.game.data.local.SaveVersion.V11,
+                contentVersion = "test-content",
+                writtenAtEpochMs = 1L,
+                data = v11Data
+            )
+        )
+        check(migrated.schemaVersion == com.idlerpg.game.data.local.SaveVersion.V12)
+        check(migrated.data.fields[defensePath] == "0")
+        check(migrated.gameState().run.player.baseStats.defense == GameNumber.ZERO)
     }
     @Test fun rarityRaisesRollFloorWithinAuthoredBounds() {
         GameSessionFactory.default().contentRegistry.allAffixes().forEach { affix ->
@@ -221,5 +282,17 @@ class ContractCorrectionTest {
         check(!recoveryAction.shouldSubmitElapsed)
         check(!recoveryAction.awaitingReadyBaseline)
         check(recoveryAction.lastPumpAtMillis == 1_100L)
+    }
+
+    private class FixedRollRandom(private val roll: Long) : GameRandom {
+        override fun nextInt(bound: Int): Int = nextLong(bound.toLong()).toInt()
+        override fun nextLong(bound: Long): Long {
+            require(roll in 0 until bound)
+            return roll
+        }
+        override fun nextUnitDouble(): Double = error("Unused test RNG method")
+        override fun <T> chooseWeighted(options: List<WeightedValue<T>>): T =
+            error("Unused test RNG method")
+        override fun snapshot(): RandomState = RandomState(0L)
     }
 }

@@ -13,6 +13,8 @@ data class BaseStats(
     val attackPower: GameNumber = GameNumber.of(10L),
     val maxHealth: GameNumber = GameNumber.of(100L),
     val armor: GameNumber = GameNumber.ZERO,
+    /** Guard rating: chance to block half of damage after Armor. */
+    val defense: GameNumber = GameNumber.ZERO,
     val actionSpeed: Ratio = Ratio.ONE,
     val criticalChance: Ratio = Ratio.ZERO,
     val criticalMultiplier: Ratio = Ratio.ONE,

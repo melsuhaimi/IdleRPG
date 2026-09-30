@@ -1,6 +1,7 @@
 package com.idlerpg.game.domain.system.stats
 
 import com.idlerpg.game.core.number.GameNumber
+import com.idlerpg.game.core.number.Ratio
 import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.model.GameState
 import com.idlerpg.game.domain.system.combat.CombatMath
@@ -50,13 +51,23 @@ object PowerScoreSystem {
         )
         val maximumHealth = DerivedStatSystem.maximumHealth(state, contentRegistry)
         val armor = DerivedStatSystem.armor(state, contentRegistry)
-        val effectiveHealth = GameNumber.fromBigInteger(
+        val armorEffectiveHealth = GameNumber.fromBigInteger(
             maximumHealth.toBigInteger()
                 .multiply(CombatMath.DEFAULT_ARMOR_SCALE.toBigInteger().add(armor.toBigInteger()))
                 .divide(CombatMath.DEFAULT_ARMOR_SCALE.toBigInteger())
         )
+        val guardDamageTakenUnits = Ratio.UNITS_PER_ONE -
+            (DerivedStatSystem.guardChance(state, contentRegistry).units *
+                com.idlerpg.game.domain.system.combat.DefenseSystem.GUARD_BLOCK_RATIO_UNITS /
+                Ratio.UNITS_PER_ONE)
+        val effectiveHealth = GameNumber.fromBigInteger(
+            armorEffectiveHealth.toBigInteger()
+                .multiply(java.math.BigInteger.valueOf(Ratio.UNITS_PER_ONE))
+                .divide(java.math.BigInteger.valueOf(guardDamageTakenUnits))
+        )
         val offense = expectedDamage
-        val defense = maximumHealth + (armor * 10L)
+        val defense = maximumHealth + (armor * 10L) +
+            (DerivedStatSystem.defense(state, contentRegistry) * DEFENSE_SCORE_PER_POINT)
         val gear = equippedGearScore(state)
         val skills = skillScore(state, contentRegistry)
         val rebirth = rebirthScore(state)
@@ -120,4 +131,5 @@ object PowerScoreSystem {
     const val MASTERY_SCORE: Long = 25L
     const val REFINEMENT_SCORE: Long = 100L
     const val REBIRTH_POINT_SCORE: Long = 100L
+    const val DEFENSE_SCORE_PER_POINT: Long = 10L
 }

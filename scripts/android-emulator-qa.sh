@@ -9,11 +9,23 @@ fi
 
 PACKAGE="com.idlerpg.game"
 ACTIVITY=".MainActivity"
-SCENARIO="$SCENARIO"
-if [ -z "$SCENARIO" ]; then
-  SCENARIO="hourly_full_feature_qa"
-fi
+SCENARIO="${SCENARIO:-hourly_full_feature_qa}"
 SESSION_SECONDS="${SESSION_SECONDS:-3600}"
+case "$SCENARIO" in
+  launch_crash|battle_flow)
+    SESSION_SECONDS=0
+    ;;
+  hourly_full_feature_qa)
+    if ! [[ "$SESSION_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+      printf 'SESSION_SECONDS must be a positive integer for %s.\n' "$SCENARIO" >&2
+      exit 64
+    fi
+    ;;
+  *)
+    printf 'Unsupported SCENARIO: %s\nExpected launch_crash, battle_flow, or hourly_full_feature_qa.\n' "$SCENARIO" >&2
+    exit 64
+    ;;
+esac
 
 OUT="artifacts/emulator"
 COMPONENT="$PACKAGE/$ACTIVITY"
@@ -28,7 +40,6 @@ SESSION_COMPLETE_AT=0
 GAME_STARTED=0
 COMBAT_ACTIVE=0
 FINAL_COMBAT_ACTIVE=0
-QA_EXIT=0
 
 mkdir -p "$OUT"
 : > "$EVENT_LOG"
@@ -767,6 +778,9 @@ printf 'launch_exit_code=%s\npid_after_launch=%s\n' \
 PLAYTEST_STATE="not_run"
 if [ -n "$PID_AFTER_LAUNCH" ]; then
   PLAYTEST_STATE="menu_observed"
+  if [ "$SCENARIO" = "launch_crash" ]; then
+    PLAYTEST_STATE="launch_survived"
+  else
   feature_settings
 
   if try_tap "08-start-expedition" '^Start Expedition$'; then
@@ -794,29 +808,30 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
     PLAYTEST_STATE="feature_pass_started"
   else
     PLAYTEST_STATE="feature_pass_not_reached"
-    QA_EXIT=1
   fi
-  SESSION_START="$(date +%s)"
-  SESSION_DEADLINE=$((SESSION_START + SESSION_SECONDS))
-  adb_cmd shell dumpsys gfxinfo "$PACKAGE" reset > "$OUT/session-gfxinfo-reset.txt" 2>&1
-
-  adb_cmd shell rm -f "$TRACE_DEVICE" > "$OUT/02-perfetto-remove.txt" 2>&1
-  adb_cmd shell perfetto -o "$TRACE_DEVICE" -t 120s --app "$PACKAGE" \
-    sched freq idle am wm gfx view binder_driver hal dalvik \
-    > "$OUT/02-perfetto-console.txt" 2>&1 &
-  PERFETTO_HOST_PID=$!
-  sleep 1
-
   if [ "$GAME_STARTED" -eq 1 ]; then
+    if [ "$SCENARIO" = "hourly_full_feature_qa" ]; then
+      SESSION_START="$(date +%s)"
+      SESSION_DEADLINE=$((SESSION_START + SESSION_SECONDS))
+      adb_cmd shell dumpsys gfxinfo "$PACKAGE" reset > "$OUT/session-gfxinfo-reset.txt" 2>&1
+      adb_cmd shell rm -f "$TRACE_DEVICE" > "$OUT/02-perfetto-remove.txt" 2>&1
+      adb_cmd shell perfetto -o "$TRACE_DEVICE" -t 120s --app "$PACKAGE" \
+        sched freq idle am wm gfx view binder_driver hal dalvik \
+        > "$OUT/02-perfetto-console.txt" 2>&1 &
+      PERFETTO_HOST_PID=$!
+      sleep 1
+    fi
+
     feature_battle_controls
     feature_adventure
     feature_build
     feature_doctrine
     feature_progress
     return_to_battle
-    PLAYTEST_STATE="endurance_running"
-  fi
-  capture_checkpoint "99-feature-pass-complete"
+    capture_checkpoint "99-feature-pass-complete"
+
+    if [ "$SCENARIO" = "hourly_full_feature_qa" ]; then
+      PLAYTEST_STATE="endurance_running"
 
   NEXT_CAPTURE=$((SESSION_START + 300))
   while :; do
@@ -845,25 +860,31 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
     else
       sleep "$REMAINING"
     fi
-  done
+      done
 
   ELAPSED="$(($(date +%s) - SESSION_START))"
   if [ "$ELAPSED" -lt "$SESSION_SECONDS" ]; then
     sleep "$((SESSION_SECONDS - ELAPSED))"
-  fi
-  try_desc "99b-final-nav-battle" '^Battle$'
-  sleep 2
-  capture_checkpoint "hourly-060m-final"
-  SESSION_COMPLETE_AT="$(date +%s)"
-  if grep -q "No active enemy" "$CURRENT_UI"; then
-    FINAL_COMBAT_ACTIVE=0
-    PLAYTEST_STATE="one_hour_complete_no_active_combat"
-  elif grep -Eiq "AUTO-COMBAT // LIVE|THREAT //|WAVE [0-9]+/[0-9]+|Retreat from the current encounter" "$CURRENT_UI"; then
-    FINAL_COMBAT_ACTIVE=1
-    PLAYTEST_STATE="one_hour_complete_active"
+      fi
+      try_desc "99b-final-nav-battle" '^Battle$'
+      sleep 2
+      capture_checkpoint "hourly-final"
+      SESSION_COMPLETE_AT="$(date +%s)"
+      if grep -q "No active enemy" "$CURRENT_UI"; then
+        FINAL_COMBAT_ACTIVE=0
+        PLAYTEST_STATE="one_hour_complete_no_active_combat"
+      elif grep -Eiq "AUTO-COMBAT // LIVE|THREAT //|WAVE [0-9]+/[0-9]+|Retreat from the current encounter" "$CURRENT_UI"; then
+        FINAL_COMBAT_ACTIVE=1
+        PLAYTEST_STATE="one_hour_complete_active"
+      else
+        FINAL_COMBAT_ACTIVE=0
+        PLAYTEST_STATE="one_hour_complete_no_active_combat"
+      fi
+    else
+      PLAYTEST_STATE="battle_flow_complete"
+    fi
   else
-    FINAL_COMBAT_ACTIVE=0
-    PLAYTEST_STATE="one_hour_complete_no_active_combat"
+    PLAYTEST_STATE="feature_pass_not_reached"
   fi
 
   adb_cmd shell am force-stop "$PACKAGE" > "$OUT/100-force-stop-after-hour.txt" 2>&1
@@ -874,9 +895,10 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   if try_tap "102-offline-summary-continue" '^Continue$'; then
     capture_checkpoint "102-after-offline-summary"
   fi
+  fi
 fi
 
-if [ -n "$PID_AFTER_LAUNCH" ]; then
+if [ "$SCENARIO" = "hourly_full_feature_qa" ] && [ -n "$PID_AFTER_LAUNCH" ]; then
   adb_cmd shell rm -f "$PERF_DATA_DEVICE" > "$OUT/103-simpleperf-remove.txt" 2>&1
   adb_cmd shell simpleperf record --app "$PACKAGE" \
     -o "$PERF_DATA_DEVICE" -e cpu-clock -f 4000 -g --duration 30 \
@@ -886,8 +908,13 @@ if [ -n "$PID_AFTER_LAUNCH" ]; then
   adb_cmd shell simpleperf report -i "$PERF_DATA_DEVICE" \
     > "$OUT/103-simpleperf-report.txt" 2>&1
 else
-  printf 'Skipped because the app had no live process after launch.\n' \
-    > "$OUT/103-simpleperf-console.txt"
+  if [ "$SCENARIO" = "hourly_full_feature_qa" ]; then
+    printf 'Skipped because the app had no live process after launch.\n' \
+      > "$OUT/103-simpleperf-console.txt"
+  else
+    printf 'Skipped because this scenario does not collect performance profiles.\n' \
+      > "$OUT/103-simpleperf-console.txt"
+  fi
 fi
 
 if [ -n "$PERFETTO_HOST_PID" ]; then
@@ -895,7 +922,7 @@ if [ -n "$PERFETTO_HOST_PID" ]; then
   adb_cmd pull "$TRACE_DEVICE" "$OUT/idlerpg-hourly.pftrace" \
     > "$OUT/02-perfetto-pull.txt" 2>&1
 else
-  printf 'Perfetto was not started because the app had no live process.\n' \
+  printf 'Perfetto was not started for this scenario or the app had no live process.\n' \
     > "$OUT/02-perfetto-console.txt"
 fi
 
@@ -908,13 +935,15 @@ adb_cmd logcat -b crash -d > "$OUT/105-crash-buffer.txt" 2>&1
 adb_cmd shell dumpsys activity activities > "$OUT/106-final-activity.txt" 2>&1
 adb_cmd shell dumpsys window windows > "$OUT/106-final-window.txt" 2>&1
 adb_cmd shell dumpsys package "$PACKAGE" > "$OUT/106-final-package-state.txt" 2>&1
-grep -E -i "$PACKAGE|FATAL EXCEPTION|ANR in|AndroidRuntime|SIGSEGV|OutOfMemoryError" \
+grep -E -i 'FATAL EXCEPTION|ANR in|AndroidRuntime|SIGSEGV|OutOfMemoryError|am_crash|am_anr' \
   "$OUT/105-logcat.txt" "$OUT/105-crash-buffer.txt" > "$OUT/107-crash-scan.txt" 2>&1
 
-if [ -n "$PID_AFTER_LAUNCH" ]; then
-  LAUNCH_VERDICT="launch_did_not_crash"
-elif grep -Eiq "$PACKAGE|FATAL EXCEPTION|AndroidRuntime" "$OUT/105-crash-buffer.txt"; then
+FINAL_PID="$(adb_cmd shell pidof -s "$PACKAGE" 2>/dev/null | tr -d '\r' | xargs)"
+if grep -Eiq 'FATAL EXCEPTION|ANR in|AndroidRuntime|SIGSEGV|OutOfMemoryError|am_crash|am_anr' \
+    "$OUT/105-logcat.txt" "$OUT/105-crash-buffer.txt"; then
   LAUNCH_VERDICT="launch_crash_evidence"
+elif [ -n "$FINAL_PID" ] && [ "$LAUNCH_CODE" -eq 0 ]; then
+  LAUNCH_VERDICT="launch_did_not_crash"
 else
   LAUNCH_VERDICT="app_not_running_after_launch"
 fi
@@ -930,6 +959,29 @@ fi
 CHECKPOINT_COUNT="$(find "$OUT" -name '*-ui.xml' | wc -l | tr -d ' ')"
 SCREENSHOT_COUNT="$(find "$OUT" -name '*.png' | wc -l | tr -d ' ')"
 
+QA_EXIT_CODE=0
+QA_EXIT_REASON="passed"
+if [ "$LAUNCH_VERDICT" != "launch_did_not_crash" ]; then
+  QA_EXIT_CODE=1
+  QA_EXIT_REASON="launch_failed_or_crashed"
+else
+  case "$SCENARIO" in
+    battle_flow)
+      if [ "$PLAYTEST_STATE" != "battle_flow_complete" ] || [ "$FEATURE_ACTION_COUNT" -le 0 ]; then
+        QA_EXIT_CODE=1
+        QA_EXIT_REASON="battle_flow_incomplete"
+      fi
+      ;;
+    hourly_full_feature_qa)
+      if [[ ! "$PLAYTEST_STATE" =~ ^one_hour_complete_(active|no_active_combat)$ ]] \
+          || [ "$SESSION_ELAPSED" -lt "$SESSION_SECONDS" ]; then
+        QA_EXIT_CODE=1
+        QA_EXIT_REASON="hourly_session_incomplete"
+      fi
+      ;;
+  esac
+fi
+
 {
   printf 'scenario=%s\n' "$SCENARIO"
   printf 'package=%s\n' "$PACKAGE"
@@ -938,6 +990,8 @@ SCREENSHOT_COUNT="$(find "$OUT" -name '*.png' | wc -l | tr -d ' ')"
   printf 'launch_exit_code=%s\n' "$LAUNCH_CODE"
   printf 'pid_after_launch=%s\n' "$PID_AFTER_LAUNCH"
   printf 'launch_verdict=%s\n' "$LAUNCH_VERDICT"
+  printf 'qa_exit_code=%s\n' "$QA_EXIT_CODE"
+  printf 'qa_exit_reason=%s\n' "$QA_EXIT_REASON"
   printf 'playtest_state=%s\n' "$PLAYTEST_STATE"
   printf 'session_target_seconds=%s\n' "$SESSION_SECONDS"
   printf 'session_elapsed_seconds=%s\n' "$SESSION_ELAPSED"
@@ -948,22 +1002,16 @@ SCREENSHOT_COUNT="$(find "$OUT" -name '*.png' | wc -l | tr -d ' ')"
   printf 'screenshot_count=%s\n' "$SCREENSHOT_COUNT"
 } > "$OUT/verdict.txt"
 
-if [ "$LAUNCH_VERDICT" != "launch_did_not_crash" ]; then
-  QA_EXIT=1
-fi
-if [ "$GAME_STARTED" -ne 1 ]; then
-  QA_EXIT=1
-fi
-
-printf 'scenario=%s launch_verdict=%s playtest_state=%s elapsed=%ss checkpoints=%s screenshots=%s exit=%s\n' \
-  "$SCENARIO" "$LAUNCH_VERDICT" "$PLAYTEST_STATE" "$SESSION_ELAPSED" "$CHECKPOINT_COUNT" "$SCREENSHOT_COUNT" "$QA_EXIT"
+printf 'scenario=%s launch_verdict=%s qa_exit_code=%s playtest_state=%s elapsed=%ss checkpoints=%s screenshots=%s\n' \
+  "$SCENARIO" "$LAUNCH_VERDICT" "$QA_EXIT_CODE" "$PLAYTEST_STATE" "$SESSION_ELAPSED" "$CHECKPOINT_COUNT" "$SCREENSHOT_COUNT"
 
 if [ -n "$GITHUB_STEP_SUMMARY" ]; then
   {
-    echo "## IdleRPG one-hour emulator QA"
+    echo "## IdleRPG emulator QA"
     echo
     echo "- Scenario: $SCENARIO"
     echo "- Launch verdict: $LAUNCH_VERDICT"
+    echo "- QA exit code: $QA_EXIT_CODE ($QA_EXIT_REASON)"
     echo "- Playtest state: $PLAYTEST_STATE"
     echo "- Session target: $SESSION_SECONDS seconds"
     echo "- Session elapsed: $SESSION_ELAPSED seconds"
@@ -976,4 +1024,4 @@ if [ -n "$GITHUB_STEP_SUMMARY" ]; then
   } >> "$GITHUB_STEP_SUMMARY"
 fi
 
-exit "$QA_EXIT"
+exit "$QA_EXIT_CODE"

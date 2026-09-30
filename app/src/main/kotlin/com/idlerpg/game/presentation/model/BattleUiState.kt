@@ -47,7 +47,8 @@ data class BattleImpactUiState(
     val sequenceNumber: Long,
     val targetInstanceId: InstanceId,
     val amountDisplay: String,
-    val critical: Boolean
+    val critical: Boolean,
+    val guarded: Boolean = false
 )
 
 /** Reward facts emitted by the canonical encounter transition. */

@@ -4,6 +4,7 @@ import com.idlerpg.game.core.id.InstanceId
 import com.idlerpg.game.core.number.GameMath
 import com.idlerpg.game.core.number.GameNumber
 import com.idlerpg.game.core.number.Ratio
+import com.idlerpg.game.core.random.GameRandom
 import com.idlerpg.game.data.content.ContentRegistry
 import com.idlerpg.game.domain.definition.Affinity
 import com.idlerpg.game.domain.definition.DamageKind
@@ -206,7 +207,8 @@ object DamageSystem {
         baseDamage: GameNumber,
         armorPenetration: GameNumber,
         damageKindId: com.idlerpg.game.core.id.ContentId,
-        contentRegistry: ContentRegistry
+        contentRegistry: ContentRegistry,
+        random: GameRandom
     ): PlayerDamageResult {
         val target = state.run.combat.playerCombatant
             ?: error("Enemy damage requires an active player combatant")
@@ -222,11 +224,25 @@ object DamageSystem {
             }
         }
         val armor = com.idlerpg.game.domain.system.stats.DerivedStatSystem.armor(state, contentRegistry)
-        val requested = if (damageKindId == DamageKind.PHYSICAL.id) {
+        val armorAdjusted = if (damageKindId == DamageKind.PHYSICAL.id) {
             CombatMath.mitigate(pressuredDamage, armor, armorPenetration)
         } else {
             pressuredDamage
         }
+        val defense = com.idlerpg.game.domain.system.stats.DerivedStatSystem.defense(
+            state,
+            contentRegistry
+        )
+        val guard = if (armorAdjusted > GameNumber.ZERO && defense > GameNumber.ZERO) {
+            DefenseSystem.resolve(
+                damage = armorAdjusted,
+                defense = defense,
+                rollUnits = random.nextLong(CombatMath.CRITICAL_ROLL_BOUND)
+            )
+        } else {
+            DefenseSystem.GuardResult(armorAdjusted, guarded = false)
+        }
+        val requested = guard.damage
         val applied = if (requested > target.currentHealth) target.currentHealth else requested
         val updatedCombatant = target.copy(currentHealth = target.currentHealth - applied)
         val updatedState = state.copy(
@@ -242,7 +258,8 @@ object DamageSystem {
                 targetInstanceId = target.instanceId,
                 amount = applied,
                 damageKindId = damageKindId,
-                critical = false
+                critical = false,
+                guarded = guard.guarded
             )
         )
     }

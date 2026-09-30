@@ -108,7 +108,7 @@ class GameEventPresenter(
             val damage = envelope.event as? DamageDealt ?: return@mapNotNull null
             com.idlerpg.game.presentation.model.BattleImpactUiState(
                 envelope.sequenceNumber, damage.targetInstanceId,
-                GameNumberFormatter.full(damage.amount), damage.critical
+                GameNumberFormatter.full(damage.amount), damage.critical, damage.guarded
             )
         }.take(12).toList().asReversed()
         return message.copy(

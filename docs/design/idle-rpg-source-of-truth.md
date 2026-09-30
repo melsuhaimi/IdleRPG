@@ -72,6 +72,8 @@ Core normal-stat candidates are:
 - Speed
 - Elemental power or resistance where the stat has a clearly defined combat role
 
+Defense is a Guard rating, separate from Armor. It grows by 1 point per player level and 10 points per Normal Rebirth allocation. For an incoming hit, Defense grants a Guard chance of `min(75%, Defense / (1,000 + Defense))`. A successful Guard blocks 50% of damage after physical Armor and Penetration have been resolved; Guard applies to physical and nonphysical hits. The canonical RNG makes one roll only when Defense and incoming damage are both positive. Rounding uses integer division.
+
 Niche effects should not be added to the allocation screen unless their mathematical role is stable and player-readable. Bounded probabilities use hard caps where required; other stats use diminishing returns where an uncapped linear investment would create a dominant strategy.
 
 ## Rebirth
@@ -127,6 +129,7 @@ The following remain:
 - Legacy-point allocation
 - Lifetime statistics and achievements where already permanent
 - Other explicitly meta-scoped progression
+- Purchased Echo Training is reapplied at its permanent starting level after ordinary run upgrades reset.
 
 Gear has no player-level requirement and can be equipped immediately after rebirth. Gear effects that depend on an unavailable skill remain inactive until that skill is unlocked again.
 
@@ -163,12 +166,12 @@ The target ordering is:
 5. Apply Critical Damage when the hit is eligible and critical.
 6. Apply target vulnerability and elemental resistance.
 7. Apply Armor and Penetration for physical damage.
-8. Resolve Defense-driven Guard, block, stagger, or similar defensive behavior.
+8. Resolve Guard using the Defense rating: roll once against `min(75%, Defense / (1,000 + Defense))`; on success, block 50% of the remaining damage.
 9. Resolve shields and HP damage.
 10. Emit the authoritative event.
 11. Resolve statuses, death, rewards, wave transitions, and stage state.
 
-Armor answers physical mitigation. Defense is a separate defensive interaction and must not silently duplicate Armor's reduction.
+Armor answers physical mitigation. Defense provides a chance-based, half-damage Guard for every damage kind. These effects resolve sequentially and do not share a formula.
 
 A baseline physical mitigation shape is:
 
@@ -250,6 +253,7 @@ The exact refinement actions must be represented as explicit commands with previ
 ## Loot and Legendary gear
 
 - Normal stages, elite encounters, and bosses use authored loot tables.
+- Each equipment item must have at least five distinct stat mechanics so the main-stat effect can be excluded while supplying four distinct Legendary substats.
 - Bosses have better Legendary weighting than ordinary encounters.
 - Legacy bonuses are small additive improvements with an upper bound.
 - Legendary gear cannot be created by promoting lower rarities.
@@ -262,7 +266,7 @@ The player controls equip, lock, salvage, and capacity decisions. Automatic salv
 
 ## Stages and automation
 
-The current authored route is a baseline, not the final endgame.
+The current authored route is a baseline, not the final endgame. Training Hollow's current content boundary is Stage 240; Stage 120 continues to Stage 121. Boss encounters recur every 12 stages from Stage 60 through Stage 240. The generated extension reuses the existing bounded enemy compositions and Hollow Warden boss mechanics. Later content updates may append another region or extend this route.
 
 The long-term route must support:
 
@@ -293,6 +297,7 @@ Offline progression is bounded and deliberately narrower than active play.
 - Offline farming uses the latest cleared non-boss stage.
 - If the latest clear is a boss, the simulation moves backward to the nearest eligible non-boss stage.
 - Offline rewards are Gold and XP only.
+- Offline simulation discards loot results and restores the pre-simulation RNG, event-sequence, and instance-ID cursors before saving, so the temporary simulation does not consume persistent deterministic state.
 - Offline progression does not award gear, materials, loot, quests, mastery, achievements, stage progress, Legacy points, or Gems.
 - Offline XP can advance the level toward 15,000.
 - Rebirth is never performed automatically.

@@ -2558,7 +2558,9 @@ private fun feedbackMessage(
             contentTitle ?: stringResource(R.string.battle_feedback_skill)
         )
         BattleFeedbackKind.DAMAGE -> feedback.amountDisplay?.let { amount ->
-            if (feedback.impacts.any { it.critical }) {
+            if (feedback.impacts.any { it.guarded }) {
+                stringResource(R.string.battle_feedback_guarded_damage, amount)
+            } else if (feedback.impacts.any { it.critical }) {
                 stringResource(R.string.battle_feedback_critical_damage, amount)
             } else {
                 stringResource(R.string.battle_feedback_damage, amount)
@@ -2620,7 +2622,8 @@ private fun feedbackAccent(feedback: BattleFeedbackUiState): Color = when {
         feedback.kind == BattleFeedbackKind.UPGRADE_PURCHASED ||
         feedback.impacts.any { it.critical } -> ResourceGold
     feedback.kind == BattleFeedbackKind.HEALING ||
-        feedback.kind == BattleFeedbackKind.STATUS_APPLIED -> PositiveGreen
+        feedback.kind == BattleFeedbackKind.STATUS_APPLIED ||
+        feedback.impacts.any { it.guarded } -> PositiveGreen
     else -> ResonanceTeal
 }
 
@@ -2630,6 +2633,7 @@ private fun feedbackGlyph(feedback: BattleFeedbackUiState): String = when {
     feedback.kind == BattleFeedbackKind.LOOT ||
         feedback.kind == BattleFeedbackKind.LEVEL_UP -> "✦"
     feedback.kind == BattleFeedbackKind.HEALING -> "+"
+    feedback.impacts.any { it.guarded } -> "⛨"
     feedback.kind == BattleFeedbackKind.DAMAGE -> "⚔"
     else -> "•"
 }

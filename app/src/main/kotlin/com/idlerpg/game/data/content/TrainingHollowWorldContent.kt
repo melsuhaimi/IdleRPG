@@ -7,9 +7,14 @@ import com.idlerpg.game.domain.definition.world.BossDefinition
 import com.idlerpg.game.domain.definition.world.EncounterDefinition
 import com.idlerpg.game.domain.definition.world.EncounterType
 
-/** Stages 9–120 provide a long-form push/farm route with recurring milestone bosses. */
+/** Stages 9–240 provide a long-form push/farm route with recurring milestone bosses. */
 object TrainingHollowWorldContent {
-    const val MAX_STAGE: Int = 120
+    const val MAX_STAGE: Int = 240
+
+    private val bossStages = setOf(30, 45) + (60..MAX_STAGE step 12).toSet()
+    private val eliteStages = setOf(10, 15, 20, 25, 29)
+    private val anomalyStages = setOf(12, 18, 24, 27)
+    private const val INITIAL_NORMAL_CLEAR_COUNT: Long = 4L
 
     val STAGE_45_BOSS_ID = ContentId("boss.training_hollow.stage_45")
     val STAGE_60_BOSS_ID = ContentId("boss.training_hollow.stage_60")
@@ -18,17 +23,13 @@ object TrainingHollowWorldContent {
     val STAGE_96_BOSS_ID = ContentId("boss.training_hollow.stage_96")
     val STAGE_108_BOSS_ID = ContentId("boss.training_hollow.stage_108")
     val STAGE_120_BOSS_ID = ContentId("boss.training_hollow.stage_120")
+    val STAGE_240_BOSS_ID = ContentId("boss.training_hollow.stage_240")
 
     fun stageId(number: Int): ContentId =
         ContentId("encounter.training_hollow.stage_${number.toString().padStart(2, '0')}")
 
     val encounters: List<EncounterDefinition> = (9..MAX_STAGE).map { stage ->
-        val type = when (stage) {
-            30, 45, 60, 72, 84, 96, 108, MAX_STAGE -> EncounterType.BOSS
-            10, 15, 20, 25, 29 -> EncounterType.ELITE
-            12, 18, 24, 27 -> EncounterType.ANOMALY
-            else -> generatedType(stage)
-        }
+        val type = encounterType(stage)
         val enemies = when (stage) {
             9 -> listOf(DefaultGameContent.SLIME_ID, DefaultGameContent.SLIME_ID, DefaultGameContent.RIFTFANG_ID)
             10 -> listOf(DefaultGameContent.HOLLOW_BULWARK_ID, DefaultGameContent.CINDER_WISP_ID)
@@ -97,71 +98,50 @@ object TrainingHollowWorldContent {
         else -> EncounterType.NORMAL
     }
 
+    private fun encounterType(stage: Int): EncounterType = when {
+        stage in bossStages -> EncounterType.BOSS
+        stage in eliteStages -> EncounterType.ELITE
+        stage in anomalyStages -> EncounterType.ANOMALY
+        else -> generatedType(stage)
+    }
+
     private fun bossIdForStage(stage: Int, type: EncounterType): ContentId? =
-        if (type != EncounterType.BOSS) null else when (stage) {
-            30 -> HollowWardenContent.BOSS_ID
-            45 -> STAGE_45_BOSS_ID
-            60 -> STAGE_60_BOSS_ID
-            72 -> STAGE_72_BOSS_ID
-            84 -> STAGE_84_BOSS_ID
-            96 -> STAGE_96_BOSS_ID
-            108 -> STAGE_108_BOSS_ID
-            MAX_STAGE -> STAGE_120_BOSS_ID
-            else -> error("No boss id authored for stage $stage")
-        }
+        if (type != EncounterType.BOSS) null else bossIdForStage(stage)
+
+    private fun bossIdForStage(stage: Int): ContentId = when (stage) {
+        30 -> HollowWardenContent.BOSS_ID
+        45 -> STAGE_45_BOSS_ID
+        60 -> STAGE_60_BOSS_ID
+        72 -> STAGE_72_BOSS_ID
+        84 -> STAGE_84_BOSS_ID
+        96 -> STAGE_96_BOSS_ID
+        108 -> STAGE_108_BOSS_ID
+        120 -> STAGE_120_BOSS_ID
+        240 -> STAGE_240_BOSS_ID
+        else -> ContentId("boss.training_hollow.stage_$stage")
+    }
 
     /** Each milestone is a separate boss contract so first-clear state remains meaningful. */
-    val additionalBosses: List<BossDefinition> = listOf(
-        BossDefinition(
-            id = STAGE_45_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(45),
-            requiredNormalClears = 30L,
-            chronicleMilestoneRelevant = true
-        ),
-        BossDefinition(
-            id = STAGE_60_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(60),
-            requiredNormalClears = 45L,
-            chronicleMilestoneRelevant = true
-        ),
-        BossDefinition(
-            id = STAGE_72_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(72),
-            requiredNormalClears = 60L,
-            chronicleMilestoneRelevant = true
-        ),
-        BossDefinition(
-            id = STAGE_84_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(84),
-            requiredNormalClears = 72L,
-            chronicleMilestoneRelevant = true
-        ),
-        BossDefinition(
-            id = STAGE_96_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(96),
-            requiredNormalClears = 84L,
-            chronicleMilestoneRelevant = true
-        ),
-        BossDefinition(
-            id = STAGE_108_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(108),
-            requiredNormalClears = 96L,
-            chronicleMilestoneRelevant = true
-        ),
-        BossDefinition(
-            id = STAGE_120_BOSS_ID,
-            regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
-            encounterDefinitionId = stageId(120),
-            requiredNormalClears = 108L,
-            chronicleMilestoneRelevant = true
+    val additionalBosses: List<BossDefinition> = bossStages
+        .filterNot { it == 30 }
+        .sorted()
+        .map { stage ->
+            BossDefinition(
+                id = bossIdForStage(stage),
+                regionId = DefaultGameContent.TRAINING_HOLLOW_REGION_ID,
+                encounterDefinitionId = stageId(stage),
+                requiredNormalClears = normalClearRequirement(stage),
+                chronicleMilestoneRelevant = true
+            )
+        }
+
+    private fun normalClearRequirement(bossStage: Int): Long =
+        Math.addExact(
+            INITIAL_NORMAL_CLEAR_COUNT,
+            (9 until bossStage).count { stage ->
+                encounterType(stage) == EncounterType.NORMAL
+            }.toLong()
         )
-    )
 
     /** Content-driven compositions keep future stage additions deterministic and varied. */
     private fun generatedComposition(stage: Int, type: EncounterType): List<ContentId> {
@@ -188,7 +168,6 @@ object TrainingHollowWorldContent {
             listOf(HollowWardenContent.ENEMY_ID)
         )
 
-    private fun stageRewardMultiplier(stage: Int): Ratio = Ratio.ofUnits(
-        10_000L + ((stage - 30L) * 125L).coerceAtMost(25_000L)
-    )
+    private fun stageRewardMultiplier(stage: Int): Ratio =
+        Ratio.ofUnits(10_000L + (stage - 30L) * 125L)
 }

@@ -50,13 +50,30 @@ Rarity quality is a new central balance choice: the minimum rises by 10% of the 
 | Save integrity | LocalGameRepository; SaveMigrationRegistry; GameRuntime/GameSession | Candidate verification and backup rotation exist; transaction publication boundary corrected |
 | Automation | Doctrine command path and Battle UI | Player chooses build/route/policy; Basic Attack fallback and explicit Auto toggle retained |
 
-## Remaining contract gaps
+## Gaps at the original review checkpoint
 
 `BaseStats` has no separate Defense stat, and the combat pipeline has no Defense-driven Guard/block/stagger step. The contract names the requirement but supplies no interaction, threshold, scaling or rounding formula. Adding an invented second mitigation stat would violate the instruction not to assume. Armor remains clearly identified as physical mitigation; no fake Defense value is displayed.
 
 The product owner must define that interaction before full combat alignment can be claimed. This revision neither deletes that requirement nor marks it implemented.
 
 The authored equipment pools also need a content redesign: `TrainingHollowLootContent.allowedAffixIdsFor` gives Armor three candidates and Helm two. Reserving one main roll leaves fewer than three substats; `AffixRollSystem.roll` silently takes the smaller candidate count. Several differently named affixes also map to the same underlying Attack effect. The contract requires three/four lines without duplicating the main stat. This needs a legal stat pool with distinct mechanical roles, not extra renamed Attack lines. Existing rolled items are preserved; this revision does not claim the pool problem is solved.
+
+
+## Follow-up fixes — 30 September 2026
+
+The findings above describe the earlier candidate. This follow-up addresses them in the current branch:
+
+| Finding | Follow-up |
+| --- | --- |
+| Offline replay advanced deterministic cursors for drops that are not awarded offline | Offline projection restores the pre-simulation RNG, event-sequence, and instance-ID cursors while retaining simulated time and permitted progress. |
+| Defense had no combat definition or implementation | Defense is a separate Guard rating: `min(75%, Defense / (1,000 + Defense))` chance to block 50% of post-Armor damage across damage kinds. It scales by 1 per player level and 10 per Normal Rebirth point, and is included in combat feedback, saves, projections, and Power Score. |
+| Authored affix pools could not fill the promised rarity lines, and rolling silently returned fewer lines or repeated a stat under another name | Equipment content has at least five distinct stat mechanics per item; rolling requires the requested count and excludes duplicate effects. |
+| Rebirth removed purchased Echo Training run upgrades | Rebirth reapplies the permanent starting level for purchased Echo Training tracks. |
+| Stage 120 behaved as terminal although the route is meant to continue | The current route reaches Stage 240, including boss encounters through Stage 240; Stage 120 links to Stage 121. |
+| QA ignored `SCENARIO` and reported success after failed checks | The emulator script validates the supported scenarios, enforces their completion conditions, and exits non-zero on launch, crash, or scenario failure. |
+| Rebirth and refinement UI copy bypassed localization | The affected text now comes from Android string resources. |
+
+At the time of the original review validation, no workflow YAML was active. The current branch has active push workflows at `.github/workflows/f001-offline-resume-artifact.yml` and `.github/workflows/apk-artifact.yml`; both run unit tests and assemble a debug APK, and the latter uploads the APK as a 14-day artifact. The original validation results below are historical and do not validate this follow-up until the current commit's workflow completes.
 
 ## Validation
 
@@ -67,4 +84,4 @@ The authored equipment pools also need a content redesign: `TrainingHollowLootCo
 - First candidate: APK assembly passed; 28/30 tests passed. Two stale test expectations were corrected after independent verification: exact level-14,999 XP and elemental Cinder Bolt bypassing physical Armor.
 - Final run [35347702105](https://github.com/melsuhaimi/IdleRPG/actions/runs/35347702105), on the validated implementation above: compilation, all 30 configured JUnit tests, debug APK assembly and Android API 35 emulator smoke script passed. The script covers required navigation and enlarged-text navigation; optional interaction results are recorded in its artifact.
 - The runner uploaded 57 screenshot/UI-tree/log/result files in `contract-ui-screens`. Downloading that artifact into the review environment returned HTTP 403 (error 1010), so screenshots, optional interaction outcomes and the crash buffer could not be independently inspected. Passing automation is not a claim of visual approval or exhaustive feature coverage.
-- The original workflows remain `.bak`. The temporary evidence workflow is also renamed `.bak` after validation; the F-001 offline-resume validation workflow remains active on this branch. The final documentation/workflow-only commit does not change the tested application source.
+- At the time of the 18 September validation, the original workflows and temporary evidence workflow were renamed `.bak`; the final documentation/workflow-only commit did not change that candidate's tested app source. Since then, the F-001 validation and APK-artifact workflows have become active; both now run unit tests and assemble the debug APK. The source and test changes in this follow-up require fresh validation on the resulting commit.

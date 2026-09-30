@@ -51,6 +51,9 @@ data class SaveVersion(
         /** Separates Normal combat and Legacy acquisition allocations. */
         val V11: SaveVersion = SaveVersion(11)
 
-        val CURRENT: SaveVersion = V11
+        /** Persists the player's Defense/Guard rating. */
+        val V12: SaveVersion = SaveVersion(12)
+
+        val CURRENT: SaveVersion = V12
     }
 }

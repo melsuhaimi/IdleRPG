@@ -480,7 +480,8 @@ object CombatSystem : ScheduledActionSource, ScheduledActionHandler {
             baseDamage = mutationAdjustedDamage,
             armorPenetration = attack.armorPenetration,
             damageKindId = attack.damageKind.id,
-            contentRegistry = context.contentRegistry
+            contentRegistry = context.contentRegistry,
+            random = context.random
         )
         var nextState = damage.state
         events += damage.event

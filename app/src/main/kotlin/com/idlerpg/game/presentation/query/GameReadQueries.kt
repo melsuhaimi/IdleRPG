@@ -13,6 +13,8 @@ import com.idlerpg.game.domain.model.combat.EnemyState
 interface GameReadQueries {
     fun attackPower(state: GameState): GameNumber
     fun armor(state: GameState): GameNumber
+    fun defense(state: GameState): GameNumber = GameNumber.ZERO
+    fun guardChance(state: GameState): Ratio = Ratio.ZERO
     fun maximumHealth(state: GameState): GameNumber = GameNumber.ZERO
     fun actionSpeed(state: GameState): Ratio = Ratio.ONE
     fun criticalChance(state: GameState): Ratio = Ratio.ZERO

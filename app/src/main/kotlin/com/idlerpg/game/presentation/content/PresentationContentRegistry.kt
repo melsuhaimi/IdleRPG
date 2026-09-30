@@ -386,13 +386,16 @@ class PresentationContentRegistry private constructor(
             ).forEach { (id, title) -> add(id, PresentationContentKind.MUTATION, title, PresentationStringKey.DESC_MUTATION, PresentationAssetKey.ASH_SKIN) }
             add("enemy.hollow_warden", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
             add("boss.hollow_warden", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_45", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_60", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_72", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_84", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_96", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_108", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
-            add("boss.training_hollow.stage_120", PresentationContentKind.ENEMY, PresentationStringKey.HOLLOW_WARDEN, PresentationStringKey.DESC_ENEMY, PresentationAssetKey.ARCANE_SEER, PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION)
+            TrainingHollowWorldContent.additionalBosses.sortedBy { it.id }.forEach { boss ->
+                entries += PresentationContentEntry(
+                    contentId = boss.id,
+                    kind = PresentationContentKind.ENEMY,
+                    titleStringKey = PresentationStringKey.HOLLOW_WARDEN,
+                    shortDescriptionStringKey = PresentationStringKey.DESC_ENEMY,
+                    iconAssetKey = PresentationAssetKey.ARCANE_SEER,
+                    illustrationAssetKey = PresentationAssetKey.HOLLOW_WARDEN_ILLUSTRATION
+                )
+            }
             add("item.training_blade", PresentationContentKind.ITEM,
                 PresentationStringKey.TRAINING_BLADE, PresentationStringKey.DESC_ITEM,
                 PresentationAssetKey.TRAINING_BLADE)

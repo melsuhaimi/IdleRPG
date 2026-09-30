@@ -37,6 +37,18 @@ object PowerScoreScenarioTest {
             )
         )
 
+        val guarded = initial.copy(
+            meta = initial.meta.copy(
+                rebirth = RebirthState(
+                    normalPointsEarned = 1L,
+                    normalAllocations = mapOf(RebirthStat.DEFENSE to 1L)
+                )
+            )
+        )
+        val guardedScore = PowerScoreSystem.calculate(guarded, factory.contentRegistry)
+        check(guardedScore.defense > base.defense)
+        check(guardedScore.effectiveHealth > base.effectiveHealth)
+
         // The calculator must not create or mutate game progression state.
         check(initial.run.progression.skillProgression.rankBySkillId.isEmpty())
         check(DefaultGameContent.BASIC_ATTACK_ID.toString().isNotBlank())

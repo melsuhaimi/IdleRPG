@@ -5,6 +5,7 @@ enum class RebirthStat {
     ATTACK_POWER,
     MAX_HEALTH,
     ARMOR,
+    DEFENSE,
     ACTION_SPEED,
     CRITICAL_CHANCE,
     CRITICAL_MULTIPLIER,

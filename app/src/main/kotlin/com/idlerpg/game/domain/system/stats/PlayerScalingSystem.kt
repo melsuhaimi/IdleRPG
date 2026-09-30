@@ -15,6 +15,7 @@ object PlayerScalingSystem {
     const val ATTACK_PER_LEVEL: Long = 2L
     const val MAX_HEALTH_PER_LEVEL: Long = 12L
     const val ARMOR_PER_LEVEL: Long = 3L
+    const val DEFENSE_PER_LEVEL: Long = 1L
     const val ACTION_SPEED_UNITS_PER_LEVEL: Long = 40L
     const val CRITICAL_CHANCE_UNITS_PER_LEVEL: Long = 25L
     const val CRITICAL_MULTIPLIER_UNITS_PER_LEVEL: Long = 50L
@@ -38,6 +39,11 @@ object PlayerScalingSystem {
             armor = GameMath.linearGrowth(
                 base.armor,
                 com.idlerpg.game.core.number.GameNumber.of(ARMOR_PER_LEVEL),
+                steps
+            ),
+            defense = GameMath.linearGrowth(
+                base.defense,
+                com.idlerpg.game.core.number.GameNumber.of(DEFENSE_PER_LEVEL),
                 steps
             ),
             actionSpeed = GameMath.ratioAfterSteps(

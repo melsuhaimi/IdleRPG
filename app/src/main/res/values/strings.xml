@@ -1159,4 +1159,5 @@
     <string name="gear_feedback_enhancement_success">Enhancement succeeded: %1$s.</string>
     <string name="gear_feedback_enhancement_failed">Enhancement failed; item remains at %1$s.</string>
     <string name="gear_feedback_refined">Affix refined to %1$s.</string>
+    <string name="battle_feedback_guarded_damage">Guard blocked half: %1$s damage taken.</string>
 </resources>
